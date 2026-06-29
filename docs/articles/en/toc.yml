@@ -1,0 +1,8 @@
+- name: Getting started
+  href: getting-started.md
+- name: Authentication
+  href: authentication.md
+- name: Architecture
+  href: architecture.md
+- name: FAQ
+  href: faq.md

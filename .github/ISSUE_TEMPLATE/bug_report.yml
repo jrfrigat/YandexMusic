@@ -1,0 +1,41 @@
+name: 🐛 Сообщить об ошибке
+description: Отчёт о некорректной работе библиотеки
+labels: [bug]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Описание
+      description: Что произошло и что ожидалось?
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Шаги воспроизведения
+      description: Минимальный пример кода, воспроизводящий проблему.
+      render: csharp
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: Версия пакета
+      placeholder: "например, 0.1.0"
+    validations:
+      required: true
+  - type: dropdown
+    id: tfm
+    attributes:
+      label: Целевая платформа
+      options:
+        - net8.0
+        - net9.0
+        - net10.0
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Логи / исключения
+      render: shell

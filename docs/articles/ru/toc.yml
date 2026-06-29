@@ -1,0 +1,8 @@
+- name: Быстрый старт
+  href: getting-started.md
+- name: Авторизация
+  href: authentication.md
+- name: Архитектура
+  href: architecture.md
+- name: FAQ
+  href: faq.md

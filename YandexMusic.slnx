@@ -1,0 +1,9 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/YandexMusic/YandexMusic.csproj" />
+    <Project Path="src/YandexMusic.DependencyInjection/YandexMusic.DependencyInjection.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/YandexMusic.Tests/YandexMusic.Tests.csproj" />
+  </Folder>
+</Solution>

@@ -1,0 +1,90 @@
+name: Release
+
+# Публикация в nuget.org через Trusted Publishing (OIDC) — без хранения API-ключа.
+#
+# Перед первым релизом настройте на nuget.org политику Trusted Publishing:
+#   nuget.org -> Account -> Trusted Publishing -> добавить policy:
+#     Subject (owner/repo): jrfrigat/YandexMusic
+#     Workflow file:        release.yml
+#     Environment:          nuget (опционально, но рекомендуется)
+# Затем задайте переменную репозитория NUGET_USER = ваш логин на nuget.org
+#   (Settings -> Secrets and variables -> Actions -> Variables).
+
+on:
+  release:
+    types: [ published ]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Версия пакета (например, 0.1.0). По умолчанию берётся из тега релиза."
+        required: false
+
+permissions:
+  contents: read
+  id-token: write   # требуется для OIDC / trusted publishing
+
+jobs:
+  publish:
+    name: Pack & publish to NuGet
+    runs-on: ubuntu-latest
+    environment: nuget
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET (8 / 9 / 10)
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.0.x
+            9.0.x
+            10.0.x
+
+      - name: Resolve version
+        id: version
+        run: |
+          VERSION="${{ github.event.inputs.version }}"
+          if [ -z "$VERSION" ]; then
+            VERSION="${GITHUB_REF_NAME#v}"
+          fi
+          echo "value=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Publishing version $VERSION"
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --configuration Release --no-restore -p:Version=${{ steps.version.outputs.value }}
+
+      - name: Test
+        run: dotnet test --configuration Release --no-build
+
+      - name: Pack
+        # Packs every packable project in the solution: YandexMusic.Abstractions,
+        # YandexMusic.API, YandexMusic and YandexMusic.DependencyInjection. All four must be
+        # published together — the higher-level packages declare NuGet dependencies on the lower
+        # ones, so shipping only a subset breaks restore for consumers. (tests/sample are IsPackable=false.)
+        run: dotnet pack YandexMusic.slnx --configuration Release --no-build -p:Version=${{ steps.version.outputs.value }} -o ./artifacts
+
+      - name: NuGet login (Trusted Publishing / OIDC)
+        id: nuget-login
+        uses: NuGet/login@v1
+        with:
+          user: ${{ vars.NUGET_USER }}
+
+      - name: Push packages to nuget.org
+        run: >
+          dotnet nuget push "./artifacts/*.nupkg"
+          --source https://api.nuget.org/v3/index.json
+          --api-key ${{ steps.nuget-login.outputs.NUGET_API_KEY }}
+          --skip-duplicate
+
+      - name: Attach packages to GitHub release
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            ./artifacts/*.nupkg
+            ./artifacts/*.snupkg

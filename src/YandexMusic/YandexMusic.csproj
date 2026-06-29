@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
+    <PackageId>YandexMusic</PackageId>
+    <Title>YandexMusic</Title>
+    <Description>Unofficial asynchronous .NET client for the Yandex Music API (.NET 8/9/10). — Неофициальный асинхронный клиент API Яндекс Музыки.</Description>
+    <IsPackable>true</IsPackable>
+    <IsAotCompatible>true</IsAotCompatible>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="YandexMusic.Tests" />
+    <InternalsVisibleTo Include="YandexMusic.DependencyInjection" />
+  </ItemGroup>
+
+</Project>

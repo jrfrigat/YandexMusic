@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
+    <PackageId>YandexMusic.DependencyInjection</PackageId>
+    <Title>YandexMusic.DependencyInjection</Title>
+    <Description>Dependency-injection integration for the YandexMusic client — AddYandexMusic() over a pooled SocketsHttpHandler. — DI-интеграция клиента Яндекс Музыки.</Description>
+    <IsPackable>true</IsPackable>
+    <IsAotCompatible>true</IsAotCompatible>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Http" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\YandexMusic\YandexMusic.csproj" />
+  </ItemGroup>
+
+</Project>

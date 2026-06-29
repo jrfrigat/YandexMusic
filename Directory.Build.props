@@ -1,0 +1,42 @@
+<Project>
+
+  <!-- Shared settings for every project in the repository. -->
+  <PropertyGroup>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Deterministic>true</Deterministic>
+    <InvariantGlobalization>true</InvariantGlobalization>
+
+    <!-- Analyzers / code style -->
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <AnalysisLevel>latest-recommended</AnalysisLevel>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+
+    <!-- Repository / authorship metadata (shared by all packable projects). -->
+    <Authors>FrigaT</Authors>
+    <Company>FrigaT</Company>
+    <Product>YandexMusic</Product>
+    <Copyright>Copyright © FrigaT $([System.DateTime]::UtcNow.Year)</Copyright>
+    <PackageProjectUrl>https://github.com/jrfrigat/YandexMusic</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/jrfrigat/YandexMusic.git</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <PackageTags>yandex;music;yandex-music;api;async;client;dotnet</PackageTags>
+    <PackageIcon>icon.png</PackageIcon>
+
+    <!-- Single source of truth for the version. CI overrides with -p:Version=x.y.z. -->
+    <VersionPrefix>0.1.0</VersionPrefix>
+
+    <!-- Reproducible builds + Source Link. -->
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <ContinuousIntegrationBuild Condition="'$(GITHUB_ACTIONS)' == 'true'">true</ContinuousIntegrationBuild>
+  </PropertyGroup>
+
+</Project>

@@ -1,0 +1,8 @@
+- name: Home / Главная
+  href: index.md
+- name: Guide (English)
+  href: articles/en/
+- name: Руководство (русский)
+  href: articles/ru/
+- name: API Reference
+  href: api/
