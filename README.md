@@ -172,6 +172,11 @@ Full guides and API reference: **<https://jrfrigat.github.io/YandexMusic/>**
 library — search, browse your albums and playlists, and a live "now playing" view with an animated
 equalizer, a real-time progress bar and keyboard volume/transport controls.
 
+**Download:** grab a ready-to-run Windows build from the
+[**Releases**](https://github.com/jrfrigat/YandexMusic/releases) page
+(`yandexmusic-player-<version>-win-x64.zip` — self-contained, no .NET install needed; unzip and run
+`yandexmusic-player.exe`). Or run it from source:
+
 ```bash
 dotnet run --project samples/YandexMusic.Player
 ```

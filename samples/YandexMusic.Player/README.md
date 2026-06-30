@@ -3,6 +3,10 @@
 An interactive terminal music player built on the **YandexMusic** library — a sample that doubles as a
 reference for structuring a real TUI app around the client.
 
+Download a ready-to-run Windows build from the
+[Releases](https://github.com/jrfrigat/YandexMusic/releases) page
+(`yandexmusic-player-<version>-win-x64.zip`, self-contained), or run it from source:
+
 ```bash
 dotnet run --project samples/YandexMusic.Player
 ```
