@@ -23,6 +23,7 @@ public sealed class PlayerApp
     private readonly SearchScreen _search;
     private readonly AlbumsScreen _albums;
     private readonly PlaylistsScreen _playlists;
+    private readonly TrackListScreen _trackList;
     private readonly NowPlayingScreen _nowPlaying;
 
     /// <summary>Creates the application.</summary>
@@ -35,6 +36,7 @@ public sealed class PlayerApp
         SearchScreen search,
         AlbumsScreen albums,
         PlaylistsScreen playlists,
+        TrackListScreen trackList,
         NowPlayingScreen nowPlaying)
     {
         _client = client;
@@ -45,6 +47,7 @@ public sealed class PlayerApp
         _search = search;
         _albums = albums;
         _playlists = playlists;
+        _trackList = trackList;
         _nowPlaying = nowPlaying;
     }
 
@@ -73,6 +76,12 @@ public sealed class PlayerApp
                     break;
                 case MainMenuAction.Playlists:
                     await PlayAndShowAsync(await _playlists.RunAsync(cancellationToken).ConfigureAwait(false), cancellationToken).ConfigureAwait(false);
+                    break;
+                case MainMenuAction.Liked:
+                    await PlayAndShowAsync(await _trackList.RunLikedAsync(cancellationToken).ConfigureAwait(false), cancellationToken).ConfigureAwait(false);
+                    break;
+                case MainMenuAction.MyWave:
+                    await PlayAndShowAsync(await _trackList.RunWaveAsync(cancellationToken).ConfigureAwait(false), cancellationToken).ConfigureAwait(false);
                     break;
                 case MainMenuAction.NowPlaying:
                     await _nowPlaying.RunAsync(cancellationToken).ConfigureAwait(false);

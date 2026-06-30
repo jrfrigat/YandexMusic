@@ -15,20 +15,28 @@ dotnet run --project samples/YandexMusic.Player
   need no token at all.)
 - **Search tracks** and start playback from any result (the whole result set becomes the queue).
 - **Browse your albums** and **your playlists**, and drill into either's tracklist.
+- **Liked** — your "liked" tracks; **My Wave** — a batch from your personal radio station.
 - **Now playing** — a live view with an animated equalizer, a real-time progress bar, a volume meter,
   and auto-advance through the queue.
 
 ### Keyboard controls
 
-The **main menu** is cursor-driven with a hotkey bar along the bottom — every entry also has a
-single-key shortcut, so you can jump straight to a section (e.g. `p` opens the player from anywhere):
+Every list (the menu and all selection screens) is cursor-driven with a hotkey bar along the bottom.
+**`Esc` always goes back**, and the menu's single-key shortcuts are matched by physical key, so they
+work on non-Latin keyboard layouts too (the key in the `p` position opens the player whatever your
+layout types).
+
+The **main menu**:
 
 | Key | Action |
 | --- | --- |
 | `↑` / `↓` · `enter` | move · select |
 | `s` · `a` · `l` | search · my albums · my playlists |
+| `f` · `w` | liked · my wave |
 | `p` | open player (now playing) |
 | `o` · `q` | sign out · quit |
+
+Any **selection screen**: `↑`/`↓` move · `enter` select · `Esc` back.
 
 In the **now-playing view**:
 
@@ -67,7 +75,8 @@ Program (composition root)
   └─ PlayerApp ............ banner, auth gate, main menu, screen dispatch
        ├─ AuthService ..... restore session ▸ pick an IAuthFlow ▸ persist
        │    └─ IAuthFlow .. Token · DeviceCode · Qr · Password
-       ├─ Screens ......... MainMenu · Search · Albums · Album · Playlists · Playlist · NowPlaying
+       ├─ Screens ......... MainMenu · Search · Albums · Album · Playlists · Playlist · TrackList
+       │                    (Liked / My Wave) · NowPlaying — list screens share a SelectionView
        ├─ IMusicCatalog ... anti-corruption layer over IYandexMusicClient
        │                    (returns the UI's own view-models, not library models)
        └─ PlaybackController . queue + transport brain over IAudioPlayer

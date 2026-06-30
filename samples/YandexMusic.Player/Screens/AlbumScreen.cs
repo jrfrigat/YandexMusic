@@ -1,3 +1,4 @@
+using System.Globalization;
 using Spectre.Console;
 using YandexMusic.Player.Catalog;
 using YandexMusic.Player.Ui;
@@ -34,51 +35,13 @@ public sealed class AlbumScreen
         }
 
         var album = detail.Album;
-        var year = album.Year?.ToString(System.Globalization.CultureInfo.InvariantCulture) ?? "—";
-        AnsiConsole.Write(new Rule($"[bold]{Markup.Escape(album.Title)}[/] [grey]— {Markup.Escape(album.Artist)} · {year}[/]").LeftJustified());
+        var year = album.Year?.ToString(CultureInfo.InvariantCulture) ?? "—";
+        var title = $"[bold]{Markup.Escape(Format.Truncate(album.Title, 40))}[/] [grey]— {Markup.Escape(Format.Truncate(album.Artist, 24))} · {year}[/]";
 
-        var table = new Table().Border(TableBorder.Minimal).BorderColor(Color.Grey);
-        table.AddColumn("[grey]#[/]");
-        table.AddColumn(Strings.ColumnTitle);
-        table.AddColumn(Strings.ColumnTime);
-        var number = 1;
-        foreach (var track in detail.Tracks)
-        {
-            table.AddRow(
-                $"[grey]{number++}[/]",
-                Markup.Escape(track.Title),
-                $"[grey]{Format.Duration(track.Duration)}[/]");
-        }
+        var picked = await new SelectionView<TrackView>(title, detail.Tracks, TrackListScreen.TrackConverter)
+            .ShowAsync(cancellationToken)
+            .ConfigureAwait(false);
 
-        AnsiConsole.Write(table);
-
-        var back = new TrackView(BackId, Strings.Back, string.Empty, null, TimeSpan.Zero);
-        var choices = new List<TrackView>(detail.Tracks) { back };
-
-        var picked = AnsiConsole.Prompt(
-            new SelectionPrompt<TrackView>()
-                .Title(Strings.PlayFromWhich)
-                .PageSize(15)
-                .UseConverter(t => t.Id == BackId ? Strings.BackDim : Markup.Escape(Format.Truncate(t.Title, 50)))
-                .AddChoices(choices));
-
-        if (picked.Id == BackId)
-        {
-            return null;
-        }
-
-        var startIndex = 0;
-        for (var i = 0; i < detail.Tracks.Count; i++)
-        {
-            if (detail.Tracks[i].Id == picked.Id)
-            {
-                startIndex = i;
-                break;
-            }
-        }
-
-        return new PlayRequest(detail.Tracks, startIndex);
+        return picked is null ? null : new PlayRequest(detail.Tracks, TrackList.IndexOfId(detail.Tracks, picked.Id));
     }
-
-    private const string BackId = "__back__";
 }

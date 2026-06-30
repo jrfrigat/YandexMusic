@@ -98,7 +98,34 @@
     <value>[grey]♪ nothing playing[/]</value>
   </data>
   <data name="MenuHotkeys" xml:space="preserve">
-    <value>[grey]↑↓[/] move   [grey]enter[/] select   [grey]s[/] search   [grey]a[/] albums   [grey]l[/] playlists   [grey]p[/] open player   [grey]o[/] sign out   [grey]q[/] quit</value>
+    <value>[grey]↑↓[/] move   [grey]enter[/] select   [grey]s[/] search   [grey]a[/] albums   [grey]l[/] playlists   [grey]f[/] liked   [grey]w[/] wave   [grey]p[/] player   [grey]o[/] sign out   [grey]q[/] quit</value>
+  </data>
+  <data name="MenuLiked" xml:space="preserve">
+    <value>Liked</value>
+  </data>
+  <data name="MenuMyWave" xml:space="preserve">
+    <value>My Wave</value>
+  </data>
+  <data name="ListHotkeys" xml:space="preserve">
+    <value>[grey]↑↓[/] move   [grey]enter[/] select   [grey]esc[/] back</value>
+  </data>
+  <data name="LoadingLiked" xml:space="preserve">
+    <value>Loading your liked tracks…</value>
+  </data>
+  <data name="NoLiked" xml:space="preserve">
+    <value>[grey]No liked tracks yet.[/]</value>
+  </data>
+  <data name="LikedTitle" xml:space="preserve">
+    <value>Liked ([green]{0}[/]):</value>
+  </data>
+  <data name="LoadingWave" xml:space="preserve">
+    <value>Tuning your wave…</value>
+  </data>
+  <data name="NoWave" xml:space="preserve">
+    <value>[grey]Your wave returned no tracks.[/]</value>
+  </data>
+  <data name="WaveTitle" xml:space="preserve">
+    <value>My Wave ([green]{0}[/]):</value>
   </data>
   <data name="Back" xml:space="preserve">
     <value>← Back</value>

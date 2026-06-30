@@ -64,6 +64,7 @@ services.AddSingleton<AlbumScreen>();
 services.AddSingleton<AlbumsScreen>();
 services.AddSingleton<PlaylistScreen>();
 services.AddSingleton<PlaylistsScreen>();
+services.AddSingleton<TrackListScreen>();
 services.AddSingleton<NowPlayingScreen>();
 services.AddSingleton<PlayerApp>();
 

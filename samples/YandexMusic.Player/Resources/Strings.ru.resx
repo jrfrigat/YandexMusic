@@ -93,7 +93,34 @@
     <value>[grey]♪ ничего не играет[/]</value>
   </data>
   <data name="MenuHotkeys" xml:space="preserve">
-    <value>[grey]↑↓[/] выбор   [grey]enter[/] открыть   [grey]s[/] поиск   [grey]a[/] альбомы   [grey]l[/] плейлисты   [grey]p[/] плеер   [grey]o[/] выход из аккаунта   [grey]q[/] выход</value>
+    <value>[grey]↑↓[/] выбор   [grey]enter[/] открыть   [grey]s[/] поиск   [grey]a[/] альбомы   [grey]l[/] плейлисты   [grey]f[/] любимое   [grey]w[/] волна   [grey]p[/] плеер   [grey]o[/] аккаунт   [grey]q[/] выход</value>
+  </data>
+  <data name="MenuLiked" xml:space="preserve">
+    <value>Мне нравится</value>
+  </data>
+  <data name="MenuMyWave" xml:space="preserve">
+    <value>Моя волна</value>
+  </data>
+  <data name="ListHotkeys" xml:space="preserve">
+    <value>[grey]↑↓[/] выбор   [grey]enter[/] выбрать   [grey]esc[/] назад</value>
+  </data>
+  <data name="LoadingLiked" xml:space="preserve">
+    <value>Загрузка любимых треков…</value>
+  </data>
+  <data name="NoLiked" xml:space="preserve">
+    <value>[grey]Пока нет любимых треков.[/]</value>
+  </data>
+  <data name="LikedTitle" xml:space="preserve">
+    <value>Мне нравится ([green]{0}[/]):</value>
+  </data>
+  <data name="LoadingWave" xml:space="preserve">
+    <value>Настройка волны…</value>
+  </data>
+  <data name="NoWave" xml:space="preserve">
+    <value>[grey]Волна не вернула треков.[/]</value>
+  </data>
+  <data name="WaveTitle" xml:space="preserve">
+    <value>Моя волна ([green]{0}[/]):</value>
   </data>
   <data name="Back" xml:space="preserve">
     <value>← Назад</value>

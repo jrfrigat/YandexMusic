@@ -17,6 +17,12 @@ public enum MainMenuAction
     /// <summary>Open the user's playlists.</summary>
     Playlists,
 
+    /// <summary>Open the user's liked tracks.</summary>
+    Liked,
+
+    /// <summary>Open "My Wave".</summary>
+    MyWave,
+
     /// <summary>Open the now-playing view.</summary>
     NowPlaying,
 
@@ -29,19 +35,22 @@ public enum MainMenuAction
 
 /// <summary>
 /// The main menu, rendered as a cursor-driven list with a persistent hotkey bar along the bottom.
-/// Besides arrow-key navigation, every entry has a single-key shortcut (so <c>p</c> jumps straight to
-/// the player from anywhere on the menu), and the currently-playing track is shown at the top.
+/// Besides arrow-key navigation, every entry has a single-key shortcut matched by physical
+/// <see cref="ConsoleKey"/> (so they work on non-Latin keyboard layouts too — pressing the key in the
+/// "p" position opens the player regardless of layout). The currently-playing track is shown on top.
 /// </summary>
 public sealed class MainMenuScreen
 {
-    private static readonly (MainMenuAction Action, char Key)[] Items =
+    private static readonly (MainMenuAction Action, ConsoleKey Key, char Hint)[] Items =
     [
-        (MainMenuAction.Search, 's'),
-        (MainMenuAction.Albums, 'a'),
-        (MainMenuAction.Playlists, 'l'),
-        (MainMenuAction.NowPlaying, 'p'),
-        (MainMenuAction.SignOut, 'o'),
-        (MainMenuAction.Quit, 'q'),
+        (MainMenuAction.Search, ConsoleKey.S, 's'),
+        (MainMenuAction.Albums, ConsoleKey.A, 'a'),
+        (MainMenuAction.Playlists, ConsoleKey.L, 'l'),
+        (MainMenuAction.Liked, ConsoleKey.F, 'f'),
+        (MainMenuAction.MyWave, ConsoleKey.W, 'w'),
+        (MainMenuAction.NowPlaying, ConsoleKey.P, 'p'),
+        (MainMenuAction.SignOut, ConsoleKey.O, 'o'),
+        (MainMenuAction.Quit, ConsoleKey.Q, 'q'),
     ];
 
     private readonly PlaybackController _controller;
@@ -71,14 +80,14 @@ public sealed class MainMenuScreen
                 {
                     live.UpdateTarget(Build());
 
-                    while (TryReadKey(out var key, out var ch))
+                    while (TryReadKey(out var key))
                     {
                         switch (key)
                         {
-                            case ConsoleKey.UpArrow:
+                            case ConsoleKey.UpArrow or ConsoleKey.K:
                                 _index = (_index - 1 + Items.Length) % Items.Length;
                                 break;
-                            case ConsoleKey.DownArrow:
+                            case ConsoleKey.DownArrow or ConsoleKey.J:
                                 _index = (_index + 1) % Items.Length;
                                 break;
                             case ConsoleKey.Enter:
@@ -90,7 +99,7 @@ public sealed class MainMenuScreen
                                 chosen = true;
                                 break;
                             default:
-                                var shortcut = Array.FindIndex(Items, i => i.Key == char.ToLowerInvariant(ch));
+                                var shortcut = Array.FindIndex(Items, item => item.Key == key);
                                 if (shortcut >= 0)
                                 {
                                     _index = shortcut;
@@ -114,10 +123,9 @@ public sealed class MainMenuScreen
         return result;
     }
 
-    private static bool TryReadKey(out ConsoleKey key, out char keyChar)
+    private static bool TryReadKey(out ConsoleKey key)
     {
         key = default;
-        keyChar = default;
         try
         {
             if (!Console.KeyAvailable)
@@ -125,9 +133,7 @@ public sealed class MainMenuScreen
                 return false;
             }
 
-            var info = Console.ReadKey(intercept: true);
-            key = info.Key;
-            keyChar = info.KeyChar;
+            key = Console.ReadKey(intercept: true).Key;
             return true;
         }
         catch (InvalidOperationException)
@@ -142,11 +148,11 @@ public sealed class MainMenuScreen
 
         for (var i = 0; i < Items.Length; i++)
         {
-            var (action, key) = Items[i];
+            var (action, _, hint) = Items[i];
             var label = LabelFor(action);
             rows.Add(new Markup(i == _index
-                ? $"[green]▶[/] [white]{label}[/] [grey]({key})[/]"
-                : $"  [grey]{label} ({key})[/]"));
+                ? $"[green]▶[/] [white]{label}[/] [grey]({hint})[/]"
+                : $"  [grey]{label} ({hint})[/]"));
         }
 
         var panel = new Panel(new Rows(rows))
@@ -163,6 +169,8 @@ public sealed class MainMenuScreen
         MainMenuAction.Search => Strings.MenuSearch,
         MainMenuAction.Albums => Strings.MenuAlbums,
         MainMenuAction.Playlists => Strings.MenuPlaylists,
+        MainMenuAction.Liked => Strings.MenuLiked,
+        MainMenuAction.MyWave => Strings.MenuMyWave,
         MainMenuAction.NowPlaying => Strings.MenuOpenPlayer,
         MainMenuAction.SignOut => Strings.MenuSignOut,
         MainMenuAction.Quit => Strings.MenuQuit,

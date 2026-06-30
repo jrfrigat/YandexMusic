@@ -36,26 +36,13 @@ public sealed class PlaylistsScreen
             return null;
         }
 
-        var back = new PlaylistView(BackId, Strings.Back, 0);
-        var choices = new List<PlaylistView>(playlists) { back };
+        var picked = await new SelectionView<PlaylistView>(Strings.YourPlaylists(playlists.Count), playlists, Convert)
+            .ShowAsync(cancellationToken)
+            .ConfigureAwait(false);
 
-        var picked = AnsiConsole.Prompt(
-            new SelectionPrompt<PlaylistView>()
-                .Title(Strings.YourPlaylists(playlists.Count))
-                .PageSize(15)
-                .MoreChoicesText(Strings.MoreChoices)
-                .UseConverter(p => p.Id == BackId
-                    ? Strings.BackDim
-                    : $"{Markup.Escape(Format.Truncate(p.Title, 40))} [grey]· {Strings.TracksSuffix(p.TrackCount)}[/]")
-                .AddChoices(choices));
-
-        if (picked.Id == BackId)
-        {
-            return null;
-        }
-
-        return await _playlistScreen.RunAsync(picked.Id, cancellationToken).ConfigureAwait(false);
+        return picked is null ? null : await _playlistScreen.RunAsync(picked.Id, cancellationToken).ConfigureAwait(false);
     }
 
-    private const string BackId = "__back__";
+    private static string Convert(PlaylistView playlist)
+        => $"{Markup.Escape(Format.Truncate(playlist.Title, 40))} [grey]· {Strings.TracksSuffix(playlist.TrackCount)}[/]";
 }

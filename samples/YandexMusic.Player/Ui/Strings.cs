@@ -28,6 +28,8 @@ public static class Strings
     public static string MenuSearch => Get(nameof(MenuSearch));
     public static string MenuAlbums => Get(nameof(MenuAlbums));
     public static string MenuPlaylists => Get(nameof(MenuPlaylists));
+    public static string MenuLiked => Get(nameof(MenuLiked));
+    public static string MenuMyWave => Get(nameof(MenuMyWave));
     public static string MenuOpenPlayer => Get(nameof(MenuOpenPlayer));
     public static string MenuSignOut => Get(nameof(MenuSignOut));
     public static string MenuQuit => Get(nameof(MenuQuit));
@@ -38,6 +40,7 @@ public static class Strings
     public static string Back => Get(nameof(Back));
     public static string BackDim => Get(nameof(BackDim));
     public static string MoreChoices => Get(nameof(MoreChoices));
+    public static string ListHotkeys => Get(nameof(ListHotkeys));
 
     // Authentication.
     public static string HowToSignIn => Get(nameof(HowToSignIn));
@@ -76,6 +79,14 @@ public static class Strings
     public static string LoadingAlbum => Get(nameof(LoadingAlbum));
     public static string AlbumNoTracks => Get(nameof(AlbumNoTracks));
     public static string PlayFromWhich => Get(nameof(PlayFromWhich));
+
+    // Liked tracks and My Wave.
+    public static string LoadingLiked => Get(nameof(LoadingLiked));
+    public static string NoLiked => Get(nameof(NoLiked));
+    public static string LikedTitle(int count) => Fmt(nameof(LikedTitle), count);
+    public static string LoadingWave => Get(nameof(LoadingWave));
+    public static string NoWave => Get(nameof(NoWave));
+    public static string WaveTitle(int count) => Fmt(nameof(WaveTitle), count);
 
     // Playlists.
     public static string LoadingPlaylists => Get(nameof(LoadingPlaylists));

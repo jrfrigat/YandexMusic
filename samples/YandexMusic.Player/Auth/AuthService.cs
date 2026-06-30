@@ -36,20 +36,17 @@ public sealed class AuthService
             return true;
         }
 
-        var quit = Strings.AuthQuit;
         while (!cancellationToken.IsCancellationRequested)
         {
-            var choice = AnsiConsole.Prompt(
-                new SelectionPrompt<string>()
-                    .Title(Strings.HowToSignIn)
-                    .AddChoices(_flows.Select(f => f.Name).Append(quit)));
+            var flow = await new SelectionView<IAuthFlow>(Strings.HowToSignIn, _flows, f => f.Name)
+                .ShowAsync(cancellationToken)
+                .ConfigureAwait(false);
 
-            if (choice == quit)
+            if (flow is null)
             {
+                // Esc — the user gave up signing in.
                 return false;
             }
-
-            var flow = _flows.First(f => f.Name == choice);
 
             try
             {

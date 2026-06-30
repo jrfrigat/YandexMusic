@@ -11,6 +11,9 @@ namespace YandexMusic.Player.Catalog;
 /// <summary>The default <see cref="IMusicCatalog"/> over an <see cref="IYandexMusicClient"/>.</summary>
 public sealed class MusicCatalog : IMusicCatalog
 {
+    private const string MyWaveStation = "user:onyourwave";
+    private const int MaxTrackBatch = 100;
+
     private readonly IYandexMusicClient _client;
     private string? _uid;
 
@@ -99,6 +102,47 @@ public sealed class MusicCatalog : IMusicCatalog
             .ToList();
 
         return new AlbumDetail(ToAlbumView(album), tracks);
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<TrackView>> GetLikedTracksAsync(CancellationToken cancellationToken = default)
+    {
+        var uid = await GetUidAsync(cancellationToken).ConfigureAwait(false);
+        if (uid is null)
+        {
+            return [];
+        }
+
+        var liked = await _client.Library.GetLikedTracksAsync(uid, cancellationToken: cancellationToken).ConfigureAwait(false);
+        var ids = (liked?.Tracks ?? [])
+            .Select(t => t.Id)
+            .Where(id => !string.IsNullOrEmpty(id))
+            .Take(MaxTrackBatch)
+            .ToList();
+        if (ids.Count == 0)
+        {
+            return [];
+        }
+
+        // The liked list carries only ids, so fetch the metadata and restore the original order.
+        var tracks = await _client.Tracks.GetManyAsync(ids, cancellationToken).ConfigureAwait(false);
+        var byId = tracks.ToDictionary(t => t.Id, t => t);
+        return ids
+            .Select(id => byId.TryGetValue(id, out var track) ? ToTrackView(track) : null)
+            .Where(v => v is not null)
+            .Select(v => v!)
+            .ToList();
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<TrackView>> GetMyWaveAsync(CancellationToken cancellationToken = default)
+    {
+        var result = await _client.Radio.GetStationTracksAsync(MyWaveStation, cancellationToken: cancellationToken).ConfigureAwait(false);
+        return (result?.Sequence ?? [])
+            .Select(s => s.Track)
+            .Where(t => t is not null)
+            .Select(t => ToTrackView(t!))
+            .ToList();
     }
 
     /// <inheritdoc />

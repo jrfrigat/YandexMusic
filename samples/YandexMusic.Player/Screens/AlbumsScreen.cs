@@ -36,26 +36,13 @@ public sealed class AlbumsScreen
             return null;
         }
 
-        var back = new AlbumView(BackId, Strings.Back, string.Empty, null, 0);
-        var choices = new List<AlbumView>(albums) { back };
+        var picked = await new SelectionView<AlbumView>(Strings.YourAlbums(albums.Count), albums, Convert)
+            .ShowAsync(cancellationToken)
+            .ConfigureAwait(false);
 
-        var picked = AnsiConsole.Prompt(
-            new SelectionPrompt<AlbumView>()
-                .Title(Strings.YourAlbums(albums.Count))
-                .PageSize(15)
-                .MoreChoicesText(Strings.MoreChoices)
-                .UseConverter(a => a.Id == BackId
-                    ? Strings.BackDim
-                    : $"{Markup.Escape(Format.Truncate(a.Title, 40))} [grey]— {Markup.Escape(Format.Truncate(a.Artist, 24))}[/]")
-                .AddChoices(choices));
-
-        if (picked.Id == BackId)
-        {
-            return null;
-        }
-
-        return await _albumScreen.RunAsync(picked.Id, cancellationToken).ConfigureAwait(false);
+        return picked is null ? null : await _albumScreen.RunAsync(picked.Id, cancellationToken).ConfigureAwait(false);
     }
 
-    private const string BackId = "__back__";
+    private static string Convert(AlbumView album)
+        => $"{Markup.Escape(Format.Truncate(album.Title, 40))} [grey]— {Markup.Escape(Format.Truncate(album.Artist, 24))}[/]";
 }

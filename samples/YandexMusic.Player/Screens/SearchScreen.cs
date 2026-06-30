@@ -22,8 +22,7 @@ public sealed class SearchScreen
     /// <returns>A play request, or <see langword="null"/> to go back.</returns>
     public async Task<PlayRequest?> RunAsync(CancellationToken cancellationToken = default)
     {
-        var query = AnsiConsole.Prompt(
-            new TextPrompt<string>(Strings.SearchPrompt).AllowEmpty());
+        var query = AnsiConsole.Prompt(new TextPrompt<string>(Strings.SearchPrompt).AllowEmpty());
         if (string.IsNullOrWhiteSpace(query))
         {
             return null;
@@ -39,36 +38,13 @@ public sealed class SearchScreen
             return null;
         }
 
-        var back = new TrackView(BackId, Strings.Back, string.Empty, null, TimeSpan.Zero);
-        var choices = new List<TrackView>(tracks) { back };
+        var picked = await new SelectionView<TrackView>(
+                Strings.SearchResultsTitle(tracks.Count, Markup.Escape(query)),
+                tracks,
+                TrackListScreen.TrackConverter)
+            .ShowAsync(cancellationToken)
+            .ConfigureAwait(false);
 
-        var picked = AnsiConsole.Prompt(
-            new SelectionPrompt<TrackView>()
-                .Title(Strings.SearchResultsTitle(tracks.Count, Markup.Escape(query)))
-                .PageSize(15)
-                .MoreChoicesText(Strings.MoreChoices)
-                .UseConverter(t => t.Id == BackId
-                    ? Strings.BackDim
-                    : $"{Markup.Escape(Format.Truncate(t.Title, 42))} [grey]— {Markup.Escape(Format.Truncate(t.Artist, 24))}[/] [grey]({Format.Duration(t.Duration)})[/]")
-                .AddChoices(choices));
-
-        if (picked.Id == BackId)
-        {
-            return null;
-        }
-
-        var startIndex = 0;
-        for (var i = 0; i < tracks.Count; i++)
-        {
-            if (tracks[i].Id == picked.Id)
-            {
-                startIndex = i;
-                break;
-            }
-        }
-
-        return new PlayRequest(tracks, startIndex);
+        return picked is null ? null : new PlayRequest(tracks, TrackList.IndexOfId(tracks, picked.Id));
     }
-
-    private const string BackId = "__back__";
 }

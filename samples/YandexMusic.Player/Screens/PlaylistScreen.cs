@@ -34,55 +34,12 @@ public sealed class PlaylistScreen
         }
 
         var playlist = detail.Playlist;
-        AnsiConsole.Write(new Rule($"[bold]{Markup.Escape(playlist.Title)}[/] [grey]· {Strings.TracksSuffix(playlist.TrackCount)}[/]").LeftJustified());
+        var title = $"[bold]{Markup.Escape(Format.Truncate(playlist.Title, 40))}[/] [grey]· {Strings.TracksSuffix(playlist.TrackCount)}[/]";
 
-        var table = new Table().Border(TableBorder.Minimal).BorderColor(Color.Grey);
-        table.AddColumn("[grey]#[/]");
-        table.AddColumn(Strings.ColumnTitle);
-        table.AddColumn(Strings.ColumnArtist);
-        table.AddColumn(Strings.ColumnTime);
-        var number = 1;
-        foreach (var track in detail.Tracks)
-        {
-            table.AddRow(
-                $"[grey]{number++}[/]",
-                Markup.Escape(Format.Truncate(track.Title, 40)),
-                $"[grey]{Markup.Escape(Format.Truncate(track.Artist, 28))}[/]",
-                $"[grey]{Format.Duration(track.Duration)}[/]");
-        }
+        var picked = await new SelectionView<TrackView>(title, detail.Tracks, TrackListScreen.TrackConverter)
+            .ShowAsync(cancellationToken)
+            .ConfigureAwait(false);
 
-        AnsiConsole.Write(table);
-
-        var back = new TrackView(BackId, Strings.Back, string.Empty, null, TimeSpan.Zero);
-        var choices = new List<TrackView>(detail.Tracks) { back };
-
-        var picked = AnsiConsole.Prompt(
-            new SelectionPrompt<TrackView>()
-                .Title(Strings.PlayFromWhich)
-                .PageSize(15)
-                .MoreChoicesText(Strings.MoreChoices)
-                .UseConverter(t => t.Id == BackId
-                    ? Strings.BackDim
-                    : $"{Markup.Escape(Format.Truncate(t.Title, 42))} [grey]— {Markup.Escape(Format.Truncate(t.Artist, 24))}[/]")
-                .AddChoices(choices));
-
-        if (picked.Id == BackId)
-        {
-            return null;
-        }
-
-        var startIndex = 0;
-        for (var i = 0; i < detail.Tracks.Count; i++)
-        {
-            if (detail.Tracks[i].Id == picked.Id)
-            {
-                startIndex = i;
-                break;
-            }
-        }
-
-        return new PlayRequest(detail.Tracks, startIndex);
+        return picked is null ? null : new PlayRequest(detail.Tracks, TrackList.IndexOfId(detail.Tracks, picked.Id));
     }
-
-    private const string BackId = "__back__";
 }
