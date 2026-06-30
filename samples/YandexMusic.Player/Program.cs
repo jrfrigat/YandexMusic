@@ -1,5 +1,6 @@
 // Composition root for the terminal player. Everything is wired here and resolved through DI so the
 // pieces (catalog, auth flows, audio backend, screens) stay decoupled and individually replaceable.
+using System.Globalization;
 using Microsoft.Extensions.DependencyInjection;
 using Spectre.Console;
 using YandexMusic;
@@ -9,6 +10,16 @@ using YandexMusic.Player.Catalog;
 using YandexMusic.Player.Playback;
 using YandexMusic.Player.Screens;
 using YandexMusic.Player.Ui;
+
+// The UI language follows the OS UI language by default; YM_PLAYER_LANG (e.g. "ru" or "en") overrides
+// it. Localized strings are resolved from the .resx satellites via CurrentUICulture.
+var forcedLanguage = Environment.GetEnvironmentVariable("YM_PLAYER_LANG");
+if (!string.IsNullOrWhiteSpace(forcedLanguage))
+{
+    var culture = CultureInfo.GetCultureInfo(forcedLanguage);
+    CultureInfo.CurrentUICulture = culture;
+    CultureInfo.DefaultThreadCurrentUICulture = culture;
+}
 
 using var cts = new CancellationTokenSource();
 Console.CancelKeyPress += (_, e) =>

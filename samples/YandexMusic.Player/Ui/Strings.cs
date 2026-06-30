@@ -1,127 +1,107 @@
 using System.Globalization;
+using System.Resources;
 
 namespace YandexMusic.Player.Ui;
 
 /// <summary>
-/// All user-facing text, in English and Russian. The language follows the OS UI language: on a
-/// Russian-language system <see cref="CultureInfo.CurrentUICulture"/> is <c>ru-*</c>, so the interface
-/// is Russian out of the box; everything else falls back to English. Strings carry their own
-/// Spectre.Console markup; dynamic values are passed in already escaped.
+/// Strongly-typed access to the player's localized strings. The text itself lives in the
+/// <c>Resources/Strings.resx</c> (English, neutral) and <c>Strings.ru.resx</c> (Russian) resource
+/// files; the .NET SDK embeds them and builds a satellite assembly per culture. The right language is
+/// chosen by <see cref="CultureInfo.CurrentUICulture"/> (the OS UI language), which
+/// <see cref="Program"/> may override from the <c>YM_PLAYER_LANG</c> environment variable.
 /// </summary>
 public static class Strings
 {
-    // Russian when the OS UI language is Russian; the YM_PLAYER_LANG env var (ru/en) overrides it.
-    private static bool Ru
-    {
-        get
-        {
-            var forced = Environment.GetEnvironmentVariable("YM_PLAYER_LANG");
-            return !string.IsNullOrWhiteSpace(forced)
-                ? forced.StartsWith("ru", StringComparison.OrdinalIgnoreCase)
-                : CultureInfo.CurrentUICulture.TwoLetterISOLanguageName == "ru";
-        }
-    }
+    private static readonly ResourceManager Manager = new("YandexMusic.Player.Resources.Strings", typeof(Strings).Assembly);
+
+    private static string Get(string key) => Manager.GetString(key, CultureInfo.CurrentUICulture) ?? key;
+
+    private static string Fmt(string key, params object[] args) => string.Format(CultureInfo.CurrentCulture, Get(key), args);
 
     // Application shell.
-    public static string Subtitle => Ru ? "терминальный музыкальный плеер" : "terminal music player";
-    public static string Bye => Ru ? "[grey]Пока.[/]" : "[grey]Bye.[/]";
-    public static string NeedsInteractive => Ru
-        ? "[yellow]Плееру нужен интерактивный терминал[/] — запустите его напрямую, не через конвейер."
-        : "[yellow]This player needs an interactive terminal[/] — run it directly, not through a pipe.";
+    public static string Subtitle => Get(nameof(Subtitle));
+    public static string Bye => Get(nameof(Bye));
+    public static string NeedsInteractive => Get(nameof(NeedsInteractive));
 
     // Main menu.
-    public static string Menu => Ru ? "[yellow] Меню [/]" : "[yellow] Menu [/]";
-    public static string MenuSearch => Ru ? "Поиск треков" : "Search tracks";
-    public static string MenuAlbums => Ru ? "Мои альбомы" : "My albums";
-    public static string MenuPlaylists => Ru ? "Мои плейлисты" : "My playlists";
-    public static string MenuOpenPlayer => Ru ? "Открыть плеер" : "Open player";
-    public static string MenuSignOut => Ru ? "Выйти из аккаунта" : "Sign out";
-    public static string MenuQuit => Ru ? "Выход" : "Quit";
-    public static string NothingPlaying => Ru ? "[grey]♪ ничего не играет[/]" : "[grey]♪ nothing playing[/]";
-    public static string MenuHotkeys => Ru
-        ? "[grey]↑↓[/] выбор   [grey]enter[/] открыть   [grey]s[/] поиск   [grey]a[/] альбомы   [grey]l[/] плейлисты   [grey]p[/] плеер   [grey]o[/] выход из аккаунта   [grey]q[/] выход"
-        : "[grey]↑↓[/] move   [grey]enter[/] select   [grey]s[/] search   [grey]a[/] albums   [grey]l[/] playlists   [grey]p[/] open player   [grey]o[/] sign out   [grey]q[/] quit";
+    public static string Menu => Get(nameof(Menu));
+    public static string MenuSearch => Get(nameof(MenuSearch));
+    public static string MenuAlbums => Get(nameof(MenuAlbums));
+    public static string MenuPlaylists => Get(nameof(MenuPlaylists));
+    public static string MenuOpenPlayer => Get(nameof(MenuOpenPlayer));
+    public static string MenuSignOut => Get(nameof(MenuSignOut));
+    public static string MenuQuit => Get(nameof(MenuQuit));
+    public static string NothingPlaying => Get(nameof(NothingPlaying));
+    public static string MenuHotkeys => Get(nameof(MenuHotkeys));
 
     // Shared list controls.
-    public static string Back => Ru ? "← Назад" : "← Back";
-    public static string BackDim => Ru ? "[grey]← Назад[/]" : "[grey]← Back[/]";
-    public static string MoreChoices => Ru ? "[grey](листайте вверх/вниз)[/]" : "[grey](move up/down for more)[/]";
+    public static string Back => Get(nameof(Back));
+    public static string BackDim => Get(nameof(BackDim));
+    public static string MoreChoices => Get(nameof(MoreChoices));
 
     // Authentication.
-    public static string HowToSignIn => Ru ? "Как вы хотите [yellow]войти[/]?" : "How would you like to [yellow]sign in[/]?";
-    public static string AuthQuit => Ru ? "Выход" : "Quit";
-    public static string SignedIn => Ru ? "[green]Вход выполнен.[/]" : "[green]Signed in.[/]";
-    public static string SignInIncomplete => Ru
-        ? "[red]Вход не завершён. Попробуйте другой способ.[/]"
-        : "[red]Sign-in did not complete. Try another method.[/]";
-    public static string SignInFailed(string message) => Ru ? $"[red]Ошибка входа:[/] {message}" : $"[red]Sign-in failed:[/] {message}";
+    public static string HowToSignIn => Get(nameof(HowToSignIn));
+    public static string AuthQuit => Get(nameof(AuthQuit));
+    public static string SignedIn => Get(nameof(SignedIn));
+    public static string SignInIncomplete => Get(nameof(SignInIncomplete));
+    public static string SignInFailed(string message) => Fmt(nameof(SignInFailed), message);
 
-    public static string FlowToken => Ru ? "OAuth-токен" : "OAuth token";
-    public static string FlowQr => Ru ? "QR-код" : "QR code";
-    public static string FlowDevice => Ru ? "Код устройства (открыть страницу, ввести код)" : "Device code (open a page, enter a code)";
-    public static string FlowPassword => Ru ? "Логин и пароль (по возможности)" : "Login + password (best-effort)";
+    public static string FlowToken => Get(nameof(FlowToken));
+    public static string FlowQr => Get(nameof(FlowQr));
+    public static string FlowDevice => Get(nameof(FlowDevice));
+    public static string FlowPassword => Get(nameof(FlowPassword));
 
-    public static string PromptToken => Ru ? "Вставьте ваш [yellow]OAuth-токен[/]:" : "Paste your [yellow]OAuth token[/]:";
-    public static string ScanWithApp => Ru ? "[grey]Отсканируйте код в приложении Яндекс:[/]" : "[grey]Scan this with the Yandex app:[/]";
-    public static string OrOpen(string url) => Ru ? $"[grey]…или откройте:[/] [blue underline]{url}[/]" : $"[grey]…or open:[/] [blue underline]{url}[/]";
-    public static string EnterCode(string code) => Ru ? $"…и введите код [yellow]{code}[/]" : $"…and enter code [yellow]{code}[/]";
-    public static string WaitingConfirmation => Ru ? "Ожидание подтверждения…" : "Waiting for confirmation…";
-    public static string OpenAndEnterCode(string url, string code) => Ru
-        ? $"Откройте [blue underline]{url}[/] и введите код [yellow]{code}[/]"
-        : $"Open [blue underline]{url}[/] and enter code [yellow]{code}[/]";
-    public static string DeviceSignInFailed(string message) => Ru ? $"[red]Ошибка входа по коду устройства:[/] {message}" : $"[red]Device sign-in failed:[/] {message}";
-    public static string PromptLogin => Ru ? "[yellow]Логин[/]:" : "[yellow]Login[/]:";
-    public static string PromptPassword => Ru ? "[yellow]Пароль[/]:" : "[yellow]Password[/]:";
-    public static string PasswordSignInFailed(string message) => Ru ? $"[red]Ошибка входа по паролю:[/] {message}" : $"[red]Password sign-in failed:[/] {message}";
-    public static string PasswordHint => Ru
-        ? "[grey]Если включена 2FA или капча — используйте вход по QR-коду или коду устройства.[/]"
-        : "[grey]If 2FA or a captcha is enabled, use the QR or device-code method.[/]";
+    public static string PromptToken => Get(nameof(PromptToken));
+    public static string ScanWithApp => Get(nameof(ScanWithApp));
+    public static string OrOpen(string url) => Fmt(nameof(OrOpen), url);
+    public static string EnterCode(string code) => Fmt(nameof(EnterCode), code);
+    public static string WaitingConfirmation => Get(nameof(WaitingConfirmation));
+    public static string OpenAndEnterCode(string url, string code) => Fmt(nameof(OpenAndEnterCode), url, code);
+    public static string DeviceSignInFailed(string message) => Fmt(nameof(DeviceSignInFailed), message);
+    public static string PromptLogin => Get(nameof(PromptLogin));
+    public static string PromptPassword => Get(nameof(PromptPassword));
+    public static string PasswordSignInFailed(string message) => Fmt(nameof(PasswordSignInFailed), message);
+    public static string PasswordHint => Get(nameof(PasswordHint));
 
     // Search.
-    public static string SearchPrompt => Ru ? "[yellow]Поиск треков[/] [grey](пусто — назад)[/]:" : "[yellow]Search tracks[/] [grey](empty to go back)[/]:";
-    public static string Searching => Ru ? "Поиск…" : "Searching…";
-    public static string NothingFound => Ru ? "[grey]Ничего не найдено.[/]" : "[grey]Nothing found.[/]";
-    public static string SearchResultsTitle(int count, string query) => Ru
-        ? $"[green]{count}[/] результатов по запросу [yellow]{query}[/]:"
-        : $"[green]{count}[/] results for [yellow]{query}[/]:";
+    public static string SearchPrompt => Get(nameof(SearchPrompt));
+    public static string Searching => Get(nameof(Searching));
+    public static string NothingFound => Get(nameof(NothingFound));
+    public static string SearchResultsTitle(int count, string query) => Fmt(nameof(SearchResultsTitle), count, query);
 
     // Albums.
-    public static string LoadingAlbums => Ru ? "Загрузка ваших альбомов…" : "Loading your albums…";
-    public static string NoAlbums => Ru
-        ? "[grey]Нет понравившихся альбомов (отметьте альбомы лайком и войдите в аккаунт).[/]"
-        : "[grey]No liked albums (like some albums in the app, and make sure you are signed in).[/]";
-    public static string YourAlbums(int count) => Ru ? $"Ваши альбомы ([green]{count}[/]):" : $"Your albums ([green]{count}[/]):";
-    public static string LoadingAlbum => Ru ? "Загрузка альбома…" : "Loading album…";
-    public static string AlbumNoTracks => Ru ? "[grey]В альбоме нет доступных треков.[/]" : "[grey]The album has no playable tracks.[/]";
-    public static string PlayFromWhich => Ru ? "С какого трека начать?" : "Play from which track?";
+    public static string LoadingAlbums => Get(nameof(LoadingAlbums));
+    public static string NoAlbums => Get(nameof(NoAlbums));
+    public static string YourAlbums(int count) => Fmt(nameof(YourAlbums), count);
+    public static string LoadingAlbum => Get(nameof(LoadingAlbum));
+    public static string AlbumNoTracks => Get(nameof(AlbumNoTracks));
+    public static string PlayFromWhich => Get(nameof(PlayFromWhich));
 
     // Playlists.
-    public static string LoadingPlaylists => Ru ? "Загрузка ваших плейлистов…" : "Loading your playlists…";
-    public static string NoPlaylists => Ru ? "[grey]Плейлисты не найдены (войдите в аккаунт).[/]" : "[grey]No playlists found (make sure you are signed in).[/]";
-    public static string YourPlaylists(int count) => Ru ? $"Ваши плейлисты ([green]{count}[/]):" : $"Your playlists ([green]{count}[/]):";
-    public static string TracksSuffix(int count) => Ru ? $"{count} треков" : $"{count} tracks";
-    public static string LoadingPlaylist => Ru ? "Загрузка плейлиста…" : "Loading playlist…";
-    public static string PlaylistNoTracks => Ru ? "[grey]В плейлисте нет доступных треков.[/]" : "[grey]The playlist has no playable tracks.[/]";
+    public static string LoadingPlaylists => Get(nameof(LoadingPlaylists));
+    public static string NoPlaylists => Get(nameof(NoPlaylists));
+    public static string YourPlaylists(int count) => Fmt(nameof(YourPlaylists), count);
+    public static string TracksSuffix(int count) => Fmt(nameof(TracksSuffix), count);
+    public static string LoadingPlaylist => Get(nameof(LoadingPlaylist));
+    public static string PlaylistNoTracks => Get(nameof(PlaylistNoTracks));
 
     // Table column headers.
-    public static string ColumnTitle => Ru ? "Название" : "Title";
-    public static string ColumnArtist => Ru ? "Исполнитель" : "Artist";
-    public static string ColumnTime => Ru ? "[grey]Время[/]" : "[grey]Time[/]";
+    public static string ColumnTitle => Get(nameof(ColumnTitle));
+    public static string ColumnArtist => Get(nameof(ColumnArtist));
+    public static string ColumnTime => Get(nameof(ColumnTime));
 
     // Now playing.
-    public static string NowPlayingHeader => Ru ? "[green] ♪ Сейчас играет [/]" : "[green] ♪ Now Playing [/]";
-    public static string NothingPlayingYet => Ru ? "[grey]Сейчас ничего не играет.[/]" : "[grey]Nothing is playing yet.[/]";
-    public static string StatePlaying => Ru ? "[green]▶ Играет[/]" : "[green]▶ Playing[/]";
-    public static string StatePaused => Ru ? "[yellow]⏸ Пауза[/]" : "[yellow]⏸ Paused[/]";
-    public static string StateBuffering => Ru ? "[blue]… Буферизация[/]" : "[blue]… Buffering[/]";
-    public static string StateStopped => Ru ? "[grey]⏹ Остановлено[/]" : "[grey]⏹ Stopped[/]";
-    public static string StateEnded => Ru ? "[grey]■ Завершено[/]" : "[grey]■ Ended[/]";
-    public static string StateError => Ru ? "[red]! Ошибка[/]" : "[red]! Error[/]";
-    public static string StateIdle => Ru ? "[grey]Ожидание[/]" : "[grey]Idle[/]";
-    public static string VolumeLabel => Ru ? "громк." : "vol";
-    public static string SimulatedSuffix => Ru ? "   ·   симуляция (без звука)" : "   ·   simulated playback (no audio output)";
-    public static string TrackCounter(int position, int length) => Ru ? $"Трек {position}/{length}" : $"Track {position}/{length}";
-    public static string NowPlayingKeys => Ru
-        ? "[grey]space[/] пауза   [grey]←/→[/] пред/след   [grey]↑/↓[/] громкость   [grey]s[/] стоп   [grey]q[/] назад"
-        : "[grey]space[/] play/pause   [grey]←/→[/] prev/next   [grey]↑/↓[/] volume   [grey]s[/] stop   [grey]q[/] back";
+    public static string NowPlayingHeader => Get(nameof(NowPlayingHeader));
+    public static string NothingPlayingYet => Get(nameof(NothingPlayingYet));
+    public static string StatePlaying => Get(nameof(StatePlaying));
+    public static string StatePaused => Get(nameof(StatePaused));
+    public static string StateBuffering => Get(nameof(StateBuffering));
+    public static string StateStopped => Get(nameof(StateStopped));
+    public static string StateEnded => Get(nameof(StateEnded));
+    public static string StateError => Get(nameof(StateError));
+    public static string StateIdle => Get(nameof(StateIdle));
+    public static string VolumeLabel => Get(nameof(VolumeLabel));
+    public static string SimulatedSuffix => Get(nameof(SimulatedSuffix));
+    public static string TrackCounter(int position, int length) => Fmt(nameof(TrackCounter), position, length);
+    public static string NowPlayingKeys => Get(nameof(NowPlayingKeys));
 }

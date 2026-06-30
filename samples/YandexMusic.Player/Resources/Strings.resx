@@ -1,0 +1,268 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!--
+    Neutral (English) UI strings for the terminal player. Russian lives in Strings.ru.resx; the .NET
+    SDK embeds both and builds a satellite assembly per culture, so ResourceManager picks the right one
+    from CultureInfo.CurrentUICulture (the OS UI language). Values carry Spectre.Console markup;
+    {0}/{1} are string.Format placeholders filled at the call site with already-escaped values.
+  -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Subtitle" xml:space="preserve">
+    <value>terminal music player</value>
+  </data>
+  <data name="Bye" xml:space="preserve">
+    <value>[grey]Bye.[/]</value>
+  </data>
+  <data name="NeedsInteractive" xml:space="preserve">
+    <value>[yellow]This player needs an interactive terminal[/] — run it directly, not through a pipe.</value>
+  </data>
+  <data name="Menu" xml:space="preserve">
+    <value>[yellow] Menu [/]</value>
+  </data>
+  <data name="MenuSearch" xml:space="preserve">
+    <value>Search tracks</value>
+  </data>
+  <data name="MenuAlbums" xml:space="preserve">
+    <value>My albums</value>
+  </data>
+  <data name="MenuPlaylists" xml:space="preserve">
+    <value>My playlists</value>
+  </data>
+  <data name="MenuOpenPlayer" xml:space="preserve">
+    <value>Open player</value>
+  </data>
+  <data name="MenuSignOut" xml:space="preserve">
+    <value>Sign out</value>
+  </data>
+  <data name="MenuQuit" xml:space="preserve">
+    <value>Quit</value>
+  </data>
+  <data name="NothingPlaying" xml:space="preserve">
+    <value>[grey]♪ nothing playing[/]</value>
+  </data>
+  <data name="MenuHotkeys" xml:space="preserve">
+    <value>[grey]↑↓[/] move   [grey]enter[/] select   [grey]s[/] search   [grey]a[/] albums   [grey]l[/] playlists   [grey]p[/] open player   [grey]o[/] sign out   [grey]q[/] quit</value>
+  </data>
+  <data name="Back" xml:space="preserve">
+    <value>← Back</value>
+  </data>
+  <data name="BackDim" xml:space="preserve">
+    <value>[grey]← Back[/]</value>
+  </data>
+  <data name="MoreChoices" xml:space="preserve">
+    <value>[grey](move up/down for more)[/]</value>
+  </data>
+  <data name="HowToSignIn" xml:space="preserve">
+    <value>How would you like to [yellow]sign in[/]?</value>
+  </data>
+  <data name="AuthQuit" xml:space="preserve">
+    <value>Quit</value>
+  </data>
+  <data name="SignedIn" xml:space="preserve">
+    <value>[green]Signed in.[/]</value>
+  </data>
+  <data name="SignInIncomplete" xml:space="preserve">
+    <value>[red]Sign-in did not complete. Try another method.[/]</value>
+  </data>
+  <data name="SignInFailed" xml:space="preserve">
+    <value>[red]Sign-in failed:[/] {0}</value>
+  </data>
+  <data name="FlowToken" xml:space="preserve">
+    <value>OAuth token</value>
+  </data>
+  <data name="FlowQr" xml:space="preserve">
+    <value>QR code</value>
+  </data>
+  <data name="FlowDevice" xml:space="preserve">
+    <value>Device code (open a page, enter a code)</value>
+  </data>
+  <data name="FlowPassword" xml:space="preserve">
+    <value>Login + password (best-effort)</value>
+  </data>
+  <data name="PromptToken" xml:space="preserve">
+    <value>Paste your [yellow]OAuth token[/]:</value>
+  </data>
+  <data name="ScanWithApp" xml:space="preserve">
+    <value>[grey]Scan this with the Yandex app:[/]</value>
+  </data>
+  <data name="OrOpen" xml:space="preserve">
+    <value>[grey]…or open:[/] [blue underline]{0}[/]</value>
+  </data>
+  <data name="EnterCode" xml:space="preserve">
+    <value>…and enter code [yellow]{0}[/]</value>
+  </data>
+  <data name="WaitingConfirmation" xml:space="preserve">
+    <value>Waiting for confirmation…</value>
+  </data>
+  <data name="OpenAndEnterCode" xml:space="preserve">
+    <value>Open [blue underline]{0}[/] and enter code [yellow]{1}[/]</value>
+  </data>
+  <data name="DeviceSignInFailed" xml:space="preserve">
+    <value>[red]Device sign-in failed:[/] {0}</value>
+  </data>
+  <data name="PromptLogin" xml:space="preserve">
+    <value>[yellow]Login[/]:</value>
+  </data>
+  <data name="PromptPassword" xml:space="preserve">
+    <value>[yellow]Password[/]:</value>
+  </data>
+  <data name="PasswordSignInFailed" xml:space="preserve">
+    <value>[red]Password sign-in failed:[/] {0}</value>
+  </data>
+  <data name="PasswordHint" xml:space="preserve">
+    <value>[grey]If 2FA or a captcha is enabled, use the QR or device-code method.[/]</value>
+  </data>
+  <data name="SearchPrompt" xml:space="preserve">
+    <value>[yellow]Search tracks[/] [grey](empty to go back)[/]:</value>
+  </data>
+  <data name="Searching" xml:space="preserve">
+    <value>Searching…</value>
+  </data>
+  <data name="NothingFound" xml:space="preserve">
+    <value>[grey]Nothing found.[/]</value>
+  </data>
+  <data name="SearchResultsTitle" xml:space="preserve">
+    <value>[green]{0}[/] results for [yellow]{1}[/]:</value>
+  </data>
+  <data name="LoadingAlbums" xml:space="preserve">
+    <value>Loading your albums…</value>
+  </data>
+  <data name="NoAlbums" xml:space="preserve">
+    <value>[grey]No liked albums (like some albums in the app, and make sure you are signed in).[/]</value>
+  </data>
+  <data name="YourAlbums" xml:space="preserve">
+    <value>Your albums ([green]{0}[/]):</value>
+  </data>
+  <data name="LoadingAlbum" xml:space="preserve">
+    <value>Loading album…</value>
+  </data>
+  <data name="AlbumNoTracks" xml:space="preserve">
+    <value>[grey]The album has no playable tracks.[/]</value>
+  </data>
+  <data name="PlayFromWhich" xml:space="preserve">
+    <value>Play from which track?</value>
+  </data>
+  <data name="LoadingPlaylists" xml:space="preserve">
+    <value>Loading your playlists…</value>
+  </data>
+  <data name="NoPlaylists" xml:space="preserve">
+    <value>[grey]No playlists found (make sure you are signed in).[/]</value>
+  </data>
+  <data name="YourPlaylists" xml:space="preserve">
+    <value>Your playlists ([green]{0}[/]):</value>
+  </data>
+  <data name="TracksSuffix" xml:space="preserve">
+    <value>{0} tracks</value>
+  </data>
+  <data name="LoadingPlaylist" xml:space="preserve">
+    <value>Loading playlist…</value>
+  </data>
+  <data name="PlaylistNoTracks" xml:space="preserve">
+    <value>[grey]The playlist has no playable tracks.[/]</value>
+  </data>
+  <data name="ColumnTitle" xml:space="preserve">
+    <value>Title</value>
+  </data>
+  <data name="ColumnArtist" xml:space="preserve">
+    <value>Artist</value>
+  </data>
+  <data name="ColumnTime" xml:space="preserve">
+    <value>[grey]Time[/]</value>
+  </data>
+  <data name="NowPlayingHeader" xml:space="preserve">
+    <value>[green] ♪ Now Playing [/]</value>
+  </data>
+  <data name="NothingPlayingYet" xml:space="preserve">
+    <value>[grey]Nothing is playing yet.[/]</value>
+  </data>
+  <data name="StatePlaying" xml:space="preserve">
+    <value>[green]▶ Playing[/]</value>
+  </data>
+  <data name="StatePaused" xml:space="preserve">
+    <value>[yellow]⏸ Paused[/]</value>
+  </data>
+  <data name="StateBuffering" xml:space="preserve">
+    <value>[blue]… Buffering[/]</value>
+  </data>
+  <data name="StateStopped" xml:space="preserve">
+    <value>[grey]⏹ Stopped[/]</value>
+  </data>
+  <data name="StateEnded" xml:space="preserve">
+    <value>[grey]■ Ended[/]</value>
+  </data>
+  <data name="StateError" xml:space="preserve">
+    <value>[red]! Error[/]</value>
+  </data>
+  <data name="StateIdle" xml:space="preserve">
+    <value>[grey]Idle[/]</value>
+  </data>
+  <data name="VolumeLabel" xml:space="preserve">
+    <value>vol</value>
+  </data>
+  <data name="SimulatedSuffix" xml:space="preserve">
+    <value>   ·   simulated playback (no audio output)</value>
+  </data>
+  <data name="TrackCounter" xml:space="preserve">
+    <value>Track {0}/{1}</value>
+  </data>
+  <data name="NowPlayingKeys" xml:space="preserve">
+    <value>[grey]space[/] play/pause   [grey]←/→[/] prev/next   [grey]↑/↓[/] volume   [grey]s[/] stop   [grey]q[/] back</value>
+  </data>
+</root>

@@ -81,11 +81,23 @@ Program (composition root)
 | `Playback` | Queue, transport, audio output | `IAudioPlayer`, `PlaybackController` |
 | `Screens` | Spectre.Console UI | (one class per screen) |
 
+### Localization
+
+The UI is localized via standard .NET resources. Strings live in
+[`Resources/Strings.resx`](Resources/Strings.resx) (English, neutral) and
+[`Strings.ru.resx`](Resources/Strings.ru.resx) (Russian); the SDK builds a satellite assembly per
+culture and `Ui/Strings` reads them through a `ResourceManager`. The language follows the OS UI
+language (`CultureInfo.CurrentUICulture`) — so it's Russian out of the box on a Russian system — and
+`YM_PLAYER_LANG=ru|en` overrides it. **Add a language** by dropping in a new `Strings.<culture>.resx`;
+no code changes. (The project sets `InvariantGlobalization=false` so cultures are available, since the
+library defaults it to `true`.)
+
 ### Extending it
 
 - **New audio backend** — implement `IAudioPlayer`, register it in `Program.cs`.
 - **New sign-in method** — implement `IAuthFlow`, add one `AddSingleton<IAuthFlow, …>()`.
 - **New screen** — add a screen class and a menu entry in `PlayerApp`.
+- **New language** — add a `Strings.<culture>.resx`; everything else is automatic.
 - **Playback features** (shuffle, repeat, gapless) live in `PlaybackController`; the UI is unaffected.
 
 ## Dependencies

@@ -1,0 +1,263 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!-- Russian (ru) UI strings. Selected automatically when the OS UI language is Russian. -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Subtitle" xml:space="preserve">
+    <value>терминальный музыкальный плеер</value>
+  </data>
+  <data name="Bye" xml:space="preserve">
+    <value>[grey]Пока.[/]</value>
+  </data>
+  <data name="NeedsInteractive" xml:space="preserve">
+    <value>[yellow]Плееру нужен интерактивный терминал[/] — запустите его напрямую, не через конвейер.</value>
+  </data>
+  <data name="Menu" xml:space="preserve">
+    <value>[yellow] Меню [/]</value>
+  </data>
+  <data name="MenuSearch" xml:space="preserve">
+    <value>Поиск треков</value>
+  </data>
+  <data name="MenuAlbums" xml:space="preserve">
+    <value>Мои альбомы</value>
+  </data>
+  <data name="MenuPlaylists" xml:space="preserve">
+    <value>Мои плейлисты</value>
+  </data>
+  <data name="MenuOpenPlayer" xml:space="preserve">
+    <value>Открыть плеер</value>
+  </data>
+  <data name="MenuSignOut" xml:space="preserve">
+    <value>Выйти из аккаунта</value>
+  </data>
+  <data name="MenuQuit" xml:space="preserve">
+    <value>Выход</value>
+  </data>
+  <data name="NothingPlaying" xml:space="preserve">
+    <value>[grey]♪ ничего не играет[/]</value>
+  </data>
+  <data name="MenuHotkeys" xml:space="preserve">
+    <value>[grey]↑↓[/] выбор   [grey]enter[/] открыть   [grey]s[/] поиск   [grey]a[/] альбомы   [grey]l[/] плейлисты   [grey]p[/] плеер   [grey]o[/] выход из аккаунта   [grey]q[/] выход</value>
+  </data>
+  <data name="Back" xml:space="preserve">
+    <value>← Назад</value>
+  </data>
+  <data name="BackDim" xml:space="preserve">
+    <value>[grey]← Назад[/]</value>
+  </data>
+  <data name="MoreChoices" xml:space="preserve">
+    <value>[grey](листайте вверх/вниз)[/]</value>
+  </data>
+  <data name="HowToSignIn" xml:space="preserve">
+    <value>Как вы хотите [yellow]войти[/]?</value>
+  </data>
+  <data name="AuthQuit" xml:space="preserve">
+    <value>Выход</value>
+  </data>
+  <data name="SignedIn" xml:space="preserve">
+    <value>[green]Вход выполнен.[/]</value>
+  </data>
+  <data name="SignInIncomplete" xml:space="preserve">
+    <value>[red]Вход не завершён. Попробуйте другой способ.[/]</value>
+  </data>
+  <data name="SignInFailed" xml:space="preserve">
+    <value>[red]Ошибка входа:[/] {0}</value>
+  </data>
+  <data name="FlowToken" xml:space="preserve">
+    <value>OAuth-токен</value>
+  </data>
+  <data name="FlowQr" xml:space="preserve">
+    <value>QR-код</value>
+  </data>
+  <data name="FlowDevice" xml:space="preserve">
+    <value>Код устройства (открыть страницу, ввести код)</value>
+  </data>
+  <data name="FlowPassword" xml:space="preserve">
+    <value>Логин и пароль (по возможности)</value>
+  </data>
+  <data name="PromptToken" xml:space="preserve">
+    <value>Вставьте ваш [yellow]OAuth-токен[/]:</value>
+  </data>
+  <data name="ScanWithApp" xml:space="preserve">
+    <value>[grey]Отсканируйте код в приложении Яндекс:[/]</value>
+  </data>
+  <data name="OrOpen" xml:space="preserve">
+    <value>[grey]…или откройте:[/] [blue underline]{0}[/]</value>
+  </data>
+  <data name="EnterCode" xml:space="preserve">
+    <value>…и введите код [yellow]{0}[/]</value>
+  </data>
+  <data name="WaitingConfirmation" xml:space="preserve">
+    <value>Ожидание подтверждения…</value>
+  </data>
+  <data name="OpenAndEnterCode" xml:space="preserve">
+    <value>Откройте [blue underline]{0}[/] и введите код [yellow]{1}[/]</value>
+  </data>
+  <data name="DeviceSignInFailed" xml:space="preserve">
+    <value>[red]Ошибка входа по коду устройства:[/] {0}</value>
+  </data>
+  <data name="PromptLogin" xml:space="preserve">
+    <value>[yellow]Логин[/]:</value>
+  </data>
+  <data name="PromptPassword" xml:space="preserve">
+    <value>[yellow]Пароль[/]:</value>
+  </data>
+  <data name="PasswordSignInFailed" xml:space="preserve">
+    <value>[red]Ошибка входа по паролю:[/] {0}</value>
+  </data>
+  <data name="PasswordHint" xml:space="preserve">
+    <value>[grey]Если включена 2FA или капча — используйте вход по QR-коду или коду устройства.[/]</value>
+  </data>
+  <data name="SearchPrompt" xml:space="preserve">
+    <value>[yellow]Поиск треков[/] [grey](пусто — назад)[/]:</value>
+  </data>
+  <data name="Searching" xml:space="preserve">
+    <value>Поиск…</value>
+  </data>
+  <data name="NothingFound" xml:space="preserve">
+    <value>[grey]Ничего не найдено.[/]</value>
+  </data>
+  <data name="SearchResultsTitle" xml:space="preserve">
+    <value>[green]{0}[/] результатов по запросу [yellow]{1}[/]:</value>
+  </data>
+  <data name="LoadingAlbums" xml:space="preserve">
+    <value>Загрузка ваших альбомов…</value>
+  </data>
+  <data name="NoAlbums" xml:space="preserve">
+    <value>[grey]Нет понравившихся альбомов (отметьте альбомы лайком и войдите в аккаунт).[/]</value>
+  </data>
+  <data name="YourAlbums" xml:space="preserve">
+    <value>Ваши альбомы ([green]{0}[/]):</value>
+  </data>
+  <data name="LoadingAlbum" xml:space="preserve">
+    <value>Загрузка альбома…</value>
+  </data>
+  <data name="AlbumNoTracks" xml:space="preserve">
+    <value>[grey]В альбоме нет доступных треков.[/]</value>
+  </data>
+  <data name="PlayFromWhich" xml:space="preserve">
+    <value>С какого трека начать?</value>
+  </data>
+  <data name="LoadingPlaylists" xml:space="preserve">
+    <value>Загрузка ваших плейлистов…</value>
+  </data>
+  <data name="NoPlaylists" xml:space="preserve">
+    <value>[grey]Плейлисты не найдены (войдите в аккаунт).[/]</value>
+  </data>
+  <data name="YourPlaylists" xml:space="preserve">
+    <value>Ваши плейлисты ([green]{0}[/]):</value>
+  </data>
+  <data name="TracksSuffix" xml:space="preserve">
+    <value>{0} треков</value>
+  </data>
+  <data name="LoadingPlaylist" xml:space="preserve">
+    <value>Загрузка плейлиста…</value>
+  </data>
+  <data name="PlaylistNoTracks" xml:space="preserve">
+    <value>[grey]В плейлисте нет доступных треков.[/]</value>
+  </data>
+  <data name="ColumnTitle" xml:space="preserve">
+    <value>Название</value>
+  </data>
+  <data name="ColumnArtist" xml:space="preserve">
+    <value>Исполнитель</value>
+  </data>
+  <data name="ColumnTime" xml:space="preserve">
+    <value>[grey]Время[/]</value>
+  </data>
+  <data name="NowPlayingHeader" xml:space="preserve">
+    <value>[green] ♪ Сейчас играет [/]</value>
+  </data>
+  <data name="NothingPlayingYet" xml:space="preserve">
+    <value>[grey]Сейчас ничего не играет.[/]</value>
+  </data>
+  <data name="StatePlaying" xml:space="preserve">
+    <value>[green]▶ Играет[/]</value>
+  </data>
+  <data name="StatePaused" xml:space="preserve">
+    <value>[yellow]⏸ Пауза[/]</value>
+  </data>
+  <data name="StateBuffering" xml:space="preserve">
+    <value>[blue]… Буферизация[/]</value>
+  </data>
+  <data name="StateStopped" xml:space="preserve">
+    <value>[grey]⏹ Остановлено[/]</value>
+  </data>
+  <data name="StateEnded" xml:space="preserve">
+    <value>[grey]■ Завершено[/]</value>
+  </data>
+  <data name="StateError" xml:space="preserve">
+    <value>[red]! Ошибка[/]</value>
+  </data>
+  <data name="StateIdle" xml:space="preserve">
+    <value>[grey]Ожидание[/]</value>
+  </data>
+  <data name="VolumeLabel" xml:space="preserve">
+    <value>громк.</value>
+  </data>
+  <data name="SimulatedSuffix" xml:space="preserve">
+    <value>   ·   симуляция (без звука)</value>
+  </data>
+  <data name="TrackCounter" xml:space="preserve">
+    <value>Трек {0}/{1}</value>
+  </data>
+  <data name="NowPlayingKeys" xml:space="preserve">
+    <value>[grey]space[/] пауза   [grey]←/→[/] пред/след   [grey]↑/↓[/] громкость   [grey]s[/] стоп   [grey]q[/] назад</value>
+  </data>
+</root>

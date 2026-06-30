@@ -14,6 +14,11 @@
     <AssemblyName>yandexmusic-player</AssemblyName>
     <!-- A demonstration app, not a shipped package. -->
     <IsPackable>false</IsPackable>
+    <!--
+      The solution defaults to globalization-invariant mode (Directory.Build.props) for the library.
+      The player needs real cultures so the UI follows the OS language and the .resx satellites load.
+    -->
+    <InvariantGlobalization>false</InvariantGlobalization>
     <!-- The sample interops with native audio (NAudio); AOT/trim analysis is not meaningful here. -->
     <IsAotCompatible>false</IsAotCompatible>
     <NoWarn>$(NoWarn);CA1031;CA1303;CA2007;CA1416</NoWarn>
