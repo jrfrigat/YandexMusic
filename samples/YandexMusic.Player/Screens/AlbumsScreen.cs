@@ -27,25 +27,25 @@ public sealed class AlbumsScreen
     public async Task<PlayRequest?> RunAsync(CancellationToken cancellationToken = default)
     {
         var albums = await AnsiConsole.Status()
-            .StartAsync("Loading your albums…", _ => _catalog.GetMyAlbumsAsync(cancellationToken))
+            .StartAsync(Strings.LoadingAlbums, _ => _catalog.GetMyAlbumsAsync(cancellationToken))
             .ConfigureAwait(false);
 
         if (albums.Count == 0)
         {
-            AnsiConsole.MarkupLine("[grey]No liked albums (like some albums in the app, and make sure you are signed in).[/]");
+            AnsiConsole.MarkupLine(Strings.NoAlbums);
             return null;
         }
 
-        var back = new AlbumView(BackId, "← Back", string.Empty, null, 0);
+        var back = new AlbumView(BackId, Strings.Back, string.Empty, null, 0);
         var choices = new List<AlbumView>(albums) { back };
 
         var picked = AnsiConsole.Prompt(
             new SelectionPrompt<AlbumView>()
-                .Title($"Your albums ([green]{albums.Count}[/]):")
+                .Title(Strings.YourAlbums(albums.Count))
                 .PageSize(15)
-                .MoreChoicesText("[grey](move up/down for more)[/]")
+                .MoreChoicesText(Strings.MoreChoices)
                 .UseConverter(a => a.Id == BackId
-                    ? "[grey]← Back[/]"
+                    ? Strings.BackDim
                     : $"{Markup.Escape(Format.Truncate(a.Title, 40))} [grey]— {Markup.Escape(Format.Truncate(a.Artist, 24))}[/]")
                 .AddChoices(choices));
 

@@ -8,6 +8,7 @@ using YandexMusic.Player.Auth;
 using YandexMusic.Player.Catalog;
 using YandexMusic.Player.Playback;
 using YandexMusic.Player.Screens;
+using YandexMusic.Player.Ui;
 
 using var cts = new CancellationTokenSource();
 Console.CancelKeyPress += (_, e) =>
@@ -59,7 +60,7 @@ await using var provider = services.BuildServiceProvider();
 
 if (!AnsiConsole.Profile.Capabilities.Interactive)
 {
-    AnsiConsole.MarkupLine("[yellow]This player needs an interactive terminal[/] — run it directly, not through a pipe.");
+    AnsiConsole.MarkupLine(Strings.NeedsInteractive);
     return;
 }
 

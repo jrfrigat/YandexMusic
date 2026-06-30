@@ -96,6 +96,28 @@ var track = await client.Tracks.GetAsync("4", cts.Token);
 
 ## Authentication & session persistence
 
+### Getting an OAuth token
+
+The simplest way to obtain a token is Yandex's OAuth implicit flow. Open this URL in a browser, sign
+in, and confirm access:
+
+```
+https://oauth.yandex.ru/authorize?response_type=token&client_id=23cabbbdc6cd418abb4b39c32c41195d
+```
+
+You'll be redirected to a `music.yandex.ru` URL with the token in the fragment (after the `#`):
+
+```
+https://music.yandex.ru/#access_token=y0__xExampleFAKEtokenDoNotUse000000000000000000&token_type=bearer&expires_in=24752795&cid=ab1cd23efghij4klmn5opqrs6
+```
+
+Copy the value of **`access_token`** (here `y0__xExampleFAKEtokenDoNotUse000000000000000000`) — that
+is your token. Keep it secret; pass it via the `YANDEX_MUSIC_TOKEN` environment variable (or paste it
+into the sample player's **OAuth token** sign-in). The `token_type`, `expires_in` and `cid` parts are
+not needed.
+
+### Sign in & persist a session
+
 Sign in with an OAuth token, then export the session to resume it later:
 
 ```csharp

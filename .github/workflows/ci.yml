@@ -63,3 +63,43 @@ jobs:
           name: nuget-packages
           path: artifacts/*.nupkg
           if-no-files-found: ignore
+
+  # Build the sample player as a self-contained Windows CLI on every push, and upload it as a
+  # version-named workflow artifact (the version is MinVer's, read from the published exe). Runs on
+  # Windows so the player's net*-windows TFM (real NAudio playback) is the one that ships.
+  player:
+    name: Build player (CLI artifact)
+    if: github.event_name == 'push'
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Publish (win-x64, self-contained, single file)
+        run: >
+          dotnet publish samples/YandexMusic.Player/YandexMusic.Player.csproj
+          -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o publish/player
+
+      - name: Package (name the zip with the MinVer version)
+        id: package
+        shell: pwsh
+        run: |
+          $exe = Get-ChildItem publish/player/yandexmusic-player.exe
+          $version = ($exe.VersionInfo.ProductVersion -split '\+')[0]
+          $zip = "yandexmusic-player-$version-win-x64.zip"
+          Compress-Archive -Path publish/player/* -DestinationPath $zip
+          "name=yandexmusic-player-$version-win-x64" >> $env:GITHUB_OUTPUT
+
+      - name: Upload player artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: ${{ steps.package.outputs.name }}
+          path: yandexmusic-player-*-win-x64.zip
+          if-no-files-found: error

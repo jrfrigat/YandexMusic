@@ -1,5 +1,6 @@
 using Spectre.Console;
 using YandexMusic;
+using YandexMusic.Player.Ui;
 
 namespace YandexMusic.Player.Auth;
 
@@ -35,12 +36,12 @@ public sealed class AuthService
             return true;
         }
 
-        const string quit = "Quit";
+        var quit = Strings.AuthQuit;
         while (!cancellationToken.IsCancellationRequested)
         {
             var choice = AnsiConsole.Prompt(
                 new SelectionPrompt<string>()
-                    .Title("How would you like to [yellow]sign in[/]?")
+                    .Title(Strings.HowToSignIn)
                     .AddChoices(_flows.Select(f => f.Name).Append(quit)));
 
             if (choice == quit)
@@ -55,15 +56,15 @@ public sealed class AuthService
                 if (await flow.SignInAsync(client, cancellationToken).ConfigureAwait(false))
                 {
                     _store.Save(client.Authentication.Session.Export());
-                    AnsiConsole.MarkupLine("[green]Signed in.[/]");
+                    AnsiConsole.MarkupLine(Strings.SignedIn);
                     return true;
                 }
 
-                AnsiConsole.MarkupLine("[red]Sign-in did not complete. Try another method.[/]");
+                AnsiConsole.MarkupLine(Strings.SignInIncomplete);
             }
             catch (YandexMusicException ex)
             {
-                AnsiConsole.MarkupLine($"[red]Sign-in failed:[/] {Markup.Escape(ex.Message)}");
+                AnsiConsole.MarkupLine(Strings.SignInFailed(Markup.Escape(ex.Message)));
             }
         }
 

@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using Spectre.Console;
 using YandexMusic;
 using YandexMusic.Player.Ui;
@@ -9,12 +8,12 @@ namespace YandexMusic.Player.Auth;
 public sealed class TokenAuthFlow : IAuthFlow
 {
     /// <inheritdoc />
-    public string Name => "OAuth token";
+    public string Name => Strings.FlowToken;
 
     /// <inheritdoc />
     public async Task<bool> SignInAsync(IYandexMusicClient client, CancellationToken cancellationToken = default)
     {
-        var token = AnsiConsole.Prompt(new TextPrompt<string>("Paste your [yellow]OAuth token[/]:").Secret());
+        var token = AnsiConsole.Prompt(new TextPrompt<string>(Strings.PromptToken).Secret());
         if (string.IsNullOrWhiteSpace(token))
         {
             return false;
@@ -25,48 +24,16 @@ public sealed class TokenAuthFlow : IAuthFlow
     }
 }
 
-/// <summary>Signs in by rendering a QR code the user scans with the Yandex app.</summary>
+/// <summary>
+/// Signs in by rendering a QR code for the OAuth device-code verification page. This uses the official,
+/// captcha-free device-code flow (not the brittle Passport magic-link, which Yandex gates behind a
+/// captcha): the user scans the code, opens the page, enters the short code, and the app polls until
+/// the sign-in is confirmed.
+/// </summary>
 public sealed class QrAuthFlow : IAuthFlow
 {
-    private static readonly TimeSpan Timeout = TimeSpan.FromMinutes(2);
-
     /// <inheritdoc />
-    public string Name => "QR code";
-
-    /// <inheritdoc />
-    public async Task<bool> SignInAsync(IYandexMusicClient client, CancellationToken cancellationToken = default)
-    {
-        var qr = await client.Authentication.StartQrSignInAsync(cancellationToken).ConfigureAwait(false);
-
-        AnsiConsole.MarkupLine("[grey]Scan this with the Yandex app:[/]");
-        AnsiConsole.WriteLine(QrRenderer.Render(qr.Url));
-        AnsiConsole.MarkupLine($"[grey]…or open:[/] [blue underline]{Markup.Escape(qr.Url)}[/]");
-
-        return await AnsiConsole.Status()
-            .Spinner(Spinner.Known.Dots)
-            .StartAsync("Waiting for confirmation…", async _ =>
-            {
-                var stopwatch = Stopwatch.StartNew();
-                while (!cancellationToken.IsCancellationRequested && stopwatch.Elapsed < Timeout)
-                {
-                    if (await client.Authentication.TryCompleteQrSignInAsync(qr, cancellationToken).ConfigureAwait(false))
-                    {
-                        return true;
-                    }
-
-                    await Task.Delay(TimeSpan.FromSeconds(2), cancellationToken).ConfigureAwait(false);
-                }
-
-                return false;
-            }).ConfigureAwait(false);
-    }
-}
-
-/// <summary>Signs in via the official OAuth device-code flow (open a page, enter a short code).</summary>
-public sealed class DeviceCodeAuthFlow : IAuthFlow
-{
-    /// <inheritdoc />
-    public string Name => "Device code (open a page, enter a code)";
+    public string Name => Strings.FlowQr;
 
     /// <inheritdoc />
     public async Task<bool> SignInAsync(IYandexMusicClient client, CancellationToken cancellationToken = default)
@@ -76,8 +43,11 @@ public sealed class DeviceCodeAuthFlow : IAuthFlow
             var token = await client.Authentication.SignInWithDeviceFlowAsync(
                 code =>
                 {
-                    AnsiConsole.MarkupLine($"Open [blue underline]{Markup.Escape(code.VerificationUrl)}[/] and enter code [yellow]{Markup.Escape(code.UserCode)}[/]");
+                    AnsiConsole.MarkupLine(Strings.ScanWithApp);
                     AnsiConsole.WriteLine(QrRenderer.Render(code.VerificationUrl));
+                    AnsiConsole.MarkupLine(Strings.OrOpen(Markup.Escape(code.VerificationUrl)));
+                    AnsiConsole.MarkupLine(Strings.EnterCode(Markup.Escape(code.UserCode)));
+                    AnsiConsole.MarkupLine($"[grey]{Strings.WaitingConfirmation}[/]");
                 },
                 cancellationToken: cancellationToken).ConfigureAwait(false);
 
@@ -85,7 +55,36 @@ public sealed class DeviceCodeAuthFlow : IAuthFlow
         }
         catch (YandexMusicException ex)
         {
-            AnsiConsole.MarkupLine($"[red]Device sign-in failed:[/] {Markup.Escape(ex.Message)}");
+            AnsiConsole.MarkupLine(Strings.DeviceSignInFailed(Markup.Escape(ex.Message)));
+            return false;
+        }
+    }
+}
+
+/// <summary>Signs in via the official OAuth device-code flow (open a page, enter a short code).</summary>
+public sealed class DeviceCodeAuthFlow : IAuthFlow
+{
+    /// <inheritdoc />
+    public string Name => Strings.FlowDevice;
+
+    /// <inheritdoc />
+    public async Task<bool> SignInAsync(IYandexMusicClient client, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            var token = await client.Authentication.SignInWithDeviceFlowAsync(
+                code =>
+                {
+                    AnsiConsole.MarkupLine(Strings.OpenAndEnterCode(Markup.Escape(code.VerificationUrl), Markup.Escape(code.UserCode)));
+                    AnsiConsole.MarkupLine($"[grey]{Strings.WaitingConfirmation}[/]");
+                },
+                cancellationToken: cancellationToken).ConfigureAwait(false);
+
+            return token is not null;
+        }
+        catch (YandexMusicException ex)
+        {
+            AnsiConsole.MarkupLine(Strings.DeviceSignInFailed(Markup.Escape(ex.Message)));
             return false;
         }
     }
@@ -98,13 +97,13 @@ public sealed class DeviceCodeAuthFlow : IAuthFlow
 public sealed class PasswordAuthFlow : IAuthFlow
 {
     /// <inheritdoc />
-    public string Name => "Login + password (best-effort)";
+    public string Name => Strings.FlowPassword;
 
     /// <inheritdoc />
     public async Task<bool> SignInAsync(IYandexMusicClient client, CancellationToken cancellationToken = default)
     {
-        var login = AnsiConsole.Prompt(new TextPrompt<string>("[yellow]Login[/]:"));
-        var password = AnsiConsole.Prompt(new TextPrompt<string>("[yellow]Password[/]:").Secret());
+        var login = AnsiConsole.Prompt(new TextPrompt<string>(Strings.PromptLogin));
+        var password = AnsiConsole.Prompt(new TextPrompt<string>(Strings.PromptPassword).Secret());
 
         try
         {
@@ -112,8 +111,8 @@ public sealed class PasswordAuthFlow : IAuthFlow
         }
         catch (YandexMusicException ex)
         {
-            AnsiConsole.MarkupLine($"[red]Password sign-in failed:[/] {Markup.Escape(ex.Message)}");
-            AnsiConsole.MarkupLine("[grey]If 2FA or a captcha is enabled, use the QR or device-code method.[/]");
+            AnsiConsole.MarkupLine(Strings.PasswordSignInFailed(Markup.Escape(ex.Message)));
+            AnsiConsole.MarkupLine(Strings.PasswordHint);
             return false;
         }
 

@@ -24,23 +24,23 @@ public sealed class PlaylistScreen
     public async Task<PlayRequest?> RunAsync(string playlistId, CancellationToken cancellationToken = default)
     {
         var detail = await AnsiConsole.Status()
-            .StartAsync("Loading playlist…", _ => _catalog.GetPlaylistAsync(playlistId, cancellationToken))
+            .StartAsync(Strings.LoadingPlaylist, _ => _catalog.GetPlaylistAsync(playlistId, cancellationToken))
             .ConfigureAwait(false);
 
         if (detail is null || detail.Tracks.Count == 0)
         {
-            AnsiConsole.MarkupLine("[grey]The playlist has no playable tracks.[/]");
+            AnsiConsole.MarkupLine(Strings.PlaylistNoTracks);
             return null;
         }
 
         var playlist = detail.Playlist;
-        AnsiConsole.Write(new Rule($"[bold]{Markup.Escape(playlist.Title)}[/] [grey]· {playlist.TrackCount} tracks[/]").LeftJustified());
+        AnsiConsole.Write(new Rule($"[bold]{Markup.Escape(playlist.Title)}[/] [grey]· {Strings.TracksSuffix(playlist.TrackCount)}[/]").LeftJustified());
 
         var table = new Table().Border(TableBorder.Minimal).BorderColor(Color.Grey);
         table.AddColumn("[grey]#[/]");
-        table.AddColumn("Title");
-        table.AddColumn("Artist");
-        table.AddColumn("[grey]Time[/]");
+        table.AddColumn(Strings.ColumnTitle);
+        table.AddColumn(Strings.ColumnArtist);
+        table.AddColumn(Strings.ColumnTime);
         var number = 1;
         foreach (var track in detail.Tracks)
         {
@@ -53,16 +53,16 @@ public sealed class PlaylistScreen
 
         AnsiConsole.Write(table);
 
-        var back = new TrackView(BackId, "← Back", string.Empty, null, TimeSpan.Zero);
+        var back = new TrackView(BackId, Strings.Back, string.Empty, null, TimeSpan.Zero);
         var choices = new List<TrackView>(detail.Tracks) { back };
 
         var picked = AnsiConsole.Prompt(
             new SelectionPrompt<TrackView>()
-                .Title("Play from which track?")
+                .Title(Strings.PlayFromWhich)
                 .PageSize(15)
-                .MoreChoicesText("[grey](move up/down for more)[/]")
+                .MoreChoicesText(Strings.MoreChoices)
                 .UseConverter(t => t.Id == BackId
-                    ? "[grey]← Back[/]"
+                    ? Strings.BackDim
                     : $"{Markup.Escape(Format.Truncate(t.Title, 42))} [grey]— {Markup.Escape(Format.Truncate(t.Artist, 24))}[/]")
                 .AddChoices(choices));
 

@@ -81,3 +81,50 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh release create "${{ github.ref_name }}" artifacts/*.nupkg --generate-notes --title "${{ github.ref_name }}"
+
+  # Publishes the sample terminal player as a versioned, self-contained Windows CLI and attaches the
+  # zip to the GitHub Release. Runs on Windows so the player's net*-windows TFM (real NAudio playback)
+  # resolves; the build is not trimmed because the sample uses reflection-based JSON.
+  player:
+    name: Publish player (CLI)
+    needs: publish
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: 10.0.x
+
+      - name: Resolve version from tag
+        id: version
+        shell: bash
+        run: echo "value=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+
+      - name: Publish (win-x64, self-contained, single file)
+        run: >
+          dotnet publish samples/YandexMusic.Player/YandexMusic.Player.csproj
+          -c Release -r win-x64 --self-contained true
+          -p:PublishSingleFile=true -p:Version=${{ steps.version.outputs.value }}
+          -o publish/player
+
+      - name: Zip
+        shell: pwsh
+        run: Compress-Archive -Path publish/player/* -DestinationPath "yandexmusic-player-${{ steps.version.outputs.value }}-win-x64.zip"
+
+      - name: Upload workflow artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: yandexmusic-player-${{ steps.version.outputs.value }}-win-x64
+          path: yandexmusic-player-${{ steps.version.outputs.value }}-win-x64.zip
+
+      - name: Attach to the GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ github.ref_name }}" "yandexmusic-player-${{ steps.version.outputs.value }}-win-x64.zip" --clobber

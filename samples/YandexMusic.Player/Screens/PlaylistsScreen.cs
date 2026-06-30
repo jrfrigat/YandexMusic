@@ -27,26 +27,26 @@ public sealed class PlaylistsScreen
     public async Task<PlayRequest?> RunAsync(CancellationToken cancellationToken = default)
     {
         var playlists = await AnsiConsole.Status()
-            .StartAsync("Loading your playlists…", _ => _catalog.GetMyPlaylistsAsync(cancellationToken))
+            .StartAsync(Strings.LoadingPlaylists, _ => _catalog.GetMyPlaylistsAsync(cancellationToken))
             .ConfigureAwait(false);
 
         if (playlists.Count == 0)
         {
-            AnsiConsole.MarkupLine("[grey]No playlists found (make sure you are signed in).[/]");
+            AnsiConsole.MarkupLine(Strings.NoPlaylists);
             return null;
         }
 
-        var back = new PlaylistView(BackId, "← Back", 0);
+        var back = new PlaylistView(BackId, Strings.Back, 0);
         var choices = new List<PlaylistView>(playlists) { back };
 
         var picked = AnsiConsole.Prompt(
             new SelectionPrompt<PlaylistView>()
-                .Title($"Your playlists ([green]{playlists.Count}[/]):")
+                .Title(Strings.YourPlaylists(playlists.Count))
                 .PageSize(15)
-                .MoreChoicesText("[grey](move up/down for more)[/]")
+                .MoreChoicesText(Strings.MoreChoices)
                 .UseConverter(p => p.Id == BackId
-                    ? "[grey]← Back[/]"
-                    : $"{Markup.Escape(Format.Truncate(p.Title, 40))} [grey]· {p.TrackCount} tracks[/]")
+                    ? Strings.BackDim
+                    : $"{Markup.Escape(Format.Truncate(p.Title, 40))} [grey]· {Strings.TracksSuffix(p.TrackCount)}[/]")
                 .AddChoices(choices));
 
         if (picked.Id == BackId)

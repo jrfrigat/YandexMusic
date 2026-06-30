@@ -10,7 +10,9 @@ dotnet run --project samples/YandexMusic.Player
 ## Features
 
 - **Sign in** four ways — OAuth token, device-code flow, QR code, or login + password — with the
-  session cached to disk so subsequent runs start already authenticated.
+  session cached to disk so subsequent runs start already authenticated. (To get a token, see
+  [Getting an OAuth token](../../README.md#getting-an-oauth-token); the QR and device-code methods
+  need no token at all.)
 - **Search tracks** and start playback from any result (the whole result set becomes the queue).
 - **Browse your albums** and **your playlists**, and drill into either's tracklist.
 - **Now playing** — a live view with an animated equalizer, a real-time progress bar, a volume meter,

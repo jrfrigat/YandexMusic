@@ -23,32 +23,32 @@ public sealed class SearchScreen
     public async Task<PlayRequest?> RunAsync(CancellationToken cancellationToken = default)
     {
         var query = AnsiConsole.Prompt(
-            new TextPrompt<string>("[yellow]Search tracks[/] [grey](empty to go back)[/]:").AllowEmpty());
+            new TextPrompt<string>(Strings.SearchPrompt).AllowEmpty());
         if (string.IsNullOrWhiteSpace(query))
         {
             return null;
         }
 
         var tracks = await AnsiConsole.Status()
-            .StartAsync("Searching…", _ => _catalog.SearchTracksAsync(query, cancellationToken))
+            .StartAsync(Strings.Searching, _ => _catalog.SearchTracksAsync(query, cancellationToken))
             .ConfigureAwait(false);
 
         if (tracks.Count == 0)
         {
-            AnsiConsole.MarkupLine("[grey]Nothing found.[/]");
+            AnsiConsole.MarkupLine(Strings.NothingFound);
             return null;
         }
 
-        var back = new TrackView(BackId, "← Back", string.Empty, null, TimeSpan.Zero);
+        var back = new TrackView(BackId, Strings.Back, string.Empty, null, TimeSpan.Zero);
         var choices = new List<TrackView>(tracks) { back };
 
         var picked = AnsiConsole.Prompt(
             new SelectionPrompt<TrackView>()
-                .Title($"[green]{tracks.Count}[/] results for [yellow]{Markup.Escape(query)}[/]:")
+                .Title(Strings.SearchResultsTitle(tracks.Count, Markup.Escape(query)))
                 .PageSize(15)
-                .MoreChoicesText("[grey](move up/down for more)[/]")
+                .MoreChoicesText(Strings.MoreChoices)
                 .UseConverter(t => t.Id == BackId
-                    ? "[grey]← Back[/]"
+                    ? Strings.BackDim
                     : $"{Markup.Escape(Format.Truncate(t.Title, 42))} [grey]— {Markup.Escape(Format.Truncate(t.Artist, 24))}[/] [grey]({Format.Duration(t.Duration)})[/]")
                 .AddChoices(choices));
 

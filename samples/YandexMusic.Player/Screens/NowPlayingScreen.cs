@@ -32,7 +32,7 @@ public sealed class NowPlayingScreen
     {
         if (_controller.Current is null)
         {
-            AnsiConsole.MarkupLine("[grey]Nothing is playing yet.[/]");
+            AnsiConsole.MarkupLine(Strings.NothingPlayingYet);
             return;
         }
 
@@ -112,12 +112,12 @@ public sealed class NowPlayingScreen
             new Markup(StatusLine()),
             new Markup(ProgressLine(position, duration)),
             new Markup(VolumeLine()),
-            new Markup($"[grey]Track {_controller.QueuePosition}/{_controller.QueueLength}{(_controller.ProducesSound ? string.Empty : "   ·   simulated playback (no audio output)")}[/]"),
-            new Markup("[grey]space[/] play/pause   [grey]←/→[/] prev/next   [grey]↑/↓[/] volume   [grey]s[/] stop   [grey]q[/] back"),
+            new Markup($"[grey]{Strings.TrackCounter(_controller.QueuePosition, _controller.QueueLength)}{(_controller.ProducesSound ? string.Empty : Strings.SimulatedSuffix)}[/]"),
+            new Markup(Strings.NowPlayingKeys),
         };
 
         return new Panel(new Rows(rows))
-            .Header("[green] ♪ Now Playing [/]")
+            .Header(Strings.NowPlayingHeader)
             .Border(BoxBorder.Rounded)
             .BorderColor(Color.Green)
             .Padding(2, 1);
@@ -125,13 +125,13 @@ public sealed class NowPlayingScreen
 
     private string StatusLine() => _controller.State switch
     {
-        PlaybackState.Playing => $"[green]▶ Playing[/]   {Equalizer()}",
-        PlaybackState.Paused => "[yellow]⏸ Paused[/]",
-        PlaybackState.Buffering => "[blue]… Buffering[/]",
-        PlaybackState.Stopped => "[grey]⏹ Stopped[/]",
-        PlaybackState.Ended => "[grey]■ Ended[/]",
-        PlaybackState.Error => "[red]! Error[/]",
-        _ => "[grey]Idle[/]",
+        PlaybackState.Playing => $"{Strings.StatePlaying}   {Equalizer()}",
+        PlaybackState.Paused => Strings.StatePaused,
+        PlaybackState.Buffering => Strings.StateBuffering,
+        PlaybackState.Stopped => Strings.StateStopped,
+        PlaybackState.Ended => Strings.StateEnded,
+        PlaybackState.Error => Strings.StateError,
+        _ => Strings.StateIdle,
     };
 
     private string Equalizer()
@@ -159,6 +159,6 @@ public sealed class NowPlayingScreen
     {
         const int width = 12;
         var filled = _controller.Volume * width / 100;
-        return $"[grey]vol[/] [green]{new string('█', filled)}[/][grey]{new string('░', width - filled)}[/] [grey]{_controller.Volume,3}%[/]";
+        return $"[grey]{Strings.VolumeLabel}[/] [green]{new string('█', filled)}[/][grey]{new string('░', width - filled)}[/] [grey]{_controller.Volume,3}%[/]";
     }
 }

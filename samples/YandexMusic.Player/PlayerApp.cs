@@ -4,6 +4,7 @@ using YandexMusic.Player.Auth;
 using YandexMusic.Player.Catalog;
 using YandexMusic.Player.Playback;
 using YandexMusic.Player.Screens;
+using YandexMusic.Player.Ui;
 
 namespace YandexMusic.Player;
 
@@ -52,7 +53,7 @@ public sealed class PlayerApp
     public async Task RunAsync(CancellationToken cancellationToken = default)
     {
         AnsiConsole.Write(new FigletText("Yandex Music").Color(Color.Yellow));
-        AnsiConsole.MarkupLine("[grey]terminal music player[/]\n");
+        AnsiConsole.MarkupLine($"[grey]{Strings.Subtitle}[/]\n");
 
         if (!await _auth.EnsureSignedInAsync(_client, cancellationToken).ConfigureAwait(false))
         {

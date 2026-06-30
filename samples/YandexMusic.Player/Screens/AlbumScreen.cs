@@ -24,12 +24,12 @@ public sealed class AlbumScreen
     public async Task<PlayRequest?> RunAsync(string albumId, CancellationToken cancellationToken = default)
     {
         var detail = await AnsiConsole.Status()
-            .StartAsync("Loading album…", _ => _catalog.GetAlbumAsync(albumId, cancellationToken))
+            .StartAsync(Strings.LoadingAlbum, _ => _catalog.GetAlbumAsync(albumId, cancellationToken))
             .ConfigureAwait(false);
 
         if (detail is null || detail.Tracks.Count == 0)
         {
-            AnsiConsole.MarkupLine("[grey]The album has no playable tracks.[/]");
+            AnsiConsole.MarkupLine(Strings.AlbumNoTracks);
             return null;
         }
 
@@ -39,8 +39,8 @@ public sealed class AlbumScreen
 
         var table = new Table().Border(TableBorder.Minimal).BorderColor(Color.Grey);
         table.AddColumn("[grey]#[/]");
-        table.AddColumn("Title");
-        table.AddColumn("[grey]Time[/]");
+        table.AddColumn(Strings.ColumnTitle);
+        table.AddColumn(Strings.ColumnTime);
         var number = 1;
         foreach (var track in detail.Tracks)
         {
@@ -52,14 +52,14 @@ public sealed class AlbumScreen
 
         AnsiConsole.Write(table);
 
-        var back = new TrackView(BackId, "← Back", string.Empty, null, TimeSpan.Zero);
+        var back = new TrackView(BackId, Strings.Back, string.Empty, null, TimeSpan.Zero);
         var choices = new List<TrackView>(detail.Tracks) { back };
 
         var picked = AnsiConsole.Prompt(
             new SelectionPrompt<TrackView>()
-                .Title("Play from which track?")
+                .Title(Strings.PlayFromWhich)
                 .PageSize(15)
-                .UseConverter(t => t.Id == BackId ? "[grey]← Back[/]" : Markup.Escape(Format.Truncate(t.Title, 50)))
+                .UseConverter(t => t.Id == BackId ? Strings.BackDim : Markup.Escape(Format.Truncate(t.Title, 50)))
                 .AddChoices(choices));
 
         if (picked.Id == BackId)

@@ -34,14 +34,14 @@ public enum MainMenuAction
 /// </summary>
 public sealed class MainMenuScreen
 {
-    private static readonly (MainMenuAction Action, string Label, char Key)[] Items =
+    private static readonly (MainMenuAction Action, char Key)[] Items =
     [
-        (MainMenuAction.Search, "Search tracks", 's'),
-        (MainMenuAction.Albums, "My albums", 'a'),
-        (MainMenuAction.Playlists, "My playlists", 'l'),
-        (MainMenuAction.NowPlaying, "Open player", 'p'),
-        (MainMenuAction.SignOut, "Sign out", 'o'),
-        (MainMenuAction.Quit, "Quit", 'q'),
+        (MainMenuAction.Search, 's'),
+        (MainMenuAction.Albums, 'a'),
+        (MainMenuAction.Playlists, 'l'),
+        (MainMenuAction.NowPlaying, 'p'),
+        (MainMenuAction.SignOut, 'o'),
+        (MainMenuAction.Quit, 'q'),
     ];
 
     private readonly PlaybackController _controller;
@@ -142,30 +142,38 @@ public sealed class MainMenuScreen
 
         for (var i = 0; i < Items.Length; i++)
         {
-            var (_, label, key) = Items[i];
+            var (action, key) = Items[i];
+            var label = LabelFor(action);
             rows.Add(new Markup(i == _index
                 ? $"[green]▶[/] [white]{label}[/] [grey]({key})[/]"
                 : $"  [grey]{label} ({key})[/]"));
         }
 
         var panel = new Panel(new Rows(rows))
-            .Header("[yellow] Menu [/]")
+            .Header(Strings.Menu)
             .Border(BoxBorder.Rounded)
             .BorderColor(Color.Grey)
             .Padding(2, 1);
 
-        var hotkeys = "[grey]↑↓[/] move   [grey]enter[/] select   " +
-                      "[grey]s[/] search   [grey]a[/] albums   [grey]l[/] playlists   " +
-                      "[grey]p[/] open player   [grey]o[/] sign out   [grey]q[/] quit";
-
-        return new Rows(panel, new Markup(hotkeys));
+        return new Rows(panel, new Markup(Strings.MenuHotkeys));
     }
+
+    private static string LabelFor(MainMenuAction action) => action switch
+    {
+        MainMenuAction.Search => Strings.MenuSearch,
+        MainMenuAction.Albums => Strings.MenuAlbums,
+        MainMenuAction.Playlists => Strings.MenuPlaylists,
+        MainMenuAction.NowPlaying => Strings.MenuOpenPlayer,
+        MainMenuAction.SignOut => Strings.MenuSignOut,
+        MainMenuAction.Quit => Strings.MenuQuit,
+        _ => action.ToString(),
+    };
 
     private string NowPlayingLine()
     {
         if (_controller.Current is not { } item)
         {
-            return "[grey]♪ nothing playing[/]";
+            return Strings.NothingPlaying;
         }
 
         var state = _controller.State switch
