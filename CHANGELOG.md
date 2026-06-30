@@ -25,7 +25,7 @@ First public release of the original, clean-room implementation.
   - **Radio** (rotor) — station dashboard, list, info, tracks, settings, feedback.
   - **Concerts**, **Metatags** — events and curated collection pages.
   - **Queue**, **Pins**, **Presaves**, **MusicHistory** — personal cross-device state.
-- Three sign-in flows: OAuth token, the official OAuth **device-code** flow, and best-effort cookie/QR — all over a serializable `AuthSnapshot` (export/import to persist and resume a session).
+- Multiple sign-in flows: OAuth token, the official OAuth **device-code** flow, and best-effort cookie, QR or login + password — all over a serializable `AuthSnapshot` (export/import to persist and resume a session).
 - `YandexMusic.DependencyInjection` package: `AddYandexMusic()` registers a scoped client over a handler pooled by `IHttpClientFactory`.
 - Typed exception hierarchy (`YandexMusicException` and descendants).
 - Full XML documentation on the public API; unit tests plus token-gated integration tests (xUnit).
@@ -70,7 +70,7 @@ First public release of the original, clean-room implementation.
   - **Radio** (rotor) — dashboard станций, список, info, треки, настройки, фидбэк.
   - **Concerts**, **Metatags** — события и подборки (мета-теги).
   - **Queue**, **Pins**, **Presaves**, **MusicHistory** — личное состояние между устройствами.
-- Три способа входа: OAuth-токен, официальный OAuth **device-code** flow и best-effort cookie/QR — всё поверх сериализуемого `AuthSnapshot` (export/import для сохранения и восстановления сессии).
+- Несколько способов входа: OAuth-токен, официальный OAuth **device-code** flow и best-effort cookie, QR или логин/пароль — всё поверх сериализуемого `AuthSnapshot` (export/import для сохранения и восстановления сессии).
 - Пакет `YandexMusic.DependencyInjection`: `AddYandexMusic()` регистрирует scoped-клиент поверх handler'а в пуле `IHttpClientFactory`.
 - Типизированная иерархия исключений (`YandexMusicException` и наследники).
 - Полная XML-документация публичного API; модульные и интеграционные (по токену) тесты (xUnit).

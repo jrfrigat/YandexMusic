@@ -27,6 +27,8 @@ var variants = await client.Tracks.GetDownloadInfoAsync("4");
 Передайте `IWebProxy` через опции:
 
 ```csharp
+using System.Net; // WebProxy
+
 using var client = new YandexMusicClient(new YandexMusicClientOptions
 {
     Proxy = new WebProxy("http://127.0.0.1:8080"),

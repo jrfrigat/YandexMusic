@@ -20,7 +20,7 @@ Unofficial asynchronous library for the Yandex Music API. Runs on **.NET 8, .NET
 - ✅ Fully asynchronous API with `CancellationToken` support on every call
 - ✅ **Full catalogue coverage** — tracks (metadata, **direct download/stream link**, lyrics, full-info, similar, trailer), search (+ autocomplete), albums, artists, playlists, genres, labels, clips, credits, disclaimers, concerts, meta-tag pages
 - ✅ **Personalised endpoints** — account & settings, library likes/dislikes (read & write), playlist editing, radio (rotor) stations, landing & feed, cross-device queues, pins, pre-saves, listening history
-- ✅ **Three sign-in flows** — OAuth token, the official OAuth **device-code** flow, and best-effort cookie/QR; all over a serializable session you can persist and restore
+- ✅ **Multiple sign-in flows** — OAuth token, the official OAuth **device-code** flow, and best-effort cookie, QR or login + password; all over a serializable session you can persist and restore
 - ✅ `System.Text.Json` source generation — allocation-conscious and trim/AOT-friendly (`IsAotCompatible`)
 - ✅ Typed exceptions, first-class dependency-injection integration, full XML documentation
 - ✅ Clean, extensible design: add an endpoint group and you have a new domain

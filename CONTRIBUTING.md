@@ -35,32 +35,32 @@ Music OAuth token and are **skipped automatically when no token is set**.
    (`.env` is in `.gitignore` — never commit the token. You can also set the `YANDEX_MUSIC_TOKEN` environment variable instead of `.env`.)
 2. Run only the integration tests:
    ```bash
-   dotnet test -c Release --filter Category=Integration
+   dotnet test -c Release --filter FullyQualifiedName~Integration
    ```
    Or only the unit tests (no network):
    ```bash
-   dotnet test -c Release --filter Category!=Integration
+   dotnet test -c Release --filter FullyQualifiedName!~Integration
    ```
 
 ## Structure
 
-- `src/YandexMusic.API` — the low-level library.
-- `src/YandexMusic` — the high-level client.
-- `samples/YaMusicCli` — a usage example.
-- `tests/YandexMusic.Tests` — unit and integration tests (xUnit).
+- `src/YandexMusic` — the core client library.
+- `src/YandexMusic.DependencyInjection` — the `AddYandexMusic()` DI integration.
+- `samples/YandexMusic.Player` — an interactive terminal music player (TUI) example.
+- `tests/YandexMusic.Tests` — unit and integration tests (xUnit; integration tests use the `[IntegrationFact]` attribute and run only when `YANDEX_MUSIC_TOKEN` is set).
 - `docs/` — documentation (DocFX).
 
 ## Conventions
 
 - Follow the style from `.editorconfig` (`dotnet format` helps).
 - Public methods are asynchronous and accept a `CancellationToken`; use `ConfigureAwait(false)` in library code.
-- Throw typed exceptions from `YandexMusic.API.Exceptions`, not `System.Exception`.
+- Throw typed exceptions derived from `YandexMusicException` (in the `YandexMusic` namespace), not `System.Exception`.
 - NuGet package versions are managed centrally in `Directory.Packages.props`.
 - Accompany new functionality with tests and, when needed, documentation in `docs/`.
 
 ## Pull request
 
-1. Create a branch off `master`.
+1. Create a branch off `main`.
 2. Make sure `dotnet build` and `dotnet test` pass without errors.
 3. Describe your change in the PR and add an entry to `CHANGELOG.md` (the `Unreleased` section).
 

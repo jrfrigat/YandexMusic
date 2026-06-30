@@ -2,8 +2,8 @@
 
 # Authentication
 
-Most endpoints require authorization. The client supports three sign-in flows: an existing OAuth
-token, the official OAuth **device-code** flow, and best-effort cookie/QR.
+Most endpoints require authorization. The client supports several sign-in flows: an existing OAuth
+token, the official OAuth **device-code** flow, and — best-effort — cookie, QR code or login + password.
 
 ## Sign in with a token
 
@@ -48,9 +48,10 @@ client.Authentication.Session.Import(
     System.Text.Json.JsonSerializer.Deserialize<YandexMusic.Authentication.AuthSnapshot>(json)!);
 ```
 
-## Cookie and QR sign-in (best-effort)
+## Cookie, QR and password sign-in (best-effort)
 
-In addition to a token, the client can sign in with Yandex session cookies or an interactive QR code.
+In addition to a token, the client can sign in with Yandex session cookies, an interactive QR code,
+or a login and password.
 
 ```csharp
 // Cookies obtained elsewhere (for example from a browser/app login)
@@ -63,11 +64,14 @@ while (!await client.Authentication.TryCompleteQrSignInAsync(qr))
 {
     await Task.Delay(TimeSpan.FromSeconds(2));
 }
+
+// Login + password (Yandex often requires a captcha or 2FA, in which case this throws)
+await client.Authentication.SignInWithPasswordAsync("login", "password");
 ```
 
 > ⚠️ These flows are a **best-effort** implementation of a version-sensitive, undocumented Yandex
-> Passport protocol. Verify them against the live flow — the token path (`SignInWithToken`) is the
-> robust, fully-supported option.
+> Passport protocol that is frequently gated behind a captcha. Verify them against the live flow — the
+> token and device-code paths are the robust, fully-supported options.
 
 ## Sign out
 
@@ -77,5 +81,12 @@ client.Authentication.SignOut();
 
 ## Getting a token
 
-You can extract an OAuth token from the official client/web. Do not publish the token or store it in
-source code — use environment variables or a secure store.
+The simplest way is Yandex's OAuth implicit flow. Open
+
+```
+https://oauth.yandex.ru/authorize?response_type=token&client_id=23cabbbdc6cd418abb4b39c32c41195d
+```
+
+in a browser, sign in, and copy the `access_token` value from the resulting
+`https://music.yandex.ru/#access_token=…` redirect URL. Do not publish the token or store it in source
+code — use an environment variable or a secure store.

@@ -29,6 +29,8 @@ These require an authenticated session with the appropriate subscription.
 Pass an `IWebProxy` through the options:
 
 ```csharp
+using System.Net; // WebProxy
+
 using var client = new YandexMusicClient(new YandexMusicClientOptions
 {
     Proxy = new WebProxy("http://127.0.0.1:8080"),

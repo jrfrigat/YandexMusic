@@ -96,6 +96,28 @@ var track = await client.Tracks.GetAsync("4", cts.Token);
 
 ## Авторизация и сохранение сессии
 
+### Получение OAuth-токена
+
+Проще всего получить токен через OAuth implicit flow Яндекса. Откройте эту ссылку в браузере, войдите
+и подтвердите доступ:
+
+```
+https://oauth.yandex.ru/authorize?response_type=token&client_id=23cabbbdc6cd418abb4b39c32c41195d
+```
+
+Вас перенаправит на адрес `music.yandex.ru`, где токен будет во фрагменте (после `#`):
+
+```
+https://music.yandex.ru/#access_token=y0__xExampleFAKEtokenDoNotUse000000000000000000&token_type=bearer&expires_in=24752795&cid=ab1cd23efghij4klmn5opqrs6
+```
+
+Скопируйте значение **`access_token`** (здесь `y0__xExampleFAKEtokenDoNotUse000000000000000000`) — это и
+есть ваш токен. Храните его в секрете; передавайте через переменную окружения `YANDEX_MUSIC_TOKEN`
+(или вставьте в способ входа **OAuth-токен** в примере-плеере). Части `token_type`, `expires_in` и `cid`
+не нужны.
+
+### Вход и сохранение сессии
+
 Войдите по OAuth-токену, затем экспортируйте сессию для восстановления позже:
 
 ```csharp
@@ -139,20 +161,39 @@ services.AddYandexMusic(options =>
 ├── tests/
 │   └── YandexMusic.Tests/               # модульные + (по токену) интеграционные тесты (xUnit)
 ├── samples/
-│   └── YandexMusic.Cli/                 # консольное демо (треки, альбомы, исполнители, поиск, …)
+│   └── YandexMusic.Player/              # интерактивный терминальный плеер (TUI-демо)
 ├── docs/                                # сайт документации (DocFX)
 └── .github/workflows/                   # CI, релиз (NuGet), публикация документации
 ```
 
-Запустите демо на живом каталоге (для публичных данных токен не нужен):
+### Пример: терминальный музыкальный плеер
+
+[`samples/YandexMusic.Player`](samples/YandexMusic.Player) — полноценный интерактивный TUI поверх
+библиотеки: поиск, просмотр своих альбомов и плейлистов, экран «сейчас играет» с анимированным
+эквалайзером, прогресс-баром в реальном времени и управлением громкостью/воспроизведением с клавиатуры.
+
+**Скачать:** готовую сборку под Windows можно взять на странице
+[**Releases**](https://github.com/jrfrigat/YandexMusic/releases)
+(`yandexmusic-player-<version>-win-x64.zip` — self-contained, .NET ставить не нужно; распакуйте и
+запустите `yandexmusic-player.exe`). Либо запустите из исходников:
 
 ```bash
-dotnet run --project samples/YandexMusic.Cli -- search "Queen"
-dotnet run --project samples/YandexMusic.Cli -- album 3
-dotnet run --project samples/YandexMusic.Cli -- artist 79215
-# команды, требующие токен (link, liked):
-YANDEX_MUSIC_TOKEN=<token> dotnet run --project samples/YandexMusic.Cli -- liked
+dotnet run --project samples/YandexMusic.Player
 ```
+
+- **Вход** по OAuth-токену, через device-code flow, QR-код или логин/пароль; сессия кэшируется, поэтому
+  следующий запуск стартует уже авторизованным.
+- **Воспроизведение** использует [NAudio](https://github.com/naudio/NAudio) на Windows; на остальных
+  платформах (и как fallback) работает беззвучная симуляция, управляющая тем же интерфейсом. Аудио-бэкенд —
+  единственный шов [`IAudioPlayer`](samples/YandexMusic.Player/Playback/IAudioPlayer.cs), так что замена
+  на кроссплатформенный движок меняет одну строку.
+- **Главное меню** управляется курсором, снизу — строка горячих клавиш; одиночные клавиши сразу
+  открывают раздел (`s` поиск · `a` альбомы · `l` плейлисты · `f` любимое · `w` волна · `p` плеер ·
+  `q` выход), а `Esc` всегда возвращает назад.
+- **Управление** (экран «сейчас играет»): `space` пауза · `←/→` пред/след · `↑/↓` громкость · `s` стоп ·
+  `q` назад.
+
+Архитектура описана в [README примера](samples/YandexMusic.Player/README.md).
 
 ## Сборка и тесты
 

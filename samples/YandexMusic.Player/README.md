@@ -98,7 +98,7 @@ Program (composition root)
 
 The UI is localized via standard .NET resources. Strings live in
 [`Resources/Strings.resx`](Resources/Strings.resx) (English, neutral) and
-[`Strings.ru.resx`](Resources/Strings.ru.resx) (Russian); the SDK builds a satellite assembly per
+[`Resources/Strings.ru.resx`](Resources/Strings.ru.resx) (Russian); the SDK builds a satellite assembly per
 culture and `Ui/Strings` reads them through a `ResourceManager`. The language follows the OS UI
 language (`CultureInfo.CurrentUICulture`) — so it's Russian out of the box on a Russian system — and
 `YM_PLAYER_LANG=ru|en` overrides it. **Add a language** by dropping in a new `Strings.<culture>.resx`;
