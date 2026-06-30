@@ -52,6 +52,20 @@ public interface IAuthenticationClient
     Task<bool> TryCompleteQrSignInAsync(QrSignIn qrSignIn, CancellationToken cancellationToken = default);
 
     /// <summary>
+    /// Signs in with a login and password via the Yandex Passport flow, then signs the client in.
+    /// </summary>
+    /// <param name="login">The account login (email, phone or username).</param>
+    /// <param name="password">The account password.</param>
+    /// <param name="cancellationToken">A token to cancel the request.</param>
+    /// <exception cref="ArgumentException"><paramref name="login"/> or <paramref name="password"/> is null or whitespace.</exception>
+    /// <exception cref="YandexMusicAuthenticationException">The credentials were rejected or a captcha/2FA is required.</exception>
+    /// <remarks>
+    /// Best-effort implementation of a version-sensitive, captcha/2FA-gated protocol; verify against the
+    /// live flow. The token and device-code paths are the robust, fully-supported options.
+    /// </remarks>
+    Task SignInWithPasswordAsync(string login, string password, CancellationToken cancellationToken = default);
+
+    /// <summary>
     /// Starts the OAuth device-code flow by requesting a device code. Show the returned
     /// <see cref="DeviceCode.UserCode"/> and <see cref="DeviceCode.VerificationUrl"/> to the user,
     /// then poll <see cref="PollDeviceTokenAsync"/> with <see cref="DeviceCode.Code"/>.

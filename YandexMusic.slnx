@@ -7,6 +7,6 @@
     <Project Path="tests/YandexMusic.Tests/YandexMusic.Tests.csproj" />
   </Folder>
   <Folder Name="/samples/">
-    <Project Path="samples/YandexMusic.Cli/YandexMusic.Cli.csproj" />
+    <Project Path="samples/YandexMusic.Player/YandexMusic.Player.csproj" />
   </Folder>
 </Solution>

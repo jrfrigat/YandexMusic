@@ -54,6 +54,14 @@ internal sealed class AuthenticationClient : IAuthenticationClient
     }
 
     /// <inheritdoc />
+    public Task SignInWithPasswordAsync(string login, string password, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(login);
+        ArgumentException.ThrowIfNullOrWhiteSpace(password);
+        return _passport.SignInWithPasswordAsync(login, password, cancellationToken);
+    }
+
+    /// <inheritdoc />
     public Task<DeviceCode> RequestDeviceCodeAsync(DeviceAuthOptions? options = null, CancellationToken cancellationToken = default)
         => _device.RequestDeviceCodeAsync(options, cancellationToken);
 

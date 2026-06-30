@@ -139,20 +139,31 @@ Full guides and API reference: **<https://jrfrigat.github.io/YandexMusic/>**
 ├── tests/
 │   └── YandexMusic.Tests/               # unit + (token-gated) integration tests (xUnit)
 ├── samples/
-│   └── YandexMusic.Cli/                 # console demo (tracks, albums, artists, search, …)
+│   └── YandexMusic.Player/              # interactive terminal music player (TUI demo)
 ├── docs/                                # documentation site (DocFX)
 └── .github/workflows/                   # CI, release (NuGet), docs publishing
 ```
 
-Try the sample against the live catalogue (no token needed for public data):
+### Sample: terminal music player
+
+[`samples/YandexMusic.Player`](samples/YandexMusic.Player) is a full interactive TUI built on the
+library — search, browse your albums, and a live "now playing" view with an animated equalizer,
+a real-time progress bar and keyboard volume/transport controls.
 
 ```bash
-dotnet run --project samples/YandexMusic.Cli -- search "Queen"
-dotnet run --project samples/YandexMusic.Cli -- album 3
-dotnet run --project samples/YandexMusic.Cli -- artist 79215
-# token-gated commands (link, liked):
-YANDEX_MUSIC_TOKEN=<token> dotnet run --project samples/YandexMusic.Cli -- liked
+dotnet run --project samples/YandexMusic.Player
 ```
+
+- **Sign in** with an OAuth token, the device-code flow, a QR code, or login + password; the session
+  is cached so the next run starts already signed in.
+- **Playback** uses [NAudio](https://github.com/naudio/NAudio) on Windows; everywhere else (and as a
+  fallback) it runs a silent simulation that drives the same UI. The audio backend is a single
+  [`IAudioPlayer`](samples/YandexMusic.Player/Playback/IAudioPlayer.cs) seam, so swapping in a
+  cross-platform backend changes one line.
+- **Controls** (now-playing view): `space` play/pause · `←/→` prev/next · `↑/↓` volume · `s` stop ·
+  `q` back.
+
+See the sample's [README](samples/YandexMusic.Player/README.md) for the architecture.
 
 ## Build and test
 

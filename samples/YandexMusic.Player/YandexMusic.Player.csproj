@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <!--
+      Cross-platform by default. On Windows we target a Windows TFM so NAudio's Windows audio
+      assemblies (WaveOut, Media Foundation) resolve and real playback is compiled in (guarded by
+      the WINDOWS symbol). On Linux/macOS the app still builds and runs with the simulated player,
+      so CI stays green everywhere.
+    -->
+    <TargetFramework Condition="'$(OS)' == 'Windows_NT'">net10.0-windows10.0.19041.0</TargetFramework>
+    <TargetFramework Condition="'$(OS)' != 'Windows_NT'">net10.0</TargetFramework>
+    <RootNamespace>YandexMusic.Player</RootNamespace>
+    <AssemblyName>yandexmusic-player</AssemblyName>
+    <!-- A demonstration app, not a shipped package. -->
+    <IsPackable>false</IsPackable>
+    <!-- The sample interops with native audio (NAudio); AOT/trim analysis is not meaningful here. -->
+    <IsAotCompatible>false</IsAotCompatible>
+    <NoWarn>$(NoWarn);CA1031;CA1303;CA2007;CA1416</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Spectre.Console" />
+    <PackageReference Include="QRCoder" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+  </ItemGroup>
+
+  <!-- Real audio backend — Windows only. -->
+  <ItemGroup Condition="'$(OS)' == 'Windows_NT'">
+    <PackageReference Include="NAudio" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\YandexMusic\YandexMusic.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -142,6 +142,92 @@ internal sealed partial class PassportAuthenticator
         return true;
     }
 
+    /// <summary>Signs in with a login and password via the Yandex Passport multi-step flow, then exchanges the session for a token.</summary>
+    /// <param name="login">The account login (email, phone or username).</param>
+    /// <param name="password">The account password.</param>
+    /// <param name="cancellationToken">A token to cancel the request.</param>
+    /// <exception cref="YandexMusicAuthenticationException">The login/password was rejected or the flow needs a captcha/2FA.</exception>
+    public async Task SignInWithPasswordAsync(string login, string password, CancellationToken cancellationToken)
+    {
+        using var http = CreateHttpClient();
+
+        var page = await http.GetStringAsync("https://passport.yandex.ru/auth", cancellationToken).ConfigureAwait(false);
+        var csrf = CsrfTokenRegex().Match(page) is { Success: true } m1 ? m1.Groups[1].Value : null;
+        var processUuid = ProcessUuidRegex().Match(page) is { Success: true } m2 ? m2.Groups[1].Value : null;
+        if (string.IsNullOrEmpty(csrf) || string.IsNullOrEmpty(processUuid))
+        {
+            throw new YandexMusicAuthenticationException("Could not initialize a Yandex Passport sign-in session.");
+        }
+
+        // Step 1 — submit the login to obtain a track id.
+        using var startForm = new FormUrlEncodedContent(new Dictionary<string, string>
+        {
+            ["csrf_token"] = csrf,
+            ["login"] = login,
+            ["process_uuid"] = processUuid,
+        });
+        using var startResponse = await http
+            .PostAsync("https://passport.yandex.ru/registration-validations/auth/multi_step/start", startForm, cancellationToken)
+            .ConfigureAwait(false);
+        var startJson = await startResponse.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+
+        string? trackId;
+        string sessionCsrf;
+        using (var document = JsonDocument.Parse(startJson))
+        {
+            var root = document.RootElement;
+            if (!IsStatusOk(root))
+            {
+                throw new YandexMusicAuthenticationException($"The login was rejected by Yandex Passport. {DescribePassportError(root)}");
+            }
+
+            trackId = root.TryGetProperty("track_id", out var t) ? t.GetString() : null;
+            sessionCsrf = root.TryGetProperty("csrf_token", out var c) ? c.GetString() ?? csrf : csrf;
+        }
+
+        if (string.IsNullOrEmpty(trackId))
+        {
+            throw new YandexMusicAuthenticationException("Yandex Passport did not return a sign-in track id.");
+        }
+
+        // Step 2 — submit the password against that track.
+        using var passwordForm = new FormUrlEncodedContent(new Dictionary<string, string>
+        {
+            ["csrf_token"] = sessionCsrf,
+            ["track_id"] = trackId,
+            ["password"] = password,
+            ["retpath"] = "https://passport.yandex.ru/profile",
+        });
+        using var passwordResponse = await http
+            .PostAsync("https://passport.yandex.ru/registration-validations/auth/multi_step/commit_password", passwordForm, cancellationToken)
+            .ConfigureAwait(false);
+        var passwordJson = await passwordResponse.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+
+        using (var document = JsonDocument.Parse(passwordJson))
+        {
+            if (!IsStatusOk(document.RootElement))
+            {
+                throw new YandexMusicAuthenticationException(
+                    $"Password sign-in did not complete (a captcha or 2FA may be required). {DescribePassportError(document.RootElement)}");
+            }
+        }
+
+        await ExchangeCookiesForTokenAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    private static bool IsStatusOk(JsonElement root)
+        => root.TryGetProperty("status", out var status)
+            && string.Equals(status.GetString(), "ok", StringComparison.OrdinalIgnoreCase);
+
+    private static string DescribePassportError(JsonElement root)
+    {
+        var state = root.TryGetProperty("state", out var s) ? s.GetString() : null;
+        var errors = root.TryGetProperty("errors", out var e) && e.ValueKind == JsonValueKind.Array && e.GetArrayLength() > 0
+            ? e[0].GetString()
+            : null;
+        return $"(state: {state ?? "?"}, error: {errors ?? "?"})";
+    }
+
     /// <summary>Extracts the <c>access_token</c> from an OAuth implicit-flow redirect URL fragment.</summary>
     /// <param name="redirectLocation">The <c>Location</c> header of the OAuth redirect.</param>
     /// <returns>The access token, or <see langword="null"/> if the URL does not contain one.</returns>
