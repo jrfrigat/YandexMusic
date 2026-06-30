@@ -20,3 +20,14 @@ public sealed record AlbumView(string Id, string Title, string Artist, int? Year
 /// <param name="Album">The album summary.</param>
 /// <param name="Tracks">The album's tracks, in order.</param>
 public sealed record AlbumDetail(AlbumView Album, IReadOnlyList<TrackView> Tracks);
+
+/// <summary>A playlist summary as the UI needs it.</summary>
+/// <param name="Id">The playlist kind (unique per owner), used to fetch it.</param>
+/// <param name="Title">The playlist title.</param>
+/// <param name="TrackCount">The number of tracks.</param>
+public sealed record PlaylistView(string Id, string Title, int TrackCount);
+
+/// <summary>A playlist together with its tracklist.</summary>
+/// <param name="Playlist">The playlist summary.</param>
+/// <param name="Tracks">The playlist's tracks, in order.</param>
+public sealed record PlaylistDetail(PlaylistView Playlist, IReadOnlyList<TrackView> Tracks);

@@ -46,9 +46,12 @@ services.AddSingleton<IAudioPlayer>(_ =>
 services.AddSingleton<PlaybackController>();
 
 // Screens.
+services.AddSingleton<MainMenuScreen>();
 services.AddSingleton<SearchScreen>();
 services.AddSingleton<AlbumScreen>();
 services.AddSingleton<AlbumsScreen>();
+services.AddSingleton<PlaylistScreen>();
+services.AddSingleton<PlaylistsScreen>();
 services.AddSingleton<NowPlayingScreen>();
 services.AddSingleton<PlayerApp>();
 

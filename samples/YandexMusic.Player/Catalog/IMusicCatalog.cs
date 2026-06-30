@@ -24,6 +24,17 @@ public interface IMusicCatalog
     /// <returns>The album and its tracks, or <see langword="null"/> when not found.</returns>
     Task<AlbumDetail?> GetAlbumAsync(string albumId, CancellationToken cancellationToken = default);
 
+    /// <summary>Gets the signed-in user's own playlists.</summary>
+    /// <param name="cancellationToken">A token to cancel the request.</param>
+    /// <returns>The user's playlists.</returns>
+    Task<IReadOnlyList<PlaylistView>> GetMyPlaylistsAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>Gets one of the user's playlists together with its tracklist.</summary>
+    /// <param name="playlistId">The playlist kind, as returned in <see cref="PlaylistView.Id"/>.</param>
+    /// <param name="cancellationToken">A token to cancel the request.</param>
+    /// <returns>The playlist and its tracks, or <see langword="null"/> when not found.</returns>
+    Task<PlaylistDetail?> GetPlaylistAsync(string playlistId, CancellationToken cancellationToken = default);
+
     /// <summary>Resolves a direct media URL for a track, when one is available.</summary>
     /// <param name="trackId">The track identifier.</param>
     /// <param name="cancellationToken">A token to cancel the request.</param>

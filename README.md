@@ -147,8 +147,8 @@ Full guides and API reference: **<https://jrfrigat.github.io/YandexMusic/>**
 ### Sample: terminal music player
 
 [`samples/YandexMusic.Player`](samples/YandexMusic.Player) is a full interactive TUI built on the
-library — search, browse your albums, and a live "now playing" view with an animated equalizer,
-a real-time progress bar and keyboard volume/transport controls.
+library — search, browse your albums and playlists, and a live "now playing" view with an animated
+equalizer, a real-time progress bar and keyboard volume/transport controls.
 
 ```bash
 dotnet run --project samples/YandexMusic.Player
@@ -160,6 +160,8 @@ dotnet run --project samples/YandexMusic.Player
   fallback) it runs a silent simulation that drives the same UI. The audio backend is a single
   [`IAudioPlayer`](samples/YandexMusic.Player/Playback/IAudioPlayer.cs) seam, so swapping in a
   cross-platform backend changes one line.
+- **Main menu** is cursor-driven with a hotkey bar along the bottom — single-key shortcuts jump
+  straight to a section (`s` search · `a` albums · `l` playlists · `p` open player · `q` quit).
 - **Controls** (now-playing view): `space` play/pause · `←/→` prev/next · `↑/↓` volume · `s` stop ·
   `q` back.
 

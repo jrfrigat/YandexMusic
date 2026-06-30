@@ -14,18 +14,14 @@ namespace YandexMusic.Player;
 /// </summary>
 public sealed class PlayerApp
 {
-    private const string Search = "Search tracks";
-    private const string MyAlbums = "My albums";
-    private const string NowPlaying = "Now playing";
-    private const string SignOut = "Sign out";
-    private const string Quit = "Quit";
-
     private readonly IYandexMusicClient _client;
     private readonly AuthService _auth;
     private readonly PlaybackController _controller;
     private readonly IMusicCatalog _catalog;
+    private readonly MainMenuScreen _menu;
     private readonly SearchScreen _search;
     private readonly AlbumsScreen _albums;
+    private readonly PlaylistsScreen _playlists;
     private readonly NowPlayingScreen _nowPlaying;
 
     /// <summary>Creates the application.</summary>
@@ -34,16 +30,20 @@ public sealed class PlayerApp
         AuthService auth,
         PlaybackController controller,
         IMusicCatalog catalog,
+        MainMenuScreen menu,
         SearchScreen search,
         AlbumsScreen albums,
+        PlaylistsScreen playlists,
         NowPlayingScreen nowPlaying)
     {
         _client = client;
         _auth = auth;
         _controller = controller;
         _catalog = catalog;
+        _menu = menu;
         _search = search;
         _albums = albums;
+        _playlists = playlists;
         _nowPlaying = nowPlaying;
     }
 
@@ -61,25 +61,22 @@ public sealed class PlayerApp
 
         while (!cancellationToken.IsCancellationRequested)
         {
-            var hasTrack = _controller.Current is not null;
-            var choices = hasTrack
-                ? new[] { Search, MyAlbums, NowPlaying, SignOut, Quit }
-                : [Search, MyAlbums, SignOut, Quit];
-
-            var action = AnsiConsole.Prompt(new SelectionPrompt<string>().Title("[yellow]Menu[/]").AddChoices(choices));
-
+            var action = await _menu.RunAsync(cancellationToken).ConfigureAwait(false);
             switch (action)
             {
-                case Search:
+                case MainMenuAction.Search:
                     await PlayAndShowAsync(await _search.RunAsync(cancellationToken).ConfigureAwait(false), cancellationToken).ConfigureAwait(false);
                     break;
-                case MyAlbums:
+                case MainMenuAction.Albums:
                     await PlayAndShowAsync(await _albums.RunAsync(cancellationToken).ConfigureAwait(false), cancellationToken).ConfigureAwait(false);
                     break;
-                case NowPlaying:
+                case MainMenuAction.Playlists:
+                    await PlayAndShowAsync(await _playlists.RunAsync(cancellationToken).ConfigureAwait(false), cancellationToken).ConfigureAwait(false);
+                    break;
+                case MainMenuAction.NowPlaying:
                     await _nowPlaying.RunAsync(cancellationToken).ConfigureAwait(false);
                     break;
-                case SignOut:
+                case MainMenuAction.SignOut:
                     _auth.SignOut(_client);
                     if (!await _auth.EnsureSignedInAsync(_client, cancellationToken).ConfigureAwait(false))
                     {
@@ -87,7 +84,7 @@ public sealed class PlayerApp
                     }
 
                     break;
-                case Quit:
+                case MainMenuAction.Quit:
                     return;
             }
         }
