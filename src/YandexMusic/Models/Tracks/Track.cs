@@ -99,10 +99,15 @@ public sealed class LyricsInfo
 /// <summary>A track in the Yandex Music catalogue.</summary>
 public sealed class Track
 {
-    /// <summary>The track identifier (a string such as <c>"4"</c>).</summary>
+    /// <summary>
+    /// The track identifier (a string such as <c>"4"</c>). The API may send it as a number — for
+    /// example in search results — so it is normalized to a string.
+    /// </summary>
+    [JsonConverter(typeof(FlexibleStringConverter))]
     public string Id { get; init; } = string.Empty;
 
     /// <summary>The canonical track identifier, which may differ from <see cref="Id"/> for aliases.</summary>
+    [JsonConverter(typeof(FlexibleStringConverter))]
     public string? RealId { get; init; }
 
     /// <summary>The track title.</summary>

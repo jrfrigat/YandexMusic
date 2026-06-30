@@ -138,8 +138,20 @@ services.AddYandexMusic(options =>
 │   └── YandexMusic.DependencyInjection/ # интеграция AddYandexMusic()
 ├── tests/
 │   └── YandexMusic.Tests/               # модульные + (по токену) интеграционные тесты (xUnit)
+├── samples/
+│   └── YandexMusic.Cli/                 # консольное демо (треки, альбомы, исполнители, поиск, …)
 ├── docs/                                # сайт документации (DocFX)
 └── .github/workflows/                   # CI, релиз (NuGet), публикация документации
+```
+
+Запустите демо на живом каталоге (для публичных данных токен не нужен):
+
+```bash
+dotnet run --project samples/YandexMusic.Cli -- search "Queen"
+dotnet run --project samples/YandexMusic.Cli -- album 3
+dotnet run --project samples/YandexMusic.Cli -- artist 79215
+# команды, требующие токен (link, liked):
+YANDEX_MUSIC_TOKEN=<token> dotnet run --project samples/YandexMusic.Cli -- liked
 ```
 
 ## Сборка и тесты

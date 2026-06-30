@@ -29,7 +29,7 @@ public sealed class PresavesTests
 
         Assert.NotNull(presaves.ReleasedAlbums);
         Assert.Equal(2, presaves.ReleasedAlbums!.Count);
-        Assert.Equal(3, presaves.ReleasedAlbums![1].Id);
+        Assert.Equal("3", presaves.ReleasedAlbums![1].Id);
     }
 
     [Fact]

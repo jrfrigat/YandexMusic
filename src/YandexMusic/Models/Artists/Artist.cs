@@ -1,3 +1,6 @@
+using System.Text.Json.Serialization;
+using YandexMusic.Serialization;
+
 namespace YandexMusic.Models.Artists;
 
 /// <summary>Aggregate counts describing an artist's catalogue.</summary>
@@ -50,7 +53,8 @@ public sealed class ArtistLink
 public sealed class Artist
 {
     /// <summary>The artist identifier.</summary>
-    public long Id { get; init; }
+    [JsonConverter(typeof(FlexibleStringConverter))]
+    public string Id { get; init; } = string.Empty;
 
     /// <summary>The artist name.</summary>
     public string Name { get; init; } = string.Empty;

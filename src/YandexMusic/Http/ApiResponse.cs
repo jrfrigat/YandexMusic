@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using YandexMusic.Serialization;
 
 namespace YandexMusic.Http;
 
@@ -38,5 +39,6 @@ internal sealed class InvocationInfo
 
     /// <summary>The server-side execution duration, in milliseconds.</summary>
     [JsonPropertyName("exec-duration-millis")]
+    [JsonConverter(typeof(FlexibleInt64Converter))]
     public long? ExecDurationMillis { get; init; }
 }

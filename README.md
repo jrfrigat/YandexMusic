@@ -138,8 +138,20 @@ Full guides and API reference: **<https://jrfrigat.github.io/YandexMusic/>**
 │   └── YandexMusic.DependencyInjection/ # AddYandexMusic() integration
 ├── tests/
 │   └── YandexMusic.Tests/               # unit + (token-gated) integration tests (xUnit)
+├── samples/
+│   └── YandexMusic.Cli/                 # console demo (tracks, albums, artists, search, …)
 ├── docs/                                # documentation site (DocFX)
 └── .github/workflows/                   # CI, release (NuGet), docs publishing
+```
+
+Try the sample against the live catalogue (no token needed for public data):
+
+```bash
+dotnet run --project samples/YandexMusic.Cli -- search "Queen"
+dotnet run --project samples/YandexMusic.Cli -- album 3
+dotnet run --project samples/YandexMusic.Cli -- artist 79215
+# token-gated commands (link, liked):
+YANDEX_MUSIC_TOKEN=<token> dotnet run --project samples/YandexMusic.Cli -- liked
 ```
 
 ## Build and test

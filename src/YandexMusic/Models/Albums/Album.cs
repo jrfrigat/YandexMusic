@@ -38,8 +38,9 @@ public sealed class TrackPosition
 /// </summary>
 public sealed class Album
 {
-    /// <summary>The album identifier.</summary>
-    public long Id { get; init; }
+    /// <summary>The album identifier. The API may send it as a number or a string, so it is normalized to a string.</summary>
+    [JsonConverter(typeof(FlexibleStringConverter))]
+    public string Id { get; init; } = string.Empty;
 
     /// <summary>The album title.</summary>
     public string Title { get; init; } = string.Empty;
@@ -78,6 +79,7 @@ public sealed class Album
     public string? MetaTagId { get; init; }
 
     /// <summary>The record labels the album was released under.</summary>
+    [JsonConverter(typeof(LabelListConverter))]
     public IReadOnlyList<Label>? Labels { get; init; }
 
     /// <summary>Whether the album has a trailer.</summary>
