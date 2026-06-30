@@ -58,6 +58,46 @@ public sealed class LiveShapeRegressionTests
         Assert.Equal("9", Assert.Single(result.Artists!.Results).Id);
     }
 
+    [Theory]
+    [InlineData("0", 0)]          // integer
+    [InlineData("0.0", 0)]        // live account/status sends price.amount like this
+    [InlineData("169.50", 169.50)]
+    [InlineData("\"169\"", 169)]  // string form
+    [InlineData("\"abc\"", 0)]    // unparseable -> 0, never throws
+    [InlineData("null", 0)]
+    public void FlexibleDecimal_ReadsNumberOrString(string json, double expected)
+    {
+        var options = new JsonSerializerOptions();
+        options.Converters.Add(new FlexibleDecimalConverter());
+        Assert.Equal((decimal)expected, JsonSerializer.Deserialize<decimal>(json, options));
+    }
+
+    [Fact]
+    public void AccountStatus_DeserializesFloatPriceAmount()
+    {
+        // Regression: with a browser User-Agent, /account/status returns subscription price amounts as
+        // floating-point numbers ("amount": 0.0). A plain int property threw and rejected valid tokens.
+        const string json =
+            """
+            {
+              "result": {
+                "account": { "uid": 1, "login": "user" },
+                "subscription": {
+                  "autoRenewable": [
+                    { "product": { "productId": "p", "price": { "amount": 0.0, "currency": "no-information" } } }
+                  ]
+                }
+              }
+            }
+            """;
+
+        var status = JsonSerializer.Deserialize(json, YandexMusicJson.TypeInfo<ApiResponse<YandexMusic.Models.Account.AccountStatus>>())!.Result!;
+
+        var price = status.Subscription!.AutoRenewable![0].Product!.Price!;
+        Assert.Equal(0m, price.Amount);
+        Assert.Equal("no-information", price.Currency);
+    }
+
     [Fact]
     public void Album_Labels_StillReadObjectForm()
     {

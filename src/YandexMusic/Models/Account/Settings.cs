@@ -1,3 +1,6 @@
+using System.Text.Json.Serialization;
+using YandexMusic.Serialization;
+
 namespace YandexMusic.Models.Account;
 
 /// <summary>The subscription purchase offer and payment configuration for the signed-in account.</summary>
@@ -113,8 +116,9 @@ public sealed class Product
 /// <summary>A monetary amount in a given currency.</summary>
 public sealed class Price
 {
-    /// <summary>The amount in the currency's minor units convention used by the API.</summary>
-    public int Amount { get; init; }
+    /// <summary>The amount in the currency's units. The API may report this as an integer, a decimal or a string.</summary>
+    [JsonConverter(typeof(FlexibleDecimalConverter))]
+    public decimal Amount { get; init; }
 
     /// <summary>The ISO-4217 currency code.</summary>
     public string Currency { get; init; } = string.Empty;
