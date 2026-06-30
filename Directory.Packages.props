@@ -13,7 +13,22 @@
     <PackageVersion Include="MinVer" Version="7.0.0" />
   </ItemGroup>
 
-  <ItemGroup Label="Dependency Injection">
+  <!--
+    Framework-aligned Microsoft.Extensions.* packages: each target framework references the latest
+    version from its own major band, so a net8.0 consumer is never forced onto net10 assemblies.
+    (Restore evaluates these per TargetFramework.)
+  -->
+  <ItemGroup Label="Dependency Injection (net8.0)" Condition="'$(TargetFramework)' == 'net8.0'">
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="8.0.2" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="8.0.1" />
+    <PackageVersion Include="Microsoft.Extensions.Http" Version="8.0.1" />
+  </ItemGroup>
+  <ItemGroup Label="Dependency Injection (net9.0)" Condition="'$(TargetFramework)' == 'net9.0'">
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="9.0.17" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="9.0.17" />
+    <PackageVersion Include="Microsoft.Extensions.Http" Version="9.0.17" />
+  </ItemGroup>
+  <ItemGroup Label="Dependency Injection (net10.0)" Condition="'$(TargetFramework)' == 'net10.0'">
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.9" />
     <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.9" />
     <PackageVersion Include="Microsoft.Extensions.Http" Version="10.0.9" />
