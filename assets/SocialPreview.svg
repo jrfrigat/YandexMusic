@@ -1,0 +1,61 @@
+<svg width="1280" height="640" viewBox="0 0 1280 640" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="YandexMusic for .NET">
+  <title>YandexMusic for .NET</title>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0D1117"/>
+      <stop offset="1" stop-color="#161B22"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.28" cy="0.46" r="0.5">
+      <stop offset="0" stop-color="#FFCC00" stop-opacity="0.18"/>
+      <stop offset="1" stop-color="#FFCC00" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="badge" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#FFD83D"/>
+      <stop offset="1" stop-color="#FFC400"/>
+    </linearGradient>
+  </defs>
+  <!-- Background -->
+  <rect width="1280" height="640" fill="url(#bg)"/>
+  <rect width="1280" height="640" fill="url(#glow)"/>
+  <!-- Faint oversized bracket watermark on the right -->
+  <g fill="none" stroke="#FFFFFF" stroke-opacity="0.035" stroke-width="34" stroke-linecap="round" stroke-linejoin="miter">
+    <path d="M1010 150 L1150 320 L1010 490"/>
+  </g>
+  <!-- Top accent bar -->
+  <rect x="0" y="0" width="1280" height="6" fill="#FFCC00"/>
+  <!-- Icon badge (the project logo, scaled up) -->
+  <g transform="translate(104,178) scale(2.1875)">
+    <rect x="8" y="8" width="112" height="112" rx="30" fill="url(#badge)"/>
+    <g fill="none" stroke="#E10600" stroke-width="7" stroke-linecap="round" stroke-linejoin="miter">
+      <path d="M44 48 L28 64 L44 80"/>
+      <path d="M84 48 L100 64 L84 80"/>
+    </g>
+    <g fill="#E10600">
+      <rect x="63" y="47.5" width="5" height="26.5" rx="2.5"/>
+      <path d="M64.5 47.5 C78 48.5 79 62 72.5 67.5 C78 58 70 55 64.5 57.5 Z"/>
+      <ellipse cx="59" cy="74" rx="9.3" ry="6" transform="rotate(-18 59 74)"/>
+    </g>
+  </g>
+  <!-- Title -->
+  <text x="470" y="278" font-family="Segoe UI, Arial, sans-serif" font-size="88" font-weight="700" fill="#FFFFFF">YandexMusic</text>
+  <text x="470" y="372" font-family="Segoe UI, Arial, sans-serif" font-size="60" font-weight="700" fill="#FFCC00">for .NET</text>
+  <!-- Subtitle -->
+  <text x="472" y="432" font-family="Segoe UI, Arial, sans-serif" font-size="30" font-weight="400" fill="#9BA4B0">Unofficial async client for the Yandex Music API</text>
+  <!-- Feature chips -->
+  <g font-family="Segoe UI, Arial, sans-serif" font-size="26" font-weight="600">
+    <g>
+      <rect x="472" y="476" width="208" height="56" rx="28" fill="#21262D" stroke="#30363D" stroke-width="1.5"/>
+      <text x="576" y="513" fill="#E6EDF3" text-anchor="middle">.NET 8 · 9 · 10</text>
+    </g>
+    <g>
+      <rect x="696" y="476" width="150" height="56" rx="28" fill="#21262D" stroke="#30363D" stroke-width="1.5"/>
+      <text x="771" y="513" fill="#E6EDF3" text-anchor="middle">AOT-ready</text>
+    </g>
+    <g>
+      <rect x="862" y="476" width="262" height="56" rx="28" fill="#21262D" stroke="#30363D" stroke-width="1.5"/>
+      <text x="993" y="513" fill="#E6EDF3" text-anchor="middle">21 endpoint groups</text>
+    </g>
+  </g>
+  <!-- Footer -->
+  <text x="472" y="588" font-family="Consolas, monospace" font-size="24" fill="#6E7681">github.com/jrfrigat/YandexMusic · MIT</text>
+</svg>
