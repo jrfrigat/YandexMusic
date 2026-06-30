@@ -1,8 +1,12 @@
-name: Docs
+name: Docs (docfx -> Pages)
 
+# Builds the DocFX site (API reference generated from the XML docs + the markdown guides) and
+# publishes it to GitHub Pages at https://jrfrigat.github.io/YandexMusic/.
+#
+# One-time setup: Settings -> Pages -> Build and deployment -> Source: "GitHub Actions".
 on:
   push:
-    branches: [ master, main ]
+    branches: [ main ]
     paths:
       - 'docs/**'
       - 'src/**'
@@ -14,9 +18,10 @@ permissions:
   pages: write
   id-token: write
 
+# Never run two Pages deploys at once; let an in-progress run finish.
 concurrency:
   group: pages
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   build:
@@ -24,14 +29,19 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
         with:
           fetch-depth: 0
 
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v4
+      # docfx compiles the projects to read the public API; the libraries multi-target
+      # net8.0/net9.0/net10.0, so install all three SDKs.
+      - name: Setup .NET (8 / 9 / 10)
+        uses: actions/setup-dotnet@v5
         with:
-          dotnet-version: 10.0.x
+          dotnet-version: |
+            8.0.x
+            9.0.x
+            10.0.x
 
       - name: Install DocFX
         run: dotnet tool update -g docfx

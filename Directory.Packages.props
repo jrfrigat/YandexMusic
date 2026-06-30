@@ -9,6 +9,8 @@
   <ItemGroup>
     <!-- Build / packaging -->
     <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="8.0.0" />
+    <!-- Version is derived from the latest 'v*' git tag (see Directory.Build.props). -->
+    <PackageVersion Include="MinVer" Version="6.0.0" />
   </ItemGroup>
 
   <ItemGroup Label="Dependency Injection">
