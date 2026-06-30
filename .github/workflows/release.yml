@@ -41,13 +41,18 @@ jobs:
             9.0.x
             10.0.x
 
+      - name: Resolve version from tag
+        id: version
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          echo "value=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Publishing version $VERSION"
+
       - name: Restore
         run: dotnet restore YandexMusic.slnx
 
-      # MinVer derives the package version from the pushed tag (v0.1.0 -> 0.1.0); fetch-depth: 0 above
-      # gives it the tag + history. No manual version flag is needed.
       - name: Build (Release)
-        run: dotnet build YandexMusic.slnx -c Release --no-restore
+        run: dotnet build YandexMusic.slnx -c Release --no-restore -p:Version=${{ steps.version.outputs.value }}
 
       - name: Test
         run: dotnet test YandexMusic.slnx -c Release --no-build
@@ -56,7 +61,7 @@ jobs:
       # (the DI package declares a NuGet dependency on YandexMusic, so both ship together). Symbol
       # packages (.snupkg) are produced alongside via IncludeSymbols. tests are IsPackable=false.
       - name: Pack
-        run: dotnet pack YandexMusic.slnx -c Release --no-build -o artifacts
+        run: dotnet pack YandexMusic.slnx -c Release --no-build -p:Version=${{ steps.version.outputs.value }} -o artifacts
 
       # Trusted Publishing: exchange the GitHub OIDC token for a short-lived NuGet API key.
       - name: NuGet login (Trusted Publishing)
