@@ -21,8 +21,13 @@
   <PropertyGroup Condition="'$(IsPackable)' == 'true' and '$(IsTestProject)' != 'true'">
     <GenerateDocumentationFile>true</GenerateDocumentationFile>
     <WarningsAsErrors>$(WarningsAsErrors);CS1591</WarningsAsErrors>
-    <!-- Hold the shipping library to a zero-warning bar: every analyzer (CS/CA/IL) warning fails
-         the build. Kept off the test projects, which need more latitude. -->
+    <!-- Hold the shipping library to a zero-warning bar: every analyzer (CS/CA/IL) warning fails the build. -->
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <!-- Test code gets the same zero-warning bar once it earns it (CS1591/CA1707 are already relaxed
+       for tests/** in .editorconfig, so xUnit naming and missing docs stay non-issues here). -->
+  <PropertyGroup Condition="'$(IsTestProject)' == 'true'">
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
   </PropertyGroup>
 

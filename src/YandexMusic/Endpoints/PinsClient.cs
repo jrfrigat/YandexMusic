@@ -3,7 +3,6 @@ using System.Text;
 using System.Text.Json;
 using YandexMusic.Http;
 using YandexMusic.Models.Pins;
-using YandexMusic.Serialization;
 
 namespace YandexMusic.Endpoints;
 
@@ -86,8 +85,8 @@ internal sealed class PinsClient : IPinsClient
 
     private async Task<Pin?> PinAsync(string path, CancellationToken cancellationToken, params (string Key, string Value)[] fields)
     {
-        using var request = new HttpRequestMessage(HttpMethod.Put, path) { Content = CreateJsonBody(fields) };
-        return await SendForResultAsync<Pin>(request, cancellationToken).ConfigureAwait(false);
+        using var content = CreateJsonBody(fields);
+        return await _connection.PutAsync<Pin>(path, content, cancellationToken).ConfigureAwait(false);
     }
 
     private Task<bool> UnpinAsync(string path, (string Key, string Value) field, CancellationToken cancellationToken)
@@ -95,38 +94,9 @@ internal sealed class PinsClient : IPinsClient
 
     private async Task<bool> UnpinAsync(string path, CancellationToken cancellationToken, params (string Key, string Value)[] fields)
     {
-        using var request = new HttpRequestMessage(HttpMethod.Delete, path) { Content = CreateJsonBody(fields) };
-        var result = await SendForResultAsync<string>(request, cancellationToken).ConfigureAwait(false);
+        using var content = CreateJsonBody(fields);
+        var result = await _connection.DeleteAsync<string>(path, content, cancellationToken).ConfigureAwait(false);
         return string.Equals(result, "ok", StringComparison.OrdinalIgnoreCase);
-    }
-
-    private async Task<T?> SendForResultAsync<T>(HttpRequestMessage request, CancellationToken cancellationToken)
-    {
-        using var response = await _connection
-            .SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken)
-            .ConfigureAwait(false);
-
-        var stream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
-        await using (stream.ConfigureAwait(false))
-        {
-            try
-            {
-                var envelope = await JsonSerializer
-                    .DeserializeAsync(stream, YandexMusicJson.TypeInfo<ApiResponse<T>>(), cancellationToken)
-                    .ConfigureAwait(false);
-
-                if (envelope?.Error is { } error)
-                {
-                    throw new YandexMusicApiException(response.StatusCode, error, rawResponse: null);
-                }
-
-                return envelope is null ? default : envelope.Result;
-            }
-            catch (JsonException ex)
-            {
-                throw new YandexMusicSerializationException("Failed to deserialize the Yandex Music API response.", ex);
-            }
-        }
     }
 
     private static StringContent CreateJsonBody((string Key, string Value)[] fields)

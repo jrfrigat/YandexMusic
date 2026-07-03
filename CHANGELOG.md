@@ -8,6 +8,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Fixed
+- **Critical**: every `Pins` call (`PinAlbumAsync`, `UnpinAlbumAsync`, `PinArtistAsync`, `UnpinArtistAsync`,
+  `PinPlaylistAsync`, `UnpinPlaylistAsync`, `PinWaveAsync`, `UnpinWaveAsync`) threw at runtime on both
+  Windows and Linux. They built a relative-path request and sent it through the raw transport method,
+  which never resolves relative paths against the API host (no `HttpClient.BaseAddress` was ever set).
+  Routed through the same request pipeline as every other endpoint instead.
+- Absolute-URI detection in the request pipeline now requires an `http`/`https` scheme. On Linux, `Uri`
+  parsed a leading-slash relative path like `/users/1/playlists/2` as an absolute `file://` URI (Windows
+  parsed the same string as relative), so requests built that way failed with "The 'file' scheme is not
+  supported" outside Windows.
+- `Account.SetSettingsAsync(IReadOnlyDictionary<string, string>, ...)` disposed its request body before
+  the request finished sending, which could intermittently throw or send a truncated body under real
+  network latency.
+
+### Added
+- `YandexMusicClientOptions.ApiBaseUri` — override the API base address for a reverse proxy, a regional
+  mirror, or a local stub server in tests; defaults to the official host.
+- Opportunistic HTTP/2 (falls back to HTTP/1.1 transparently) on every `HttpClient` the library creates,
+  enabling connection multiplexing.
+- `AddYandexMusic(..., configureHttpClient)` overload and a public `HttpClientName` constant, so consumers
+  can attach a resilience handler, logging, or a custom primary handler to the pooled `IHttpClientFactory`
+  client without depending on an internal name.
+
+### Changed
+- `YandexMusic.DependencyInjection`: HTTP client options (timeout, headers, proxy, base address) now
+  resolve from the DI container consistently everywhere, instead of partly from a locally-captured copy —
+  fixes a split-brain where a pre-registered `YandexMusicClientOptions` silently lost its
+  proxy/timeout/headers configuration.
+- CI now builds and tests on both `ubuntu-latest` and `windows-latest` (previously Linux-only), so
+  OS-dependent regressions like the two fixes above are caught automatically.
+- The zero-warning build bar (`TreatWarningsAsErrors`) now also covers the test project.
+
+## [0.1.0] - 2026-06-30
+
 First public release of the original, clean-room implementation.
 
 ### Added
@@ -52,6 +86,40 @@ First public release of the original, clean-room implementation.
 проект следует [семантическому версионированию](https://semver.org/lang/ru/).
 
 ## [Не выпущено]
+
+### Исправлено
+- **Критично**: любой вызов `Pins` (`PinAlbumAsync`, `UnpinAlbumAsync`, `PinArtistAsync`, `UnpinArtistAsync`,
+  `PinPlaylistAsync`, `UnpinPlaylistAsync`, `PinWaveAsync`, `UnpinWaveAsync`) падал в рантайме и на Windows,
+  и на Linux. Эти методы строили запрос с относительным путём и отправляли его через низкоуровневый метод
+  транспорта, который не резолвит относительные пути против хоста API (у `HttpClient` никогда не был
+  выставлен `BaseAddress`). Теперь они идут через тот же конвейер запросов, что и все остальные эндпоинты.
+- Определение абсолютного URI в конвейере запросов теперь требует схему `http`/`https`. На Linux `Uri`
+  разбирал путь вида `/users/1/playlists/2` как абсолютный `file://`-URI (на Windows та же строка
+  считалась относительной), из-за чего такие запросы падали с ошибкой «схема 'file' не поддерживается»
+  вне Windows.
+- `Account.SetSettingsAsync(IReadOnlyDictionary<string, string>, ...)` освобождал тело запроса до
+  завершения его отправки, что могло изредка приводить к ошибке или обрезанному телу при реальной
+  сетевой задержке.
+
+### Добавлено
+- `YandexMusicClientOptions.ApiBaseUri` — переопределение базового адреса API для обратного прокси,
+  регионального зеркала или локального стаб-сервера в тестах; по умолчанию — официальный хост.
+- Оппортунистический HTTP/2 (с прозрачным откатом на HTTP/1.1) на каждом `HttpClient`, который создаёт
+  библиотека — включает мультиплексирование соединений.
+- Перегрузка `AddYandexMusic(..., configureHttpClient)` и публичная константа `HttpClientName` — теперь
+  можно подключить resilience-handler, логирование или свой primary handler к клиенту в пуле
+  `IHttpClientFactory`, не полагаясь на внутреннее имя.
+
+### Изменено
+- `YandexMusic.DependencyInjection`: настройки HTTP-клиента (таймаут, заголовки, прокси, базовый адрес)
+  теперь везде последовательно резолвятся из контейнера DI, а не частично из локально захваченной копии —
+  исправлен «раздвоенный» баг, при котором заранее зарегистрированный `YandexMusicClientOptions` незаметно
+  терял свои настройки прокси/таймаута/заголовков.
+- CI теперь собирает и тестирует и на `ubuntu-latest`, и на `windows-latest` (раньше — только на Linux),
+  так что подобные ОС-специфичные регрессии ловятся автоматически.
+- Планка нулевых предупреждений (`TreatWarningsAsErrors`) теперь распространяется и на тестовый проект.
+
+## [0.1.0] - 2026-06-30
 
 Первый публичный релиз оригинальной clean-room реализации.
 

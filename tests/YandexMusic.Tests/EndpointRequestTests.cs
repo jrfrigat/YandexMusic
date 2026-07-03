@@ -158,4 +158,43 @@ public sealed class EndpointRequestTests
 
         Assert.Equal("q1", Assert.Single(queues).Id);
     }
+
+    [Fact]
+    public async Task Pins_PinAlbum_SendsPutToPinAlbumPath()
+    {
+        // Regression: pin/unpin used to build a raw HttpRequestMessage with a relative path and send
+        // it through SendAsync, which never resolves against the API host — every call threw at
+        // runtime (no HttpClient.BaseAddress is configured). Routing through PutAsync/DeleteAsync
+        // fixes that; this test guards the HTTP verb and URL those calls must use.
+        var connection = new RecordingConnection { NextResult = new YandexMusic.Models.Pins.Pin() };
+        await new PinsClient(connection).PinAlbumAsync("42");
+
+        Assert.Equal(HttpMethod.Put, connection.Method);
+        Assert.Equal("/pin/album", connection.Url);
+        Assert.Contains("\"id\":\"42\"", connection.Body);
+    }
+
+    [Fact]
+    public async Task Pins_UnpinArtist_SendsDeleteToPinArtistPath()
+    {
+        var connection = new RecordingConnection { NextResult = "ok" };
+        var result = await new PinsClient(connection).UnpinArtistAsync("79215");
+
+        Assert.True(result);
+        Assert.Equal(HttpMethod.Delete, connection.Method);
+        Assert.Equal("/pin/artist", connection.Url);
+        Assert.Contains("\"id\":\"79215\"", connection.Body);
+    }
+
+    [Fact]
+    public async Task Pins_PinPlaylist_SendsUidAndKind()
+    {
+        var connection = new RecordingConnection { NextResult = new YandexMusic.Models.Pins.Pin() };
+        await new PinsClient(connection).PinPlaylistAsync("100", "3");
+
+        Assert.Equal(HttpMethod.Put, connection.Method);
+        Assert.Equal("/pin/playlist", connection.Url);
+        Assert.Contains("\"uid\":\"100\"", connection.Body);
+        Assert.Contains("\"kind\":\"3\"", connection.Body);
+    }
 }

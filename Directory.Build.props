@@ -13,12 +13,16 @@
     <AnalysisLevel>latest-recommended</AnalysisLevel>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
     <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
+    <!-- NU1900 means the NuGet audit service could not be reached (offline/air-gapped/proxy build) —
+         it reports a fetch failure, never an actual vulnerability, so it must never fail the build.
+         Real findings (a package with a known advisory) are NU1901-NU1904 and stay full errors. -->
+    <WarningsNotAsErrors>$(WarningsNotAsErrors);NU1900</WarningsNotAsErrors>
 
     <!-- Repository / authorship metadata (shared by all packable projects). -->
     <Authors>FrigaT</Authors>
     <Company>FrigaT</Company>
     <Product>YandexMusic</Product>
-    <Copyright>Copyright © FrigaT $([System.DateTime]::UtcNow.Year)</Copyright>
+    <Copyright>Copyright © FrigaT</Copyright>
     <PackageProjectUrl>https://github.com/jrfrigat/YandexMusic</PackageProjectUrl>
     <RepositoryUrl>https://github.com/jrfrigat/YandexMusic.git</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
@@ -26,7 +30,8 @@
     <PackageReadmeFile>README.md</PackageReadmeFile>
     <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
     <PackageTags>yandex;music;yandex-music;api;async;client;dotnet</PackageTags>
-    <PackageIcon>icon.png</PackageIcon>
+    <!-- PackageIcon itself is (re)declared in Directory.Build.targets, paired with the icon.png
+         pack item, so it only applies to actually-packable projects. -->
 
     <!-- Version is derived from git tags by MinVer: the latest 'vX.Y.Z' tag IS the package version;
          untagged builds get a 'preview' pre-release. CI needs full history/tags (fetch-depth: 0). -->

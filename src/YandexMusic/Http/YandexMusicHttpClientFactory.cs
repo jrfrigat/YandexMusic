@@ -35,11 +35,24 @@ internal static class YandexMusicHttpClientFactory
 
         var httpClient = new HttpClient(handler, disposeHandler: true)
         {
+            BaseAddress = options.ApiBaseUri,
             Timeout = options.Timeout,
         };
 
         ConfigureDefaultHeaders(httpClient, options);
+        ConfigureProtocolVersion(httpClient);
         return httpClient;
+    }
+
+    /// <summary>
+    /// Prefers HTTP/2 (connection multiplexing) while transparently falling back to HTTP/1.1 when the
+    /// server or an intermediary does not negotiate it. Applied to every client the library creates.
+    /// </summary>
+    /// <param name="httpClient">The client to configure.</param>
+    public static void ConfigureProtocolVersion(HttpClient httpClient)
+    {
+        httpClient.DefaultRequestVersion = HttpVersion.Version20;
+        httpClient.DefaultVersionPolicy = HttpVersionPolicy.RequestVersionOrLower;
     }
 
     /// <summary>

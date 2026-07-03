@@ -39,6 +39,22 @@ internal interface IYandexMusicConnection
     /// <returns>The deserialized result, or <see langword="null"/> when the API returns no result.</returns>
     Task<T?> PostAsync<T>(string relativeUrl, HttpContent? content, IReadOnlyDictionary<string, string>? headers, CancellationToken cancellationToken);
 
+    /// <summary>Sends a <c>PUT</c> request and returns the unwrapped <c>result</c> payload.</summary>
+    /// <typeparam name="T">The payload type.</typeparam>
+    /// <param name="relativeUrl">A path relative to the API host, or an absolute URL.</param>
+    /// <param name="content">The request body, or <see langword="null"/>.</param>
+    /// <param name="cancellationToken">A token to cancel the request.</param>
+    /// <returns>The deserialized result, or <see langword="null"/> when the API returns no result.</returns>
+    Task<T?> PutAsync<T>(string relativeUrl, HttpContent? content, CancellationToken cancellationToken);
+
+    /// <summary>Sends a <c>DELETE</c> request and returns the unwrapped <c>result</c> payload.</summary>
+    /// <typeparam name="T">The payload type.</typeparam>
+    /// <param name="relativeUrl">A path relative to the API host, or an absolute URL.</param>
+    /// <param name="content">The request body, or <see langword="null"/>.</param>
+    /// <param name="cancellationToken">A token to cancel the request.</param>
+    /// <returns>The deserialized result, or <see langword="null"/> when the API returns no result.</returns>
+    Task<T?> DeleteAsync<T>(string relativeUrl, HttpContent? content, CancellationToken cancellationToken);
+
     /// <summary>Sends a raw request and returns the response without unwrapping or disposing it.</summary>
     /// <param name="request">The request to send. Authentication headers are applied automatically.</param>
     /// <param name="completionOption">When the operation should complete.</param>

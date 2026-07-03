@@ -39,6 +39,14 @@ internal sealed class YandexMusicConnection : IYandexMusicConnection
         => SendForResultAsync<T>(HttpMethod.Post, relativeUrl, content, headers, cancellationToken);
 
     /// <inheritdoc />
+    public Task<T?> PutAsync<T>(string relativeUrl, HttpContent? content, CancellationToken cancellationToken)
+        => SendForResultAsync<T>(HttpMethod.Put, relativeUrl, content, headers: null, cancellationToken);
+
+    /// <inheritdoc />
+    public Task<T?> DeleteAsync<T>(string relativeUrl, HttpContent? content, CancellationToken cancellationToken)
+        => SendForResultAsync<T>(HttpMethod.Delete, relativeUrl, content, headers: null, cancellationToken);
+
+    /// <inheritdoc />
     public Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, HttpCompletionOption completionOption, CancellationToken cancellationToken)
     {
         ApplyAuthentication(request);
@@ -82,11 +90,16 @@ internal sealed class YandexMusicConnection : IYandexMusicConnection
 
     private HttpRequestMessage CreateRequest(HttpMethod method, string relativeUrl, HttpContent? content, IReadOnlyDictionary<string, string>? headers)
     {
-        // Resolve relative paths against the API host. An already-absolute URL (for example a signed
-        // media URL) is used as-is; building via Uri parsing avoids the fragile StartsWith("http") heuristic.
+        // Resolve relative paths against the client's configured base address (YandexMusicClientOptions.ApiBaseUri,
+        // or the API host by default). An already-absolute HTTP(S) URL (for example a signed media URL) is
+        // used as-is. Only http/https counts as absolute: on Unix a leading-slash path such as
+        // "/users/1/playlists/2" is parsed by Uri as an absolute file:// URI (on Windows it is relative),
+        // so an unqualified UriKind.Absolute check would send requests to file:// in Linux containers and
+        // throw "The 'file' scheme is not supported".
         var uri = Uri.TryCreate(relativeUrl, UriKind.Absolute, out var absolute)
+                  && (absolute.Scheme == Uri.UriSchemeHttp || absolute.Scheme == Uri.UriSchemeHttps)
             ? absolute
-            : new Uri(new Uri(YandexMusicHosts.Api), relativeUrl);
+            : new Uri(_httpClient.BaseAddress ?? new Uri(YandexMusicHosts.Api), relativeUrl);
 
         var request = new HttpRequestMessage(method, uri) { Content = content };
         ApplyAuthentication(request);

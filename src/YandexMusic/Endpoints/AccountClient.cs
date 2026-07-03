@@ -33,12 +33,12 @@ internal sealed class AccountClient : IAccountClient
     }
 
     /// <inheritdoc />
-    public Task<UserSettings?> SetSettingsAsync(IReadOnlyDictionary<string, string> data, CancellationToken cancellationToken = default)
+    public async Task<UserSettings?> SetSettingsAsync(IReadOnlyDictionary<string, string> data, CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(data);
 
         using var content = new FormUrlEncodedContent(data);
-        return _connection.PostAsync<UserSettings>("/account/settings", content, cancellationToken);
+        return await _connection.PostAsync<UserSettings>("/account/settings", content, cancellationToken).ConfigureAwait(false);
     }
 
     /// <inheritdoc />

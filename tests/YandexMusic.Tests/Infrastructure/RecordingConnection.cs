@@ -42,6 +42,18 @@ internal sealed class RecordingConnection : IYandexMusicConnection
         return Task.FromResult((T?)NextResult);
     }
 
+    public Task<T?> PutAsync<T>(string relativeUrl, HttpContent? content, CancellationToken cancellationToken)
+    {
+        Record(HttpMethod.Put, relativeUrl, headers: null, content);
+        return Task.FromResult((T?)NextResult);
+    }
+
+    public Task<T?> DeleteAsync<T>(string relativeUrl, HttpContent? content, CancellationToken cancellationToken)
+    {
+        Record(HttpMethod.Delete, relativeUrl, headers: null, content);
+        return Task.FromResult((T?)NextResult);
+    }
+
     public Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, HttpCompletionOption completionOption, CancellationToken cancellationToken)
         => throw new NotSupportedException("RecordingConnection does not support raw SendAsync.");
 

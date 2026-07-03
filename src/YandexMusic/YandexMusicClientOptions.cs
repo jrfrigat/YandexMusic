@@ -1,4 +1,5 @@
 using System.Net;
+using YandexMusic.Http;
 
 namespace YandexMusic;
 
@@ -8,6 +9,13 @@ namespace YandexMusic;
 /// </summary>
 public sealed class YandexMusicClientOptions
 {
+    /// <summary>
+    /// The base address requests are resolved against. Defaults to the official Yandex Music API host;
+    /// override it to route traffic through a reverse proxy, a regional mirror, or a local stub server
+    /// for offline testing.
+    /// </summary>
+    public Uri ApiBaseUri { get; set; } = new(YandexMusicHosts.Api);
+
     /// <summary>
     /// The per-request timeout. The default is 30 seconds. Use <see cref="System.Threading.Timeout.InfiniteTimeSpan"/>
     /// to disable the timeout.

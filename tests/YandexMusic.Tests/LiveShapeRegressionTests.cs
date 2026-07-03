@@ -13,17 +13,24 @@ namespace YandexMusic.Tests;
 /// </summary>
 public sealed class LiveShapeRegressionTests
 {
+    // Shared per-converter options so each test run reuses one instance (CA1869).
+    private static readonly JsonSerializerOptions Int64Options = CreateOptions(new FlexibleInt64Converter());
+    private static readonly JsonSerializerOptions DecimalOptions = CreateOptions(new FlexibleDecimalConverter());
+
+    private static JsonSerializerOptions CreateOptions(System.Text.Json.Serialization.JsonConverter converter)
+    {
+        var options = new JsonSerializerOptions();
+        options.Converters.Add(converter);
+        return options;
+    }
+
     [Theory]
     [InlineData("166", 166L)]      // JSON number
     [InlineData("\"166\"", 166L)]  // JSON string (search sends exec-duration-millis like this)
     [InlineData("\"abc\"", null)]  // unparseable string -> null, never throws
     [InlineData("null", null)]
     public void FlexibleInt64_ReadsStringOrNumber(string json, long? expected)
-    {
-        var options = new JsonSerializerOptions();
-        options.Converters.Add(new FlexibleInt64Converter());
-        Assert.Equal(expected, JsonSerializer.Deserialize<long?>(json, options));
-    }
+        => Assert.Equal(expected, JsonSerializer.Deserialize<long?>(json, Int64Options));
 
     [Fact]
     public void Search_DeserializesLiveShapes_NumericIdsStringLabelsStringDuration()
@@ -66,11 +73,7 @@ public sealed class LiveShapeRegressionTests
     [InlineData("\"abc\"", 0)]    // unparseable -> 0, never throws
     [InlineData("null", 0)]
     public void FlexibleDecimal_ReadsNumberOrString(string json, double expected)
-    {
-        var options = new JsonSerializerOptions();
-        options.Converters.Add(new FlexibleDecimalConverter());
-        Assert.Equal((decimal)expected, JsonSerializer.Deserialize<decimal>(json, options));
-    }
+        => Assert.Equal((decimal)expected, JsonSerializer.Deserialize<decimal>(json, DecimalOptions));
 
     [Fact]
     public void AccountStatus_DeserializesFloatPriceAmount()

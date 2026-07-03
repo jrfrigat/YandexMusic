@@ -69,23 +69,6 @@ dotnet_diagnostic.IDE0161.severity = suggestion
 # correct null-flow narrowing at explicit guards.
 dotnet_diagnostic.CA1513.severity = suggestion
 
-[src/YandexMusic.API/Models/**.cs]
-# DTOs are populated by System.Text.Json. Non-nullable members are intentionally
-# left without initializers; the deserializer fills them (or they are genuinely absent).
-dotnet_diagnostic.CS8618.severity = none
-
-[src/YandexMusic.API/Requests/{Account,Passport}/**.cs]
-# Эти построители выполняются только внутри auth-flow, где токены сессии (AuthToken/HeaderToken)
-# гарантированно инициализированы вызывающим кодом. Компилятор не может это доказать.
-dotnet_diagnostic.CS8602.severity = suggestion
-dotnet_diagnostic.CS8604.severity = suggestion
-dotnet_diagnostic.CS8601.severity = suggestion
-
-[src/YandexMusic.API/API/{YAuthAPI,YPassportAPI}.cs]
-dotnet_diagnostic.CS8602.severity = suggestion
-dotnet_diagnostic.CS8604.severity = suggestion
-dotnet_diagnostic.CS8601.severity = suggestion
-
 [tests/**.cs]
 dotnet_diagnostic.CS1591.severity = none
 dotnet_diagnostic.CA1707.severity = none
