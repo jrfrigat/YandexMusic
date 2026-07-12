@@ -36,7 +36,7 @@
   </ItemGroup>
 
   <ItemGroup Label="Sample player (TUI)">
-    <PackageVersion Include="Spectre.Console" Version="0.57.1" />
+    <PackageVersion Include="Spectre.Console" Version="0.57.2" />
     <PackageVersion Include="QRCoder" Version="1.8.0" />
     <PackageVersion Include="NAudio" Version="3.0.0-preview.15" />
   </ItemGroup>
