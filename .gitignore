@@ -378,6 +378,5 @@ artifacts/
 
 # Local AI tooling (not part of the library)
 .claude/
-.claude-flow/
 .mcp.json
 CLAUDE.md
