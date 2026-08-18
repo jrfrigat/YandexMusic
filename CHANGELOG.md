@@ -9,6 +9,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Fixed
+- `Authentication.PollDeviceTokenAsync` now signs the client in when the user confirms the device
+  code, as its documentation always promised. Previously it returned the token without applying it,
+  leaving `IsAuthenticated` false and every subsequent call silently unauthenticated.
+- Sample player: launching offline (or pressing Ctrl+C during the startup session check) no longer
+  deletes the saved session. The stored session is now dropped only when the API itself refuses it;
+  network errors keep it.
+- Sample player: the stored session file (`session.json`, token and cookies) is now written
+  atomically and restricted to the owner (`0600`, and a `0700` directory) on Linux/macOS instead of
+  the default world-readable mode.
 - **Critical**: every `Pins` call (`PinAlbumAsync`, `UnpinAlbumAsync`, `PinArtistAsync`, `UnpinArtistAsync`,
   `PinPlaylistAsync`, `UnpinPlaylistAsync`, `PinWaveAsync`, `UnpinWaveAsync`) threw at runtime on both
   Windows and Linux. They built a relative-path request and sent it through the raw transport method,

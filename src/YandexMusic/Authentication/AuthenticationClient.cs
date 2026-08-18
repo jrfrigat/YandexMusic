@@ -66,10 +66,16 @@ internal sealed class AuthenticationClient : IAuthenticationClient
         => _device.RequestDeviceCodeAsync(options, cancellationToken);
 
     /// <inheritdoc />
-    public Task<OAuthToken?> PollDeviceTokenAsync(string deviceCode, DeviceAuthOptions? options = null, CancellationToken cancellationToken = default)
+    public async Task<OAuthToken?> PollDeviceTokenAsync(string deviceCode, DeviceAuthOptions? options = null, CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(deviceCode);
-        return DeviceAuthenticator.PollDeviceTokenAsync(deviceCode, options, cancellationToken);
+        var token = await DeviceAuthenticator.PollDeviceTokenAsync(deviceCode, options, cancellationToken).ConfigureAwait(false);
+        if (token is not null)
+        {
+            _session.SetAccessToken(token.AccessToken);
+        }
+
+        return token;
     }
 
     /// <inheritdoc />
