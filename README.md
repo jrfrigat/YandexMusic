@@ -20,6 +20,7 @@ Unofficial asynchronous library for the Yandex Music API. Runs on **.NET 8, .NET
 - ✅ Fully asynchronous API with `CancellationToken` support on every call
 - ✅ **Full catalogue coverage** — tracks (metadata, **direct download/stream link**, lyrics, full-info, similar, trailer), search (+ autocomplete), albums, artists, playlists, genres, labels, clips, credits, disclaimers, concerts, meta-tag pages
 - ✅ **Personalised endpoints** — account & settings, library likes/dislikes (read & write), playlist editing, radio (rotor) stations, landing & feed, cross-device queues, pins, pre-saves, listening history
+- ✅ **Ynison real-time** — subscribe to the account's playback state across all devices and remote-control it (pause, tracks, volume) over the same websocket protocol the official clients use
 - ✅ **Multiple sign-in flows** — OAuth token, the official OAuth **device-code** flow, and best-effort cookie, QR or login + password; all over a serializable session you can persist and restore
 - ✅ `System.Text.Json` source generation — allocation-conscious and trim/AOT-friendly (`IsAotCompatible`)
 - ✅ Typed exceptions, first-class dependency-injection integration, full XML documentation
@@ -85,6 +86,24 @@ await using var client = new YandexMusicClient();
 var token = await client.Authentication.SignInWithDeviceFlowAsync(code =>
     Console.WriteLine($"Open {code.VerificationUrl} and enter code {code.UserCode}"));
 // The client is now authenticated; persist token.AccessToken if you want to reuse it.
+```
+
+### Control playback in real time (Ynison)
+
+Ynison is what synchronizes the web player, the phone apps and smart speakers. The client subscribes
+to the account's playback state and can control any device of the session:
+
+```csharp
+await using var ynison = client.CreateYnisonClient();
+var run = Task.Run(() => ynison.RunAsync());
+
+var state = await ynison.WaitForStateAsync(TimeSpan.FromSeconds(10));
+Console.WriteLine(state.Devices.Count + " device(s) in the session");
+ynison.StateReceived += (_, s) => Console.WriteLine(s.PlayerState?.PlayerQueue?.PlayableList[
+    Math.Max(0, s.PlayerState.PlayerQueue.CurrentPlayableIndex)]?.Title);
+
+await ynison.SetPausedAsync(paused: false);   // remote control
+await ynison.NextTrackAsync();
 ```
 
 Every method accepts a `CancellationToken`:

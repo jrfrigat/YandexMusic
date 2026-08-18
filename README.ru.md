@@ -20,6 +20,7 @@
 - ✅ Полностью асинхронный API с поддержкой `CancellationToken` во всех методах
 - ✅ **Полное покрытие каталога** — треки (метаданные, **прямая ссылка на скачивание/стрим**, тексты, full-info, похожие, трейлер), поиск (+ подсказки), альбомы, исполнители, плейлисты, жанры, лейблы, клипы, кредиты, дисклеймеры, концерты, мета-теги
 - ✅ **Персональные эндпоинты** — аккаунт и настройки, библиотека (лайки/дизлайки на чтение и запись), редактирование плейлистов, радио (rotor), лендинг и фид, очереди между устройствами, пины, пресейвы, история прослушиваний
+- ✅ **Ynison в реальном времени** — подписка на состояние воспроизведения аккаунта на всех устройствах и дистанционное управление (пауза, треки, громкость) по websocket-протоколу официальных клиентов
 - ✅ **Три способа входа** — OAuth-токен, официальный OAuth **device-code** flow и best-effort cookie/QR; всё поверх сериализуемой сессии с сохранением/восстановлением
 - ✅ Source-generation `System.Text.Json` — экономно к аллокациям, дружелюбно к trim/AOT (`IsAotCompatible`)
 - ✅ Типизированные исключения, интеграция с DI, полная XML-документация
@@ -85,6 +86,24 @@ await using var client = new YandexMusicClient();
 var token = await client.Authentication.SignInWithDeviceFlowAsync(code =>
     Console.WriteLine($"Откройте {code.VerificationUrl} и введите код {code.UserCode}"));
 // Клиент авторизован; сохраните token.AccessToken для повторного использования.
+```
+
+### Управление воспроизведением в реальном времени (Ynison)
+
+Ynison — это то, что синхронизирует веб-плеер, телефонные приложения и умные колонки. Клиент
+подписывается на состояние воспроизведения аккаунта и может управлять любым устройством сессии:
+
+```csharp
+await using var ynison = client.CreateYnisonClient();
+var run = Task.Run(() => ynison.RunAsync());
+
+var state = await ynison.WaitForStateAsync(TimeSpan.FromSeconds(10));
+Console.WriteLine(state.Devices.Count + " устройств в сессии");
+ynison.StateReceived += (_, s) => Console.WriteLine(s.PlayerState?.PlayerQueue?.PlayableList[
+    Math.Max(0, s.PlayerState.PlayerQueue.CurrentPlayableIndex)]?.Title);
+
+await ynison.SetPausedAsync(paused: false);   // дистанционное управление
+await ynison.NextTrackAsync();
 ```
 
 Все методы принимают `CancellationToken`:

@@ -20,6 +20,7 @@ using YandexMusic.Models.Queue;
 using YandexMusic.Models.Radio;
 using YandexMusic.Models.Search;
 using YandexMusic.Models.Tracks;
+using YandexMusic.Ynison;
 
 namespace YandexMusic.Serialization;
 
@@ -56,6 +57,9 @@ namespace YandexMusic.Serialization;
 [JsonSerializable(typeof(ApiResponse<TrackTrailer>))]
 [JsonSerializable(typeof(ApiResponse<AfterTrackResponse>))]
 [JsonSerializable(typeof(ApiResponse<string>))]
+[JsonSerializable(typeof(PutYnisonStateRequest))]
+[JsonSerializable(typeof(PutYnisonStateResponse))]
+[JsonSerializable(typeof(RedirectResponse))]
 [JsonSerializable(typeof(ApiResponse<Label>))]
 [JsonSerializable(typeof(ApiResponse<LabelAlbums>))]
 [JsonSerializable(typeof(ApiResponse<LabelArtists>))]

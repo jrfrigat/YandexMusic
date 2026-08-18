@@ -32,6 +32,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   network latency.
 
 ### Added
+- Ynison real-time client (`YandexMusic.Ynison`): subscribe to the account's playback state across
+  all devices and remote-control it (pause/resume, next/previous track, per-device volume) over the
+  same websocket protocol the official clients use. Full protobuf-JSON state models, reconnect with
+  capped exponential backoff, ready-made request builders, and
+  `YandexMusicClient.CreateYnisonClient()` wiring the session token automatically.
 - `YandexMusicClientOptions.ApiBaseUri` — override the API base address for a reverse proxy, a regional
   mirror, or a local stub server in tests; defaults to the official host.
 - Opportunistic HTTP/2 (falls back to HTTP/1.1 transparently) on every `HttpClient` the library creates,

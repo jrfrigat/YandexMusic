@@ -1,6 +1,7 @@
 using YandexMusic.Authentication;
 using YandexMusic.Endpoints;
 using YandexMusic.Http;
+using YandexMusic.Ynison;
 
 namespace YandexMusic;
 
@@ -13,6 +14,7 @@ public sealed class YandexMusicClient : IYandexMusicClient
 {
     private readonly HttpClient _httpClient;
     private readonly bool _ownsHttpClient;
+    private readonly AuthSession _session;
     private int _disposed;
 
     /// <summary>Creates a client with default options.</summary>
@@ -31,6 +33,7 @@ public sealed class YandexMusicClient : IYandexMusicClient
         var session = new AuthSession(options.DeviceId);
         _httpClient = YandexMusicHttpClientFactory.Create(options, session);
         _ownsHttpClient = true;
+        _session = session;
 
         Connection = new YandexMusicConnection(_httpClient, session);
         Authentication = new AuthenticationClient(session);
@@ -71,6 +74,7 @@ public sealed class YandexMusicClient : IYandexMusicClient
 
         _httpClient = httpClient;
         _ownsHttpClient = false;
+        _session = session;
 
         Connection = new YandexMusicConnection(_httpClient, session);
         Authentication = new AuthenticationClient(session);
@@ -161,6 +165,22 @@ public sealed class YandexMusicClient : IYandexMusicClient
 
     /// <summary>The shared request engine used by the endpoint groups.</summary>
     internal IYandexMusicConnection Connection { get; }
+
+    /// <summary>
+    /// Creates a <see cref="YnisonClient"/> for the signed-in account: a websocket subscription to
+    /// the account's playback state across devices and a channel for remote-control commands. The
+    /// token and device id are read from this client's session at call time; the returned client is
+    /// independent of this one and must be disposed separately.
+    /// </summary>
+    /// <param name="deviceId">Overrides the session's device id for the Ynison session.</param>
+    /// <param name="options">The Ynison client options, or <see langword="null"/> for defaults.</param>
+    /// <exception cref="InvalidOperationException">The client is not signed in.</exception>
+    public YnisonClient CreateYnisonClient(string? deviceId = null, YnisonClientOptions? options = null)
+    {
+        var token = _session.AccessToken ?? throw new InvalidOperationException(
+            "Sign in before creating a Ynison client; the session has no access token yet.");
+        return new YnisonClient(token, deviceId ?? _session.DeviceId, options);
+    }
 
     /// <inheritdoc />
     public void Dispose()
