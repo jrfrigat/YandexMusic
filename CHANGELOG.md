@@ -1,6 +1,6 @@
 # Changelog
 
-🌐 **English** below · [Русская версия ниже](#история-изменений)
+🌐 **English** · [Русский](CHANGELOG.ru.md)
 
 All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
@@ -16,8 +16,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   deletes the saved session. The stored session is now dropped only when the API itself refuses it;
   network errors keep it.
 - Sample player: the stored session file (`session.json`, token and cookies) is now written
-  atomically and restricted to the owner (`0600`, and a `0700` directory) on Linux/macOS instead of
-  the default world-readable mode.
+  atomically and restricted to the owner (`0600`) on Linux/macOS instead of the default
+  world-readable mode.
 - **Critical**: every `Pins` call (`PinAlbumAsync`, `UnpinAlbumAsync`, `PinArtistAsync`, `UnpinArtistAsync`,
   `PinPlaylistAsync`, `UnpinPlaylistAsync`, `PinWaveAsync`, `UnpinWaveAsync`) threw at runtime on both
   Windows and Linux. They built a relative-path request and sent it through the raw transport method,
@@ -67,7 +67,7 @@ First public release of the original, clean-room implementation.
   - **Landing** — feed, landing blocks, charts, new releases/playlists, podcasts, tags.
   - **Radio** (rotor) — station dashboard, list, info, tracks, settings, feedback.
   - **Concerts**, **Metatags** — events and curated collection pages.
-  - **Queue**, **Pins**, **Presaves**, **MusicHistory** — personal cross-device state.
+  - **Queue**, **Pins**, **Presaves**, `MusicHistory` — personal cross-device state.
 - Multiple sign-in flows: OAuth token, the official OAuth **device-code** flow, and best-effort cookie, QR or login + password — all over a serializable `AuthSnapshot` (export/import to persist and resume a session).
 - `YandexMusic.DependencyInjection` package: `AddYandexMusic()` registers a scoped client over a handler pooled by `IHttpClientFactory`.
 - Typed exception hierarchy (`YandexMusicException` and descendants).
@@ -83,81 +83,3 @@ First public release of the original, clean-room implementation.
 ### Note
 - This is an original, clean-room implementation written from the public HTTP API. It does not derive from
   any third-party Yandex Music client.
-
----
-
-# История изменений
-
-🌐 [English version above](#changelog) · **Русская версия**
-
-Все значимые изменения в этом проекте документируются в этом файле.
-Формат основан на [Keep a Changelog](https://keepachangelog.com/ru/1.1.0/),
-проект следует [семантическому версионированию](https://semver.org/lang/ru/).
-
-## [Не выпущено]
-
-### Исправлено
-- **Критично**: любой вызов `Pins` (`PinAlbumAsync`, `UnpinAlbumAsync`, `PinArtistAsync`, `UnpinArtistAsync`,
-  `PinPlaylistAsync`, `UnpinPlaylistAsync`, `PinWaveAsync`, `UnpinWaveAsync`) падал в рантайме и на Windows,
-  и на Linux. Эти методы строили запрос с относительным путём и отправляли его через низкоуровневый метод
-  транспорта, который не резолвит относительные пути против хоста API (у `HttpClient` никогда не был
-  выставлен `BaseAddress`). Теперь они идут через тот же конвейер запросов, что и все остальные эндпоинты.
-- Определение абсолютного URI в конвейере запросов теперь требует схему `http`/`https`. На Linux `Uri`
-  разбирал путь вида `/users/1/playlists/2` как абсолютный `file://`-URI (на Windows та же строка
-  считалась относительной), из-за чего такие запросы падали с ошибкой «схема 'file' не поддерживается»
-  вне Windows.
-- `Account.SetSettingsAsync(IReadOnlyDictionary<string, string>, ...)` освобождал тело запроса до
-  завершения его отправки, что могло изредка приводить к ошибке или обрезанному телу при реальной
-  сетевой задержке.
-
-### Добавлено
-- `YandexMusicClientOptions.ApiBaseUri` — переопределение базового адреса API для обратного прокси,
-  регионального зеркала или локального стаб-сервера в тестах; по умолчанию — официальный хост.
-- Оппортунистический HTTP/2 (с прозрачным откатом на HTTP/1.1) на каждом `HttpClient`, который создаёт
-  библиотека — включает мультиплексирование соединений.
-- Перегрузка `AddYandexMusic(..., configureHttpClient)` и публичная константа `HttpClientName` — теперь
-  можно подключить resilience-handler, логирование или свой primary handler к клиенту в пуле
-  `IHttpClientFactory`, не полагаясь на внутреннее имя.
-
-### Изменено
-- `YandexMusic.DependencyInjection`: настройки HTTP-клиента (таймаут, заголовки, прокси, базовый адрес)
-  теперь везде последовательно резолвятся из контейнера DI, а не частично из локально захваченной копии —
-  исправлен «раздвоенный» баг, при котором заранее зарегистрированный `YandexMusicClientOptions` незаметно
-  терял свои настройки прокси/таймаута/заголовков.
-- CI теперь собирает и тестирует и на `ubuntu-latest`, и на `windows-latest` (раньше — только на Linux),
-  так что подобные ОС-специфичные регрессии ловятся автоматически.
-- Планка нулевых предупреждений (`TreatWarningsAsErrors`) теперь распространяется и на тестовый проект.
-
-## [0.1.0] - 2026-06-30
-
-Первый публичный релиз оригинальной clean-room реализации.
-
-### Добавлено
-- Поддержка `net8.0`, `net9.0` и `net10.0` (мультитаргетинг).
-- Высокоуровневый `YandexMusicClient` (`IYandexMusicClient`) с типизированными группами эндпоинтов:
-  - **Tracks** — метаданные (одиночно и пачкой), прямая ссылка, тексты, supplement, full-info, трейлер, похожие, play-audio, after-track.
-  - **Search** — полный поиск с полиморфным best и секциями по категориям, плюс подсказки (`suggest`).
-  - **Albums** — альбом, альбом-с-треками, пачкой, similar-entities, трейлер.
-  - **Artists** — brief-info, пагинируемые треки/альбомы, похожие, ссылки, about, info, клипы, донаты, skeleton, трейлер, дискография.
-  - **Playlists** — чтение, создание, удаление, переименование, видимость/описание, правка треков, рекомендации, similar-entities, трейлер и др.
-  - **Account** — статус, настройки (get/set), permission-alerts, A/B-эксперименты, промокоды.
-  - **Library** — лайкнутые и дизлайкнутые треки/альбомы/исполнители/плейлисты/клипы, включая add/remove.
-  - **Genres**, **Labels**, **Clips**, **Credits**, **Disclaimers** — метаданные каталога.
-  - **Landing** — фид, блоки лендинга, чарты, новые релизы/плейлисты, подкасты, теги.
-  - **Radio** (rotor) — dashboard станций, список, info, треки, настройки, фидбэк.
-  - **Concerts**, **Metatags** — события и подборки (мета-теги).
-  - **Queue**, **Pins**, **Presaves**, **MusicHistory** — личное состояние между устройствами.
-- Несколько способов входа: OAuth-токен, официальный OAuth **device-code** flow и best-effort cookie, QR или логин/пароль — всё поверх сериализуемого `AuthSnapshot` (export/import для сохранения и восстановления сессии).
-- Пакет `YandexMusic.DependencyInjection`: `AddYandexMusic()` регистрирует scoped-клиент поверх handler'а в пуле `IHttpClientFactory`.
-- Типизированная иерархия исключений (`YandexMusicException` и наследники).
-- Полная XML-документация публичного API; модульные и интеграционные (по токену) тесты (xUnit).
-- Source Link, символьные пакеты (`snupkg`), README в пакетах, документация DocFX, CI/CD на GitHub Actions.
-
-### Производительность
-- Source-generation `System.Text.Json` целиком (единый общий «замороженный» `JsonSerializerOptions`); ответы
-  десериализуются прямо из UTF-8 потока через `JsonTypeInfo<T>` — экономно к аллокациям, чисто к trim/AOT (`IsAotCompatible`).
-- Терпимая обработка перечислений (kebab/UPPER_SNAKE, значение по умолчанию на неизвестном) — новые значения на стороне сервера не ломают ответ.
-
-### Примечание
-- Это оригинальная clean-room реализация, написанная по публичному HTTP-API. Она не является производной от
-  какого-либо стороннего клиента Яндекс Музыки.

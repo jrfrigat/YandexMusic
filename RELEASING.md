@@ -1,6 +1,6 @@
 # Releasing & repository setup
 
-🌐 **English** below · [Русская версия ниже](#релиз-и-настройка-репозитория)
+🌐 **English** · [Русский](RELEASING.ru.md)
 
 ## 1. First push to GitHub
 
@@ -49,7 +49,7 @@ No API-key secret is required — the workflow exchanges a short-lived token via
 
 ## 4. Cutting a release
 
-1. Update `CHANGELOG.md` (move items from *Unreleased* to the new version).
+1. Update `CHANGELOG.md` and `CHANGELOG.ru.md` (move items from *Unreleased* to the new version).
 2. Push a version tag: `git tag v0.1.0 && git push origin v0.1.0`.
    - The **Release** workflow builds, tests, packs and pushes both packages (`.nupkg` and
      `.snupkg`) to nuget.org, then creates the GitHub Release itself and attaches the packages and
@@ -59,69 +59,4 @@ No API-key secret is required — the workflow exchanges a short-lived token via
 
 The package version is derived from the tag by MinVer (the `v` prefix is stripped); an untagged
 local build gets a `preview` pre-release (`MinVerDefaultPreReleaseIdentifiers` in
-`Directory.Build.props`).
-
----
-
-# Релиз и настройка репозитория
-
-🌐 [English version above](#releasing--repository-setup) · **Русская версия**
-
-## 1. Первый пуш в GitHub
-
-Создайте пустой репозиторий `jrfrigat/YandexMusic` на GitHub (без README/лицензии — они уже здесь), затем:
-
-```bash
-git add -A
-git commit -m "Initial public release: refactor, multi-targeting, CI/CD, docs"
-git branch -M main
-git remote add origin https://github.com/jrfrigat/YandexMusic.git
-git push -u origin HEAD
-```
-
-> Workflow'ы CI, Docs и CodeQL срабатывают на ветке `main`; workflow релиза — на тегах версий (`v*`).
-> Если хотите чистую историю, перед командами выполните `rm -rf .git && git init`.
-
-## 2. Настройки репозитория (вкладка Settings)
-
-- **General → Default branch**: `main`.
-- **General → Features**: включите **Issues** и **Discussions** (шаблон issue ссылается на Discussions).
-- **About** (⚙ на главной): задайте Description, добавьте topics
-  `yandex-music, dotnet, csharp, api-client, nuget, async`, в Website укажите адрес Pages (ниже).
-- **Pages**: Source = **GitHub Actions** (workflow `Docs` публикует сайт DocFX по адресу
-  `https://jrfrigat.github.io/YandexMusic/`).
-- **Actions → General**:
-  - Actions permissions: **Allow all actions and reusable workflows**.
-  - Workflow permissions: достаточно **Read repository contents** — каждый workflow сам запрашивает
-    нужные ему права (`id-token`, `pages`).
-- **Environments** (создаются автоматически при первом запуске; можно защитить):
-  - `github-pages` — для workflow документации.
-  - `nuget` — для workflow релиза; можно добавить обязательных ревьюеров.
-- **Branch protection (опционально)**: защитите `main`, требуйте прохождения проверки **CI**.
-
-## 3. Публикация в NuGet (Trusted Publishing / OIDC — без API-ключа)
-
-1. На **nuget.org → Account → Trusted Publishing** добавьте политику:
-   - Owner/repo: `jrfrigat/YandexMusic`
-   - Workflow file: `release.yml`
-   - Environment: `nuget`
-   - Package IDs: `YandexMusic` и `YandexMusic.DependencyInjection` (зарезервируйте/владейте обоими
-     ID — релиз публикует оба пакета).
-2. В GitHub, **Settings → Secrets and variables → Actions → Variables**, добавьте переменную:
-   - `NUGET_USER` = ваш логин на nuget.org.
-
-Секрет с API-ключом не нужен — workflow получает временный токен через OIDC.
-
-## 4. Выпуск релиза
-
-1. Обновите `CHANGELOG.md` (перенесите изменения из *Unreleased* в новую версию).
-2. Запушьте тег версии: `git tag v0.1.0 && git push origin v0.1.0`.
-   - Workflow **Release** соберёт, протестирует, упакует и опубликует оба пакета (`.nupkg` и
-     `.snupkg`) в nuget.org, затем сам создаст GitHub Release и приложит пакеты и архивы плеера.
-     Не создавайте релиз вручную заранее — шаг создания в workflow упадёт уже после публикации
-     пакетов в NuGet.
-   - Workflow **Docs** опубликует сайт документации.
-
-Версия пакета вычисляется из тега средствами MinVer (префикс `v` отбрасывается); локальная сборка
-без тега получает pre-release `preview` (`MinVerDefaultPreReleaseIdentifiers` в
 `Directory.Build.props`).

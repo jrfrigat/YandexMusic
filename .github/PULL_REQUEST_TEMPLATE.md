@@ -14,5 +14,5 @@
 - [ ] `dotnet build -c Release` проходит без ошибок
 - [ ] `dotnet test -c Release` проходит
 - [ ] Добавлены/обновлены тесты при необходимости
-- [ ] Обновлён `CHANGELOG.md` (раздел Unreleased)
+- [ ] Обновлён `CHANGELOG.md` / `CHANGELOG.ru.md` (раздел Unreleased)
 - [ ] Обновлена документация при необходимости

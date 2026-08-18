@@ -62,7 +62,7 @@ Music OAuth token and are **skipped automatically when no token is set**.
 
 1. Create a branch off `main`.
 2. Make sure `dotnet build` and `dotnet test` pass without errors.
-3. Describe your change in the PR and add an entry to `CHANGELOG.md` (the `Unreleased` section).
+3. Describe your change in the PR and add an entry to `CHANGELOG.md` and `CHANGELOG.ru.md` (the `Unreleased` sections).
 
 ## License
 
