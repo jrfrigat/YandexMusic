@@ -98,7 +98,7 @@
     <value>[grey]♪ nothing playing[/]</value>
   </data>
   <data name="MenuHotkeys" xml:space="preserve">
-    <value>[grey]↑↓[/] move   [grey]enter[/] select   [grey]s[/] search   [grey]a[/] albums   [grey]l[/] playlists   [grey]f[/] liked   [grey]w[/] wave   [grey]p[/] player   [grey]o[/] sign out   [grey]q[/] quit</value>
+    <value>[grey]↑↓[/] move   [grey]enter[/] select   [grey]s[/] search   [grey]a[/] albums   [grey]l[/] playlists   [grey]f[/] liked   [grey]w[/] wave   [grey]p[/] player   [grey]r[/] remote   [grey]o[/] sign out   [grey]q[/] quit</value>
   </data>
   <data name="MenuLiked" xml:space="preserve">
     <value>Liked</value>
@@ -291,5 +291,41 @@
   </data>
   <data name="NowPlayingKeys" xml:space="preserve">
     <value>[grey]space[/] play/pause   [grey]←/→[/] prev/next   [grey]↑/↓[/] volume   [grey]s[/] stop   [grey]q[/] back</value>
+  </data>
+  <data name="MenuRemote" xml:space="preserve">
+    <value>Remote control</value>
+  </data>
+  <data name="RemoteHeader" xml:space="preserve">
+    <value>Ynison remote</value>
+  </data>
+  <data name="RemoteFailed" xml:space="preserve">
+    <value>Cannot reach Ynison: {0}</value>
+  </data>
+  <data name="RemoteDevices" xml:space="preserve">
+    <value>Devices (press 1-9 to play here):</value>
+  </data>
+  <data name="RemoteNoDevices" xml:space="preserve">
+    <value>No other devices yet — open Yandex Music somewhere and come back.</value>
+  </data>
+  <data name="RemoteNothing" xml:space="preserve">
+    <value>Nothing is playing</value>
+  </data>
+  <data name="RemoteActive" xml:space="preserve">
+    <value>● playing here</value>
+  </data>
+  <data name="RemoteOffline" xml:space="preserve">
+    <value>offline</value>
+  </data>
+  <data name="RemoteUnknownDevice" xml:space="preserve">
+    <value>Unknown device</value>
+  </data>
+  <data name="RemoteStartedOn" xml:space="preserve">
+    <value>Playback started on {0}</value>
+  </data>
+  <data name="RemoteCommandFailed" xml:space="preserve">
+    <value>Command failed: {0}</value>
+  </data>
+  <data name="RemoteKeys" xml:space="preserve">
+    <value>[grey]space[/] pause   [grey]←/→[/] prev/next   [grey]↑/↓[/] volume   [grey]1-9[/] play on device   [grey]q[/] back</value>
   </data>
 </root>

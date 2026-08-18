@@ -25,6 +25,7 @@ public sealed class PlayerApp
     private readonly PlaylistsScreen _playlists;
     private readonly TrackListScreen _trackList;
     private readonly NowPlayingScreen _nowPlaying;
+    private readonly RemoteScreen _remote;
 
     /// <summary>Creates the application.</summary>
     public PlayerApp(
@@ -37,7 +38,8 @@ public sealed class PlayerApp
         AlbumsScreen albums,
         PlaylistsScreen playlists,
         TrackListScreen trackList,
-        NowPlayingScreen nowPlaying)
+        NowPlayingScreen nowPlaying,
+        RemoteScreen remote)
     {
         _client = client;
         _auth = auth;
@@ -49,6 +51,7 @@ public sealed class PlayerApp
         _playlists = playlists;
         _trackList = trackList;
         _nowPlaying = nowPlaying;
+        _remote = remote;
     }
 
     /// <summary>Runs the app until the user quits.</summary>
@@ -85,6 +88,9 @@ public sealed class PlayerApp
                     break;
                 case MainMenuAction.NowPlaying:
                     await _nowPlaying.RunAsync(cancellationToken).ConfigureAwait(false);
+                    break;
+                case MainMenuAction.Remote:
+                    await _remote.RunAsync(cancellationToken).ConfigureAwait(false);
                     break;
                 case MainMenuAction.SignOut:
                     _auth.SignOut(_client);

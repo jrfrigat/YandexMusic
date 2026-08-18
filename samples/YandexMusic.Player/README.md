@@ -23,6 +23,8 @@ dotnet run --project samples/YandexMusic.Player
 - **Search tracks** and start playback from any result (the whole result set becomes the queue).
 - **Browse your albums** and **your playlists**, and drill into either's tracklist.
 - **Liked** — your "liked" tracks; **My Wave** — a batch from your personal radio station.
+- **Remote control** (`r`) — the Ynison screen: live playback state of every device on the account,
+  pause/tracks/volume commands, and "play on this device" via keys `1-9`.
 - **Now playing** — a live view with an animated equalizer, a real-time progress bar, a volume meter,
   and auto-advance through the queue.
 

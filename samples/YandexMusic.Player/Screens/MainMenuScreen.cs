@@ -26,6 +26,9 @@ public enum MainMenuAction
     /// <summary>Open the now-playing view.</summary>
     NowPlaying,
 
+    /// <summary>Open the Ynison remote control.</summary>
+    Remote,
+
     /// <summary>Sign out.</summary>
     SignOut,
 
@@ -49,6 +52,7 @@ public sealed class MainMenuScreen
         (MainMenuAction.Liked, ConsoleKey.F, 'f'),
         (MainMenuAction.MyWave, ConsoleKey.W, 'w'),
         (MainMenuAction.NowPlaying, ConsoleKey.P, 'p'),
+        (MainMenuAction.Remote, ConsoleKey.R, 'r'),
         (MainMenuAction.SignOut, ConsoleKey.O, 'o'),
         (MainMenuAction.Quit, ConsoleKey.Q, 'q'),
     ];
@@ -172,6 +176,7 @@ public sealed class MainMenuScreen
         MainMenuAction.Liked => Strings.MenuLiked,
         MainMenuAction.MyWave => Strings.MenuMyWave,
         MainMenuAction.NowPlaying => Strings.MenuOpenPlayer,
+        MainMenuAction.Remote => Strings.MenuRemote,
         MainMenuAction.SignOut => Strings.MenuSignOut,
         MainMenuAction.Quit => Strings.MenuQuit,
         _ => action.ToString(),

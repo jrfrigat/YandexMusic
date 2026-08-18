@@ -93,7 +93,7 @@
     <value>[grey]♪ ничего не играет[/]</value>
   </data>
   <data name="MenuHotkeys" xml:space="preserve">
-    <value>[grey]↑↓[/] выбор   [grey]enter[/] открыть   [grey]s[/] поиск   [grey]a[/] альбомы   [grey]l[/] плейлисты   [grey]f[/] любимое   [grey]w[/] волна   [grey]p[/] плеер   [grey]o[/] аккаунт   [grey]q[/] выход</value>
+    <value>[grey]↑↓[/] выбор   [grey]enter[/] открыть   [grey]s[/] поиск   [grey]a[/] альбомы   [grey]l[/] плейлисты   [grey]f[/] любимое   [grey]w[/] волна   [grey]p[/] плеер   [grey]r[/] пульт   [grey]o[/] аккаунт   [grey]q[/] выход</value>
   </data>
   <data name="MenuLiked" xml:space="preserve">
     <value>Мне нравится</value>
@@ -286,5 +286,41 @@
   </data>
   <data name="NowPlayingKeys" xml:space="preserve">
     <value>[grey]space[/] пауза   [grey]←/→[/] пред/след   [grey]↑/↓[/] громкость   [grey]s[/] стоп   [grey]q[/] назад</value>
+  </data>
+  <data name="MenuRemote" xml:space="preserve">
+    <value>Пульт</value>
+  </data>
+  <data name="RemoteHeader" xml:space="preserve">
+    <value>Пульт Ynison</value>
+  </data>
+  <data name="RemoteFailed" xml:space="preserve">
+    <value>Не удалось подключиться к Ynison: {0}</value>
+  </data>
+  <data name="RemoteDevices" xml:space="preserve">
+    <value>Устройства (1-9 — играть здесь):</value>
+  </data>
+  <data name="RemoteNoDevices" xml:space="preserve">
+    <value>Других устройств пока нет — откройте Яндекс Музыку где-нибудь ещё и вернитесь.</value>
+  </data>
+  <data name="RemoteNothing" xml:space="preserve">
+    <value>Ничего не воспроизводится</value>
+  </data>
+  <data name="RemoteActive" xml:space="preserve">
+    <value>● играет здесь</value>
+  </data>
+  <data name="RemoteOffline" xml:space="preserve">
+    <value>офлайн</value>
+  </data>
+  <data name="RemoteUnknownDevice" xml:space="preserve">
+    <value>Неизвестное устройство</value>
+  </data>
+  <data name="RemoteStartedOn" xml:space="preserve">
+    <value>Воспроизведение запущено на «{0}»</value>
+  </data>
+  <data name="RemoteCommandFailed" xml:space="preserve">
+    <value>Команда не выполнена: {0}</value>
+  </data>
+  <data name="RemoteKeys" xml:space="preserve">
+    <value>[grey]space[/] пауза   [grey]←/→[/] пред/след   [grey]↑/↓[/] громкость   [grey]1-9[/] играть на устройстве   [grey]q[/] назад</value>
   </data>
 </root>

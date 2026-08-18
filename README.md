@@ -26,6 +26,38 @@ Unofficial asynchronous library for the Yandex Music API. Runs on **.NET 8, .NET
 - ✅ Typed exceptions, first-class dependency-injection integration, full XML documentation
 - ✅ Clean, extensible design: add an endpoint group and you have a new domain
 
+### Sample: terminal music player
+
+[`samples/YandexMusic.Player`](samples/YandexMusic.Player) is a full interactive TUI built on the
+library — search, browse your albums and playlists, and a live "now playing" view with an animated
+equalizer, a real-time progress bar and keyboard volume/transport controls.
+
+**Download:** ready-to-run builds for **Windows** and **Linux** are published on the
+[**Releases**](https://github.com/jrfrigat/YandexMusic/releases) page —
+`yandexmusic-player-<version>-win-x64.zip` and `yandexmusic-player-<version>-linux-x64.tar.gz`
+(self-contained, no .NET install needed; extract and run `yandexmusic-player.exe` on Windows,
+`./yandexmusic-player` on Linux). Or run it from source:
+
+```bash
+dotnet run --project samples/YandexMusic.Player
+```
+
+- **Sign in** with an OAuth token, the device-code flow, a QR code, or login + password; the session
+  is cached so the next run starts already signed in.
+- **Playback** uses [NAudio](https://github.com/naudio/NAudio) on Windows; everywhere else (and as a
+  fallback) it runs a silent simulation that drives the same UI. The audio backend is a single
+  [`IAudioPlayer`](samples/YandexMusic.Player/Playback/IAudioPlayer.cs) seam, so swapping in a
+  cross-platform backend changes one line.
+- **Remote control** — the Ynison screen shows what is playing on every device of the account (web,
+  phone, smart speakers) and controls it: pause, tracks, volume, and "play here" by pressing `1-9`.
+- **Main menu** is cursor-driven with a hotkey bar along the bottom — single-key shortcuts jump
+  straight to a section (`s` search · `a` albums · `l` playlists · `p` open player · `r` remote ·
+  `q` quit).
+- **Controls** (now-playing view): `space` play/pause · `←/→` prev/next · `↑/↓` volume · `s` stop ·
+  `q` back.
+
+See the sample's [README](samples/YandexMusic.Player/README.md) for the architecture.
+
 ## Installation
 
 ```bash
@@ -185,34 +217,6 @@ Full guides and API reference: **<https://jrfrigat.github.io/YandexMusic/>**
 └── .github/workflows/                   # CI, release (NuGet), docs publishing
 ```
 
-### Sample: terminal music player
-
-[`samples/YandexMusic.Player`](samples/YandexMusic.Player) is a full interactive TUI built on the
-library — search, browse your albums and playlists, and a live "now playing" view with an animated
-equalizer, a real-time progress bar and keyboard volume/transport controls.
-
-**Download:** ready-to-run builds for **Windows** and **Linux** are published on the
-[**Releases**](https://github.com/jrfrigat/YandexMusic/releases) page —
-`yandexmusic-player-<version>-win-x64.zip` and `yandexmusic-player-<version>-linux-x64.tar.gz`
-(self-contained, no .NET install needed; extract and run `yandexmusic-player.exe` on Windows,
-`./yandexmusic-player` on Linux). Or run it from source:
-
-```bash
-dotnet run --project samples/YandexMusic.Player
-```
-
-- **Sign in** with an OAuth token, the device-code flow, a QR code, or login + password; the session
-  is cached so the next run starts already signed in.
-- **Playback** uses [NAudio](https://github.com/naudio/NAudio) on Windows; everywhere else (and as a
-  fallback) it runs a silent simulation that drives the same UI. The audio backend is a single
-  [`IAudioPlayer`](samples/YandexMusic.Player/Playback/IAudioPlayer.cs) seam, so swapping in a
-  cross-platform backend changes one line.
-- **Main menu** is cursor-driven with a hotkey bar along the bottom — single-key shortcuts jump
-  straight to a section (`s` search · `a` albums · `l` playlists · `p` open player · `q` quit).
-- **Controls** (now-playing view): `space` play/pause · `←/→` prev/next · `↑/↓` volume · `s` stop ·
-  `q` back.
-
-See the sample's [README](samples/YandexMusic.Player/README.md) for the architecture.
 
 ## Build and test
 

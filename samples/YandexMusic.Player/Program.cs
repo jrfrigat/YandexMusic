@@ -66,6 +66,7 @@ services.AddSingleton<PlaylistScreen>();
 services.AddSingleton<PlaylistsScreen>();
 services.AddSingleton<TrackListScreen>();
 services.AddSingleton<NowPlayingScreen>();
+services.AddSingleton<RemoteScreen>();
 services.AddSingleton<PlayerApp>();
 
 await using var provider = services.BuildServiceProvider();

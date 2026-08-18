@@ -115,4 +115,18 @@ public static class Strings
     public static string SimulatedSuffix => Get(nameof(SimulatedSuffix));
     public static string TrackCounter(int position, int length) => Fmt(nameof(TrackCounter), position, length);
     public static string NowPlayingKeys => Get(nameof(NowPlayingKeys));
+
+    // Ynison remote control.
+    public static string MenuRemote => Get(nameof(MenuRemote));
+    public static string RemoteHeader => Get(nameof(RemoteHeader));
+    public static string RemoteFailed(string reason) => Fmt(nameof(RemoteFailed), reason);
+    public static string RemoteDevices => Get(nameof(RemoteDevices));
+    public static string RemoteNoDevices => Get(nameof(RemoteNoDevices));
+    public static string RemoteNothing => Get(nameof(RemoteNothing));
+    public static string RemoteActive => Get(nameof(RemoteActive));
+    public static string RemoteOffline => Get(nameof(RemoteOffline));
+    public static string RemoteUnknownDevice => Get(nameof(RemoteUnknownDevice));
+    public static string RemoteStartedOn(string device) => Fmt(nameof(RemoteStartedOn), device);
+    public static string RemoteCommandFailed(string reason) => Fmt(nameof(RemoteCommandFailed), reason);
+    public static string RemoteKeys => Get(nameof(RemoteKeys));
 }
