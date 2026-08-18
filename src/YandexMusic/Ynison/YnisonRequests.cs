@@ -109,6 +109,15 @@ public static class YnisonRequests
     public static PutYnisonStateRequest CreatePreviousTrackRequest(string deviceId, PlayerState currentState)
         => CreateChangeTrackRequest(deviceId, currentState, -1);
 
+    /// <summary>Builds a request making another device the active (sound-playing) one.</summary>
+    /// <param name="targetDeviceId">The device that should take over playback.</param>
+    /// <returns>The <c>UpdateActiveDevice</c> request.</returns>
+    public static PutYnisonStateRequest CreateSetActiveDeviceRequest(string targetDeviceId)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(targetDeviceId);
+        return Stamp(new PutYnisonStateRequest(UpdateActiveDevice: new UpdateActiveDevice(targetDeviceId)));
+    }
+
     /// <summary>Builds a volume change request for a target device.</summary>
     /// <param name="deviceId">This device's identifier.</param>
     /// <param name="targetDeviceId">The device whose volume changes.</param>

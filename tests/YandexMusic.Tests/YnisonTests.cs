@@ -256,6 +256,31 @@ public sealed class YnisonTests
         await run.WaitAsync(TimeSpan.FromSeconds(10));
     }
 
+    [Fact]
+    public async Task PlayOnDevice_SwitchesActiveDeviceAndResumes()
+    {
+        var redirectSocket = new FakeSocket([RedirectFrame]);
+        var stateSocket = new FakeSocket([StateFrame]);
+        var factory = new FakeSocketFactory([redirectSocket, stateSocket]);
+        await using var client = new YnisonClient("token-1", "device-x", null, factory);
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+        var run = Task.Run(() => client.RunAsync(cts.Token));
+
+        await client.WaitForStateAsync(TimeSpan.FromSeconds(10));
+        await client.PlayOnDeviceAsync("device-a");
+
+        // Registration, then the device switch, then the resume.
+        Assert.Equal(3, stateSocket.Sent.Count);
+        using var activation = JsonDocument.Parse(stateSocket.Sent[1]);
+        var activeDevice = activation.RootElement.GetProperty("updateActiveDevice");
+        Assert.Equal("device-a", activeDevice.GetProperty("deviceIdOptional").GetString());
+        using var resume = JsonDocument.Parse(stateSocket.Sent[2]);
+        Assert.False(resume.RootElement.GetProperty("updatePlayingStatus").GetProperty("playingStatus").GetProperty("paused").GetBoolean());
+
+        await client.DisposeAsync();
+        await run.WaitAsync(TimeSpan.FromSeconds(10));
+    }
+
     private sealed class FakeSocketFactory(IReadOnlyList<FakeSocket> sockets) : IYnisonSocketFactory
     {
         private int _created;

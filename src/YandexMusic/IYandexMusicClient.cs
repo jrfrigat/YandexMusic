@@ -1,4 +1,5 @@
 using YandexMusic.Authentication;
+using YandexMusic.Ynison;
 using YandexMusic.Endpoints;
 
 namespace YandexMusic;
@@ -72,4 +73,15 @@ public interface IYandexMusicClient : IDisposable, IAsyncDisposable
 
     /// <summary>Endpoints for the user's listening history.</summary>
     IMusicHistoryClient MusicHistory { get; }
+
+    /// <summary>
+    /// Creates a <see cref="YnisonClient"/> for the signed-in account: a websocket
+    /// subscription to the account's playback state across devices and a channel for remote-control
+    /// commands. The token and device id are read from the session at call time; the returned client
+    /// is independent of this one and must be disposed separately.
+    /// </summary>
+    /// <param name="deviceId">Overrides the session's device id for the Ynison session.</param>
+    /// <param name="options">The Ynison client options, or <see langword="null"/> for defaults.</param>
+    /// <exception cref="InvalidOperationException">The client is not signed in.</exception>
+    YnisonClient CreateYnisonClient(string? deviceId = null, YnisonClientOptions? options = null);
 }

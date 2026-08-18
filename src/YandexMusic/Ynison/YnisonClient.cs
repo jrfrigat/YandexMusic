@@ -192,6 +192,24 @@ public sealed class YnisonClient : IAsyncDisposable
     public Task SetVolumeAsync(string targetDeviceId, double volume, CancellationToken cancellationToken = default)
         => SendAsync(YnisonRequests.CreateSetVolumeRequest(DeviceId, targetDeviceId, volume), cancellationToken);
 
+    /// <summary>Makes another device the active one; it takes over the session's playback.</summary>
+    /// <param name="targetDeviceId">The device that should play the sound.</param>
+    /// <param name="cancellationToken">A token to cancel the command.</param>
+    public Task SetActiveDeviceAsync(string targetDeviceId, CancellationToken cancellationToken = default)
+        => SendAsync(YnisonRequests.CreateSetActiveDeviceRequest(targetDeviceId), cancellationToken);
+
+    /// <summary>
+    /// Starts playback of the current track on a device: makes it the active one and resumes. The
+    /// new device continues from the session's current progress.
+    /// </summary>
+    /// <param name="targetDeviceId">The device to start playback on.</param>
+    /// <param name="cancellationToken">A token to cancel the command.</param>
+    public async Task PlayOnDeviceAsync(string targetDeviceId, CancellationToken cancellationToken = default)
+    {
+        await SetActiveDeviceAsync(targetDeviceId, cancellationToken).ConfigureAwait(false);
+        await SetPausedAsync(paused: false, cancellationToken).ConfigureAwait(false);
+    }
+
     /// <inheritdoc />
     public async ValueTask DisposeAsync()
     {

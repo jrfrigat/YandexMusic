@@ -175,6 +175,7 @@ public sealed class YandexMusicClient : IYandexMusicClient
     /// <param name="deviceId">Overrides the session's device id for the Ynison session.</param>
     /// <param name="options">The Ynison client options, or <see langword="null"/> for defaults.</param>
     /// <exception cref="InvalidOperationException">The client is not signed in.</exception>
+    /// <inheritdoc />
     public YnisonClient CreateYnisonClient(string? deviceId = null, YnisonClientOptions? options = null)
     {
         var token = _session.AccessToken ?? throw new InvalidOperationException(
