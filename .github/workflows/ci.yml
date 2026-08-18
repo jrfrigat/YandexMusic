@@ -68,8 +68,10 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: nuget-packages
-          path: artifacts/*.nupkg
-          if-no-files-found: ignore
+          path: |
+            artifacts/*.nupkg
+            artifacts/*.snupkg
+          if-no-files-found: error
 
   # Build the sample player as a self-contained single-file CLI on every push and upload it as a
   # version-named workflow artifact. Two flavours ship: Windows (net*-windows TFM, real NAudio

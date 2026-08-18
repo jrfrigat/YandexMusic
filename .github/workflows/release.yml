@@ -27,6 +27,7 @@ jobs:
   publish:
     name: Pack & push to NuGet
     runs-on: ubuntu-latest
+    environment: nuget   # matches the Trusted Publishing policy (RELEASING.md); optionally protect it
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -80,7 +81,7 @@ jobs:
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "${{ github.ref_name }}" artifacts/*.nupkg --generate-notes --title "${{ github.ref_name }}"
+        run: gh release create "${{ github.ref_name }}" artifacts/*.nupkg artifacts/*.snupkg --generate-notes --title "${{ github.ref_name }}"
 
   # Publishes the sample terminal player as versioned, self-contained single-file CLIs and attaches
   # them to the GitHub Release. Two flavours ship: Windows (net*-windows TFM, real NAudio playback)

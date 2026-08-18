@@ -50,13 +50,16 @@ No API-key secret is required — the workflow exchanges a short-lived token via
 ## 4. Cutting a release
 
 1. Update `CHANGELOG.md` (move items from *Unreleased* to the new version).
-2. Create a **GitHub Release** with a tag like `v0.1.0` (the workflow strips the leading `v`).
-   - The **Release** workflow builds, tests, packs and pushes both packages to nuget.org, and
-     attaches the `.nupkg`/`.snupkg` to the release.
+2. Push a version tag: `git tag v0.1.0 && git push origin v0.1.0`.
+   - The **Release** workflow builds, tests, packs and pushes both packages (`.nupkg` and
+     `.snupkg`) to nuget.org, then creates the GitHub Release itself and attaches the packages and
+     the player archives. Do not create the release manually first — the workflow's create step
+     would fail after the packages are already on NuGet.
    - The **Docs** workflow publishes the documentation site.
 
-The package version comes from the tag; locally the default is `VersionPrefix` in
-`Directory.Build.props`.
+The package version is derived from the tag by MinVer (the `v` prefix is stripped); an untagged
+local build gets a `preview` pre-release (`MinVerDefaultPreReleaseIdentifiers` in
+`Directory.Build.props`).
 
 ---
 
@@ -112,10 +115,13 @@ git push -u origin HEAD
 ## 4. Выпуск релиза
 
 1. Обновите `CHANGELOG.md` (перенесите изменения из *Unreleased* в новую версию).
-2. Создайте **GitHub Release** с тегом вида `v0.1.0` (workflow убирает ведущий `v`).
-   - Workflow **Release** соберёт, протестирует, упакует и опубликует оба пакета в nuget.org,
-     и приложит `.nupkg`/`.snupkg` к релизу.
+2. Запушьте тег версии: `git tag v0.1.0 && git push origin v0.1.0`.
+   - Workflow **Release** соберёт, протестирует, упакует и опубликует оба пакета (`.nupkg` и
+     `.snupkg`) в nuget.org, затем сам создаст GitHub Release и приложит пакеты и архивы плеера.
+     Не создавайте релиз вручную заранее — шаг создания в workflow упадёт уже после публикации
+     пакетов в NuGet.
    - Workflow **Docs** опубликует сайт документации.
 
-Версия пакета берётся из тега; локально по умолчанию используется `VersionPrefix` из
-`Directory.Build.props`.
+Версия пакета вычисляется из тега средствами MinVer (префикс `v` отбрасывается); локальная сборка
+без тега получает pre-release `preview` (`MinVerDefaultPreReleaseIdentifiers` в
+`Directory.Build.props`).
