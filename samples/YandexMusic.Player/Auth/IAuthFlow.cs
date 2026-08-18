@@ -19,23 +19,49 @@ public interface IAuthFlow
     Task<bool> SignInAsync(IYandexMusicClient client, CancellationToken cancellationToken = default);
 }
 
+/// <summary>Outcome of checking a restored session against the live account status.</summary>
+public enum SessionCheck
+{
+    /// <summary>The account status was fetched; the session works.</summary>
+    Valid,
+
+    /// <summary>The API refused the session; it is stale.</summary>
+    Rejected,
+
+    /// <summary>The API could not be reached; nothing is known about the session.</summary>
+    Unreachable,
+}
+
 /// <summary>Shared helpers for the auth flows.</summary>
 internal static class AuthSupport
 {
     /// <summary>Confirms a sign-in actually works by fetching the account status.</summary>
     /// <param name="client">The client to check.</param>
     /// <param name="cancellationToken">A token to cancel the request.</param>
-    /// <returns><see langword="true"/> when the account could be retrieved.</returns>
-    public static async Task<bool> ValidateAsync(IYandexMusicClient client, CancellationToken cancellationToken)
+    /// <returns>Whether the session is <see cref="SessionCheck.Valid"/>, was <see cref="SessionCheck.Rejected"/>
+    /// by the API, or the API is <see cref="SessionCheck.Unreachable"/>.</returns>
+    public static async Task<SessionCheck> ValidateAsync(IYandexMusicClient client, CancellationToken cancellationToken)
     {
         try
         {
             var status = await client.Account.GetStatusAsync(cancellationToken).ConfigureAwait(false);
-            return status is not null;
+            return status is not null ? SessionCheck.Valid : SessionCheck.Rejected;
         }
-        catch (Exception)
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
-            return false;
+            throw; // Ctrl+C: the app is exiting; keep the session and let the cancellation propagate.
+        }
+        catch (OperationCanceledException)
+        {
+            return SessionCheck.Unreachable; // A timeout, not a user cancellation.
+        }
+        catch (YandexMusicException)
+        {
+            return SessionCheck.Rejected; // The API answered and refused the session.
+        }
+        catch (HttpRequestException)
+        {
+            return SessionCheck.Unreachable; // A network failure says nothing about the session.
         }
     }
 }

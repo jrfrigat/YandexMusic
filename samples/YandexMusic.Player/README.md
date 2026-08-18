@@ -17,7 +17,9 @@ dotnet run --project samples/YandexMusic.Player
 - **Sign in** four ways — OAuth token, device-code flow, QR code, or login + password — with the
   session cached to disk so subsequent runs start already authenticated. (To get a token, see
   [Getting an OAuth token](../../README.md#getting-an-oauth-token); the QR and device-code methods
-  need no token at all.)
+  need no token at all.) The cache is plain JSON — token and cookies — at
+  `%APPDATA%\yandexmusic-player\session.json` on Windows or `~/.config/yandexmusic-player/session.json`
+  on Linux/macOS, readable only by your user account.
 - **Search tracks** and start playback from any result (the whole result set becomes the queue).
 - **Browse your albums** and **your playlists**, and drill into either's tracklist.
 - **Liked** — your "liked" tracks; **My Wave** — a batch from your personal radio station.

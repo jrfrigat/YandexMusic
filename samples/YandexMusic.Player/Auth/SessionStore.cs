@@ -18,8 +18,11 @@ public interface ISessionStore
 }
 
 /// <summary>
-/// Stores the session as JSON under the user's application-data folder. A real app would protect the
-/// token (DPAPI/keychain); for a sample, a private file under the profile is enough.
+/// Stores the session as JSON under the user's application-data folder
+/// (<c>%APPDATA%\yandexmusic-player\session.json</c> on Windows,
+/// <c>~/.config/yandexmusic-player/session.json</c> elsewhere). The file is private to the user
+/// (0600 on Unix) and written atomically, but its contents are plain JSON — a real app would use
+/// DPAPI/keychain instead.
 /// </summary>
 public sealed class FileSessionStore : ISessionStore
 {
@@ -59,7 +62,16 @@ public sealed class FileSessionStore : ISessionStore
     public void Save(AuthSnapshot snapshot)
     {
         ArgumentNullException.ThrowIfNull(snapshot);
-        File.WriteAllText(_path, JsonSerializer.Serialize(snapshot, SerializerOptions));
+        // Write to a temp file and rename, so a crash mid-write cannot truncate the session.
+        var tempPath = _path + ".tmp";
+        File.WriteAllText(tempPath, JsonSerializer.Serialize(snapshot, SerializerOptions));
+        if (!OperatingSystem.IsWindows())
+        {
+            // The token and session cookies are account access; keep the file to the owner only.
+            File.SetUnixFileMode(tempPath, UnixFileMode.UserRead | UnixFileMode.UserWrite);
+        }
+
+        File.Move(tempPath, _path, overwrite: true);
     }
 
     /// <inheritdoc />

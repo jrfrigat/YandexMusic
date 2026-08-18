@@ -20,7 +20,8 @@ public sealed class TokenAuthFlow : IAuthFlow
         }
 
         client.Authentication.SignInWithToken(token.Trim());
-        return await AuthSupport.ValidateAsync(client, cancellationToken).ConfigureAwait(false);
+        // Unreachable counts as signed in: the token is set, the network will catch up later.
+        return await AuthSupport.ValidateAsync(client, cancellationToken).ConfigureAwait(false) != SessionCheck.Rejected;
     }
 }
 
@@ -116,6 +117,7 @@ public sealed class PasswordAuthFlow : IAuthFlow
             return false;
         }
 
-        return await AuthSupport.ValidateAsync(client, cancellationToken).ConfigureAwait(false);
+        // Unreachable counts as signed in: the credentials are consumed, the network will catch up.
+        return await AuthSupport.ValidateAsync(client, cancellationToken).ConfigureAwait(false) != SessionCheck.Rejected;
     }
 }

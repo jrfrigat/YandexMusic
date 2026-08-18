@@ -86,14 +86,19 @@ public sealed class AuthService
         }
 
         client.Authentication.Session.Import(snapshot);
-        if (await AuthSupport.ValidateAsync(client, cancellationToken).ConfigureAwait(false))
+        switch (await AuthSupport.ValidateAsync(client, cancellationToken).ConfigureAwait(false))
         {
-            return true;
-        }
+            case SessionCheck.Valid:
+            case SessionCheck.Unreachable:
+                // Unreachable (offline, timeout): keep the saved session and proceed. Destroying it
+                // on a network hiccup would force a full re sign-in for no reason.
+                return true;
 
-        // Stale session — drop it and fall back to interactive sign-in.
-        _store.Clear();
-        client.Authentication.SignOut();
-        return false;
+            default:
+                // The API refused the session — it is stale; drop it and sign in interactively.
+                _store.Clear();
+                client.Authentication.SignOut();
+                return false;
+        }
     }
 }
