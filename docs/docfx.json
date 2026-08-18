@@ -41,9 +41,9 @@
       "_disableContribution": false,
       "_gitContribute": {
         "repo": "https://github.com/jrfrigat/YandexMusic",
-        "branch": "master"
+        "branch": "main"
       },
-      "_appFooter": "YandexMusic — неофициальная библиотека API Яндекс Музыки для .NET 8/9/10."
+      "_appFooter": "YandexMusic - unofficial Yandex Music API client for .NET 8/9/10 · Неофициальный клиент API Яндекс Музыки для .NET 8/9/10"
     }
   }
 }
