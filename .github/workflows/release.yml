@@ -82,13 +82,24 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: gh release create "${{ github.ref_name }}" artifacts/*.nupkg --generate-notes --title "${{ github.ref_name }}"
 
-  # Publishes the sample terminal player as a versioned, self-contained Windows CLI and attaches the
-  # zip to the GitHub Release. Runs on Windows so the player's net*-windows TFM (real NAudio playback)
-  # resolves; the build is not trimmed because the sample uses reflection-based JSON.
+  # Publishes the sample terminal player as versioned, self-contained single-file CLIs and attaches
+  # them to the GitHub Release. Two flavours ship: Windows (net*-windows TFM, real NAudio playback)
+  # built on Windows, and Linux (plain net10.0 TFM, simulated audio) built on Ubuntu. The build is
+  # not trimmed because the sample uses reflection-based JSON.
   player:
-    name: Publish player (CLI)
+    name: Publish player (${{ matrix.rid }})
     needs: publish
-    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            rid: win-x64
+            tfm: net10.0-windows10.0.19041.0
+          - os: ubuntu-latest
+            rid: linux-x64
+            tfm: net10.0
+    runs-on: ${{ matrix.os }}
     permissions:
       contents: write
     steps:
@@ -107,24 +118,36 @@ jobs:
         shell: bash
         run: echo "value=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
 
-      - name: Publish (win-x64, self-contained, single file)
+      - name: Publish (${{ matrix.rid }}, self-contained, single file)
         run: >
           dotnet publish samples/YandexMusic.Player/YandexMusic.Player.csproj
-          -c Release -r win-x64 --self-contained true
+          -c Release -r ${{ matrix.rid }} --self-contained true
           -p:PublishSingleFile=true -p:Version=${{ steps.version.outputs.value }}
-          -o publish/player
+          -p:PlayerTargetFramework=${{ matrix.tfm }} -o publish/player
 
-      - name: Zip
+      # Windows ships a zip; Linux a tar.gz, so the executable bit survives packaging.
+      - name: Package
+        id: package
         shell: pwsh
-        run: Compress-Archive -Path publish/player/* -DestinationPath "yandexmusic-player-${{ steps.version.outputs.value }}-win-x64.zip"
+        run: |
+          $version = '${{ steps.version.outputs.value }}'.Split('+')[0]
+          if ('${{ matrix.rid }}' -eq 'win-x64') {
+            $archive = "yandexmusic-player-$version-win-x64.zip"
+            Compress-Archive -Path publish/player/* -DestinationPath $archive
+          }
+          else {
+            $archive = "yandexmusic-player-$version-linux-x64.tar.gz"
+            tar -czf $archive -C publish/player .
+          }
+          "archive=$archive" >> $env:GITHUB_OUTPUT
 
       - name: Upload workflow artifact
         uses: actions/upload-artifact@v7
         with:
-          name: yandexmusic-player-${{ steps.version.outputs.value }}-win-x64
-          path: yandexmusic-player-${{ steps.version.outputs.value }}-win-x64.zip
+          name: yandexmusic-player-${{ steps.version.outputs.value }}-${{ matrix.rid }}
+          path: ${{ steps.package.outputs.archive }}
 
       - name: Attach to the GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release upload "${{ github.ref_name }}" "yandexmusic-player-${{ steps.version.outputs.value }}-win-x64.zip" --clobber
+        run: gh release upload "${{ github.ref_name }}" "${{ steps.package.outputs.archive }}" --clobber

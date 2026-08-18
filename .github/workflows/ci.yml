@@ -71,13 +71,23 @@ jobs:
           path: artifacts/*.nupkg
           if-no-files-found: ignore
 
-  # Build the sample player as a self-contained Windows CLI on every push, and upload it as a
-  # version-named workflow artifact (the version is MinVer's, read from the published exe). Runs on
-  # Windows so the player's net*-windows TFM (real NAudio playback) is the one that ships.
+  # Build the sample player as a self-contained single-file CLI on every push and upload it as a
+  # version-named workflow artifact. Two flavours ship: Windows (net*-windows TFM, real NAudio
+  # playback) built on Windows, and Linux (plain net10.0 TFM, simulated audio) built on Ubuntu.
   player:
-    name: Build player (CLI artifact)
+    name: Build player (${{ matrix.rid }})
     if: github.event_name == 'push'
-    runs-on: windows-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            rid: win-x64
+            tfm: net10.0-windows10.0.19041.0
+          - os: ubuntu-latest
+            rid: linux-x64
+            tfm: net10.0
+    runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -89,24 +99,44 @@ jobs:
         with:
           dotnet-version: 10.0.x
 
-      - name: Publish (win-x64, self-contained, single file)
+      - name: Restore
+        run: dotnet restore samples/YandexMusic.Player/YandexMusic.Player.csproj -p:PlayerTargetFramework=${{ matrix.tfm }}
+
+      # MinVer computes the version inside a build target, so it can only be read after one has run;
+      # invoking the target directly is much cheaper than a full build.
+      - name: Resolve version (MinVer)
+        id: version
+        shell: bash
+        run: >
+          echo "value=$(dotnet msbuild samples/YandexMusic.Player/YandexMusic.Player.csproj
+          -t:MinVer -getProperty:Version -p:Configuration=Release
+          -p:PlayerTargetFramework=${{ matrix.tfm }} -v:q -nologo | tr -d '\r\n')" >> "$GITHUB_OUTPUT"
+
+      - name: Publish (${{ matrix.rid }}, self-contained, single file)
         run: >
           dotnet publish samples/YandexMusic.Player/YandexMusic.Player.csproj
-          -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -o publish/player
+          -c Release -r ${{ matrix.rid }} --self-contained true -p:PublishSingleFile=true
+          -p:PlayerTargetFramework=${{ matrix.tfm }} -o publish/player
 
-      - name: Package (name the zip with the MinVer version)
+      # Windows ships a zip; Linux a tar.gz, so the executable bit survives packaging.
+      - name: Package
         id: package
         shell: pwsh
         run: |
-          $exe = Get-ChildItem publish/player/yandexmusic-player.exe
-          $version = ($exe.VersionInfo.ProductVersion -split '\+')[0]
-          $zip = "yandexmusic-player-$version-win-x64.zip"
-          Compress-Archive -Path publish/player/* -DestinationPath $zip
-          "name=yandexmusic-player-$version-win-x64" >> $env:GITHUB_OUTPUT
+          $version = '${{ steps.version.outputs.value }}'.Split('+')[0]
+          if ('${{ matrix.rid }}' -eq 'win-x64') {
+            $archive = "yandexmusic-player-$version-win-x64.zip"
+            Compress-Archive -Path publish/player/* -DestinationPath $archive
+          }
+          else {
+            $archive = "yandexmusic-player-$version-linux-x64.tar.gz"
+            tar -czf $archive -C publish/player .
+          }
+          "archive=$archive" >> $env:GITHUB_OUTPUT
 
       - name: Upload player artifact
         uses: actions/upload-artifact@v7
         with:
-          name: ${{ steps.package.outputs.name }}
-          path: yandexmusic-player-*-win-x64.zip
+          name: yandexmusic-player-${{ steps.version.outputs.value }}-${{ matrix.rid }}
+          path: ${{ steps.package.outputs.archive }}
           if-no-files-found: error

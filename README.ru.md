@@ -172,10 +172,11 @@ services.AddYandexMusic(options =>
 библиотеки: поиск, просмотр своих альбомов и плейлистов, экран «сейчас играет» с анимированным
 эквалайзером, прогресс-баром в реальном времени и управлением громкостью/воспроизведением с клавиатуры.
 
-**Скачать:** готовую сборку под Windows можно взять на странице
+**Скачать:** готовые сборки под **Windows** и **Linux** публикуются на странице
 [**Releases**](https://github.com/jrfrigat/YandexMusic/releases)
-(`yandexmusic-player-<version>-win-x64.zip` — self-contained, .NET ставить не нужно; распакуйте и
-запустите `yandexmusic-player.exe`). Либо запустите из исходников:
+(`yandexmusic-player-<version>-win-x64.zip` и `yandexmusic-player-<version>-linux-x64.tar.gz` —
+self-contained, .NET ставить не нужно; распакуйте и запустите `yandexmusic-player.exe` на Windows
+или `./yandexmusic-player` на Linux). Либо запустите из исходников:
 
 ```bash
 dotnet run --project samples/YandexMusic.Player
