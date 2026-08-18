@@ -6,7 +6,7 @@
 Формат основан на [Keep a Changelog](https://keepachangelog.com/ru/1.1.0/),
 проект следует [семантическому версионированию](https://semver.org/lang/ru/).
 
-## [Не выпущено]
+## [0.3.0] - 2026-08-19
 
 ### Исправлено
 - `Authentication.PollDeviceTokenAsync` теперь выполняет вход в клиент, когда пользователь подтверждает
