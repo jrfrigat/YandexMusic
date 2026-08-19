@@ -124,6 +124,21 @@ public sealed class TrackDeserializationTests
     }
 
     [Fact]
+    public void Deserializes_Supplement_WithStringId_LiveShape()
+    {
+        // The live API returns the supplement id as a string and the inner lyrics id as a number.
+        const string json =
+            """{ "result": { "id": "1710808", "lyrics": { "id": 1710808, "lyrics": "short", "fullLyrics": "full text", "hasRights": true } } }""";
+
+        var response = JsonSerializer.Deserialize(json, YandexMusicJson.TypeInfo<ApiResponse<TrackSupplement>>());
+        var supplement = response!.Result!;
+
+        Assert.Equal(1_710_808, supplement.Id);
+        Assert.Equal(1_710_808, supplement.Lyrics!.Id);
+        Assert.Equal("full text", supplement.Lyrics.FullText);
+    }
+
+    [Fact]
     public void Deserializes_SimilarTracks()
     {
         const string json =
