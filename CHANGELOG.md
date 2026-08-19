@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- Ynison real-time client (`YandexMusic.Ynison`): subscribe to the account's playback state across
+  all devices and remote-control it (pause/resume, next/previous track, per-device volume, "play on
+  device") over the same websocket protocol the official clients use. Full protobuf-JSON state
+  models, reconnect with capped exponential backoff, ready-made request builders, and
+  `IYandexMusicClient.CreateYnisonClient()` wiring the session token automatically.
+- Sample player: the Ynison remote control screen — live playback state of every device of the
+  account with pause/tracks/volume commands and "play on this device" via keys `1-9`.
 - Sample player: per-track actions on the now-playing screen — like (`l`), dislike with an auto-skip
   (`x`), lyrics (`t`), and an endless "similar tracks" radio seeded from the current track (`i`).
 - Sample player: play reporting — every playback start sends a play-audio event, and radio queues
@@ -17,8 +24,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Sample player: search with tabs (tracks, albums, playlists), "load more" paging, and drill-in to
   a picked album's or playlist's tracklist; radio queues keep fetching batches instead of stopping
   at the end of the first one.
-
-## [0.3.0] - 2026-08-19
+- `YandexMusicClientOptions.ApiBaseUri` — override the API base address for a reverse proxy, a regional
+  mirror, or a local stub server in tests; defaults to the official host.
+- Opportunistic HTTP/2 (falls back to HTTP/1.1 transparently) on every `HttpClient` the library creates,
+  enabling connection multiplexing.
+- `AddYandexMusic(..., configureHttpClient)` overload and a public `HttpClientName` constant, so consumers
+  can attach a resilience handler, logging, or a custom primary handler to the pooled `IHttpClientFactory`
+  client without depending on an internal name.
 
 ### Fixed
 - `Authentication.PollDeviceTokenAsync` now signs the client in when the user confirms the device
@@ -42,20 +54,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - `Account.SetSettingsAsync(IReadOnlyDictionary<string, string>, ...)` disposed its request body before
   the request finished sending, which could intermittently throw or send a truncated body under real
   network latency.
-
-### Added
-- Ynison real-time client (`YandexMusic.Ynison`): subscribe to the account's playback state across
-  all devices and remote-control it (pause/resume, next/previous track, per-device volume) over the
-  same websocket protocol the official clients use. Full protobuf-JSON state models, reconnect with
-  capped exponential backoff, ready-made request builders, and
-  `YandexMusicClient.CreateYnisonClient()` wiring the session token automatically.
-- `YandexMusicClientOptions.ApiBaseUri` — override the API base address for a reverse proxy, a regional
-  mirror, or a local stub server in tests; defaults to the official host.
-- Opportunistic HTTP/2 (falls back to HTTP/1.1 transparently) on every `HttpClient` the library creates,
-  enabling connection multiplexing.
-- `AddYandexMusic(..., configureHttpClient)` overload and a public `HttpClientName` constant, so consumers
-  can attach a resilience handler, logging, or a custom primary handler to the pooled `IHttpClientFactory`
-  client without depending on an internal name.
 
 ### Changed
 - `YandexMusic.DependencyInjection`: HTTP client options (timeout, headers, proxy, base address) now
