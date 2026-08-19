@@ -6,14 +6,15 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [0.3.0] - 2026-08-19
 
 ### Added
 - Ynison real-time client (`YandexMusic.Ynison`): subscribe to the account's playback state across
   all devices and remote-control it (pause/resume, next/previous track, per-device volume, "play on
   device") over the same websocket protocol the official clients use. Full protobuf-JSON state
-  models, reconnect with capped exponential backoff, ready-made request builders, and
-  `IYandexMusicClient.CreateYnisonClient()` wiring the session token automatically.
+  models (the protocol's original snake_case wire names), reconnect with capped exponential
+  backoff, ready-made request builders, and `IYandexMusicClient.CreateYnisonClient()` wiring the
+  session token automatically. Verified against the live service.
 - Sample player: the Ynison remote control screen — live playback state of every device of the
   account with pause/tracks/volume commands and "play on this device" via keys `1-9`.
 - Sample player: per-track actions on the now-playing screen — like (`l`), dislike with an auto-skip
@@ -24,6 +25,39 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Sample player: search with tabs (tracks, albums, playlists), "load more" paging, and drill-in to
   a picked album's or playlist's tracklist; radio queues keep fetching batches instead of stopping
   at the end of the first one.
+- The sample player now ships as self-contained single-file builds for **Linux** alongside Windows
+  (a zip for win-x64, a tar.gz for linux-x64), attached to releases and CI artifacts.
+
+### Fixed
+- Ynison: server frames use the protocol's original snake_case field names (`player_state`,
+  `redirect_ticket`); the models now deserialize them correctly (previously only camelCase was
+  accepted, so every live frame parsed empty and the redirector answer was rejected).
+- `Authentication.PollDeviceTokenAsync` now signs the client in when the user confirms the device
+  code, as its documentation always promised. Previously it returned the token without applying it,
+  leaving `IsAuthenticated` false and every subsequent call silently unauthenticated.
+- Sample player: the lyrics view now reads the text from the supplement endpoint, which carries it
+  directly. The signed `/lyrics` endpoint currently answers 403 "Invalid Sign" even with the exact
+  reference signature, so `Tracks.GetLyricsAsync` is documented accordingly.
+- Sample player: a failing screen (network drop, API error) shows an error line and returns to the
+  menu instead of exiting the whole app; the same applies to the Ynison remote teardown.
+- Sample player: launching offline (or pressing Ctrl+C during the startup session check) no longer
+  deletes the saved session. The stored session is now dropped only when the API itself refuses it;
+  network errors keep it.
+- Sample player: the stored session file (`session.json`, token and cookies) is now written
+  atomically and restricted to the owner (`0600`) on Linux/macOS instead of the default
+  world-readable mode.
+- Release workflow: requests the `nuget` environment as the Trusted Publishing policy expects, and
+  attaches `.snupkg` symbol packages to the GitHub Release (they already reached NuGet.org, but
+  were missing from the release assets).
+
+### Changed
+- `RELEASING.md` now exists per language (`RELEASING.md` + `RELEASING.ru.md`), like the READMEs; the
+  changelog follows the same split (`CHANGELOG.md` + `CHANGELOG.ru.md`). The versioning description
+  now matches reality (MinVer tag-driven; push a tag — the workflow creates the release).
+
+## [0.2.0] - 2026-07-03
+
+### Added
 - `YandexMusicClientOptions.ApiBaseUri` — override the API base address for a reverse proxy, a regional
   mirror, or a local stub server in tests; defaults to the official host.
 - Opportunistic HTTP/2 (falls back to HTTP/1.1 transparently) on every `HttpClient` the library creates,
@@ -33,15 +67,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   client without depending on an internal name.
 
 ### Fixed
-- `Authentication.PollDeviceTokenAsync` now signs the client in when the user confirms the device
-  code, as its documentation always promised. Previously it returned the token without applying it,
-  leaving `IsAuthenticated` false and every subsequent call silently unauthenticated.
-- Sample player: launching offline (or pressing Ctrl+C during the startup session check) no longer
-  deletes the saved session. The stored session is now dropped only when the API itself refuses it;
-  network errors keep it.
-- Sample player: the stored session file (`session.json`, token and cookies) is now written
-  atomically and restricted to the owner (`0600`) on Linux/macOS instead of the default
-  world-readable mode.
 - **Critical**: every `Pins` call (`PinAlbumAsync`, `UnpinAlbumAsync`, `PinArtistAsync`, `UnpinArtistAsync`,
   `PinPlaylistAsync`, `UnpinPlaylistAsync`, `PinWaveAsync`, `UnpinWaveAsync`) threw at runtime on both
   Windows and Linux. They built a relative-path request and sent it through the raw transport method,
@@ -62,7 +87,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   proxy/timeout/headers configuration.
 - CI now builds and tests on both `ubuntu-latest` and `windows-latest` (previously Linux-only), so
   OS-dependent regressions like the two fixes above are caught automatically.
-- The zero-warning build bar (`TreatWarningsAsErrors`) now also covers the test project.
+- The zero-warning build bar (`TreatWarningsAsErrors`) now also covers the test project; NU1900 (audit
+  feed unreachable) is demoted so an offline build cannot fail CI.
 
 ## [0.1.0] - 2026-06-30
 
