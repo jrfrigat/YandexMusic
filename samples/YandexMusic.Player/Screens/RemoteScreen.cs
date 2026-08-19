@@ -16,8 +16,11 @@ public sealed class RemoteScreen
 {
     private const double VolumeStep = 0.1;
     private const int MaxDeviceHotkeys = 9;
+    private static readonly TimeSpan ToastLifetime = TimeSpan.FromSeconds(4);
 
     private readonly IYandexMusicClient _client;
+    private string _toast = string.Empty;
+    private DateTime _toastShownAt;
 
     /// <summary>Creates the remote screen.</summary>
     /// <param name="client">The signed-in client the Ynison session is created from.</param>
@@ -47,16 +50,15 @@ public sealed class RemoteScreen
         }
 
         var exit = false;
-        var toast = string.Empty;
         try
         {
-            await AnsiConsole.Live(Build(ynison.LatestState!, toast))
+            await AnsiConsole.Live(Build(ynison.LatestState!))
                 .AutoClear(true)
                 .StartAsync(async live =>
                 {
                     while (!exit && !cancellationToken.IsCancellationRequested)
                     {
-                        live.UpdateTarget(Build(ynison.LatestState!, toast));
+                        live.UpdateTarget(Build(ynison.LatestState!));
 
                         while (TryReadKey(out var key))
                         {
@@ -81,7 +83,7 @@ public sealed class RemoteScreen
                                 case ConsoleKey.D1 or ConsoleKey.D2 or ConsoleKey.D3 or ConsoleKey.D4
                                     or ConsoleKey.D5 or ConsoleKey.D6 or ConsoleKey.D7 or ConsoleKey.D8
                                     or ConsoleKey.D9:
-                                    toast = await PlayOnDeviceAsync(ynison, (int)key - (int)ConsoleKey.D1, cancellationToken);
+                                    ShowToast(await PlayOnDeviceAsync(ynison, (int)key - (int)ConsoleKey.D1, cancellationToken));
                                     break;
                                 case ConsoleKey.Q or ConsoleKey.Escape:
                                     exit = true;
@@ -184,7 +186,13 @@ public sealed class RemoteScreen
         }
     }
 
-    private static Panel Build(PutYnisonStateResponse state, string toast)
+    private void ShowToast(string message)
+    {
+        _toast = message;
+        _toastShownAt = DateTime.UtcNow;
+    }
+
+    private Panel Build(PutYnisonStateResponse state)
     {
         var rows = new List<IRenderable>
         {
@@ -204,7 +212,14 @@ public sealed class RemoteScreen
         }
 
         rows.Add(new Markup(string.Empty));
-        rows.Add(new Markup(string.IsNullOrEmpty(toast) ? Strings.RemoteKeys : ToastLine(toast)));
+        if (!string.IsNullOrEmpty(_toast) && DateTime.UtcNow - _toastShownAt < ToastLifetime)
+        {
+            rows.Add(new Markup($"[grey]{Markup.Escape(_toast)}[/]"));
+        }
+        else
+        {
+            rows.Add(new Markup(Strings.RemoteKeys));
+        }
 
         return new Panel(new Rows(rows))
             .Header(Strings.RemoteHeader)
@@ -242,8 +257,7 @@ public sealed class RemoteScreen
         var offline = device.IsOffline ? $" [grey]({Strings.RemoteOffline})[/]" : string.Empty;
         var title = Markup.Escape(Format.Truncate(device.Info?.Title ?? Strings.RemoteUnknownDevice, 36));
         var volume = (int)Math.Round(Math.Clamp(device.VolumeInfo?.Volume ?? 0, 0, 1) * 100);
-        return $"[grey][{index + 1}][/] {title}{marker}{offline}  [grey]{Strings.VolumeLabel}[/] [green]{volume,3}%[/]";
+        return $"[grey][[{index + 1}]] [/grey]{title}{marker}{offline}  [grey]{Strings.VolumeLabel}[/] [green]{volume,3}%[/]";
     }
 
-    private static string ToastLine(string toast) => $"[yellow]{Markup.Escape(toast)}[/]";
 }

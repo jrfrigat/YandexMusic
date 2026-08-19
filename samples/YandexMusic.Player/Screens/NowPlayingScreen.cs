@@ -17,6 +17,7 @@ namespace YandexMusic.Player.Screens;
 public sealed class NowPlayingScreen
 {
     private const string EqualizerBlocks = "▁▂▃▄▅▆▇█";
+    private static readonly TimeSpan ToastLifetime = TimeSpan.FromSeconds(4);
 
     private readonly PlaybackController _controller;
     private readonly IMusicCatalog _catalog;
@@ -24,6 +25,7 @@ public sealed class NowPlayingScreen
     private HashSet<string> _likedIds = [];
     private bool _likedLoaded;
     private string _toast = string.Empty;
+    private DateTime _toastShownAt;
     private int _frame;
 
     /// <summary>Creates the now-playing screen.</summary>
@@ -145,6 +147,12 @@ public sealed class NowPlayingScreen
         return exit;
     }
 
+    private void ShowToast(string message)
+    {
+        _toast = message;
+        _toastShownAt = DateTime.UtcNow;
+    }
+
     private async Task EnsureLikedLoadedAsync(CancellationToken cancellationToken)
     {
         if (_likedLoaded)
@@ -185,16 +193,16 @@ public sealed class NowPlayingScreen
                     _ = _likedIds.Remove(item.Id);
                 }
 
-                _toast = liked ? Strings.LikeAdded : Strings.LikeRemoved;
+                ShowToast(liked ? Strings.LikeAdded : Strings.LikeRemoved);
             }
             else
             {
-                _toast = Strings.ActionFailed;
+                ShowToast(Strings.ActionFailed);
             }
         }
         catch (YandexMusicException)
         {
-            _toast = Strings.ActionFailed;
+            ShowToast(Strings.ActionFailed);
         }
     }
 
@@ -211,17 +219,17 @@ public sealed class NowPlayingScreen
             if (await _catalog.DislikeTrackAsync(item.Id, cancellationToken).ConfigureAwait(false))
             {
                 _ = _likedIds.Remove(item.Id);
-                _toast = Strings.DislikeDone;
+                ShowToast(Strings.DislikeDone);
                 await _controller.NextAsync(cancellationToken).ConfigureAwait(false);
             }
             else
             {
-                _toast = Strings.ActionFailed;
+                ShowToast(Strings.ActionFailed);
             }
         }
         catch (YandexMusicException)
         {
-            _toast = Strings.ActionFailed;
+            ShowToast(Strings.ActionFailed);
         }
     }
 
@@ -232,13 +240,13 @@ public sealed class NowPlayingScreen
             return;
         }
 
-        _toast = Strings.SimilarStarting;
+        ShowToast(Strings.SimilarStarting);
         try
         {
             var batch = await _catalog.GetSimilarRadioAsync(item.Id, cancellationToken).ConfigureAwait(false);
             if (batch.Tracks.Count == 0)
             {
-                _toast = Strings.NothingFound;
+                ShowToast(Strings.NothingFound);
                 return;
             }
 
@@ -251,7 +259,7 @@ public sealed class NowPlayingScreen
         }
         catch (YandexMusicException)
         {
-            _toast = Strings.ActionFailed;
+            ShowToast(Strings.ActionFailed);
         }
     }
 
@@ -298,9 +306,9 @@ public sealed class NowPlayingScreen
             new Markup(VolumeLine()),
             new Markup($"[grey]{Strings.TrackCounter(_controller.QueuePosition, _controller.QueueLength)}{(_controller.ProducesSound ? string.Empty : Strings.SimulatedSuffix)}[/]"),
         };
-        if (!string.IsNullOrEmpty(_toast))
+        if (!string.IsNullOrEmpty(_toast) && DateTime.UtcNow - _toastShownAt < ToastLifetime)
         {
-            rows.Add(new Markup($"[yellow]{_toast}[/]"));
+            rows.Add(new Markup($"[grey]{Markup.Escape(_toast)}[/]"));
         }
 
         rows.Add(new Markup(Strings.NowPlayingKeys));
