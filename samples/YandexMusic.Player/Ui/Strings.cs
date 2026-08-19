@@ -151,5 +151,7 @@ public static class Strings
     public static string SearchTabAlbums => Get(nameof(SearchTabAlbums));
     public static string SearchTabPlaylists => Get(nameof(SearchTabPlaylists));
     public static string LoadMore => Get(nameof(LoadMore));
+    public static string LoadingMore => Get(nameof(LoadingMore));
+    public static string SearchTabsKeys => Get(nameof(SearchTabsKeys));
     public static string ScreenFailed(string reason) => Fmt(nameof(ScreenFailed), reason);
 }
