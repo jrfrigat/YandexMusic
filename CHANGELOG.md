@@ -22,13 +22,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Sample player: play reporting — every playback start sends a play-audio event, and radio queues
   (My Wave, similar tracks) report radio-started/track-started/finished/skipped feedback, so
   recommendations react to what is actually played.
-- Sample player: search with tabs (tracks, albums, playlists), "load more" paging, and drill-in to
-  a picked album's or playlist's tracklist; radio queues keep fetching batches instead of stopping
-  at the end of the first one.
+- Sample player: search as a tabbed screen — a horizontal tab bar (tracks, albums, playlists) over
+  a result list in one live view, per-tab paging via a "load more" row, and drill-in to a picked
+  album's or playlist's tracklist; radio queues keep fetching batches instead of stopping at the
+  end of the first one.
+- Sample player: status toasts (liked, errors) are grey and fade out after four seconds.
 - The sample player now ships as self-contained single-file builds for **Linux** alongside Windows
   (a zip for win-x64, a tar.gz for linux-x64), attached to releases and CI artifacts.
 
 ### Fixed
+- Sample player: the remote no longer crashes on Spectre markup — the device hotkey badges
+  ("[1]"-style) are rendered as literal brackets now.
+- Sample player: lyrics load again — the supplement endpoint returns its id as a string, which the
+  model now accepts (number or string).
 - Ynison: server frames use the protocol's original snake_case field names (`player_state`,
   `redirect_ticket`); the models now deserialize them correctly (previously only camelCase was
   accepted, so every live frame parsed empty and the redirector answer was rejected).
