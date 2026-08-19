@@ -7,11 +7,26 @@ namespace YandexMusic.Player.Catalog;
 /// </summary>
 public interface IMusicCatalog
 {
-    /// <summary>Searches the catalogue for tracks.</summary>
+    /// <summary>Searches the catalogue for tracks, one page at a time.</summary>
     /// <param name="query">The search text.</param>
+    /// <param name="page">The zero-based result page.</param>
     /// <param name="cancellationToken">A token to cancel the request.</param>
-    /// <returns>The matching tracks.</returns>
-    Task<IReadOnlyList<TrackView>> SearchTracksAsync(string query, CancellationToken cancellationToken = default);
+    /// <returns>The page of matching tracks and the total match count.</returns>
+    Task<SearchPage<TrackView>> SearchTracksAsync(string query, int page = 0, CancellationToken cancellationToken = default);
+
+    /// <summary>Searches the catalogue for albums, one page at a time.</summary>
+    /// <param name="query">The search text.</param>
+    /// <param name="page">The zero-based result page.</param>
+    /// <param name="cancellationToken">A token to cancel the request.</param>
+    /// <returns>The page of matching albums and the total match count.</returns>
+    Task<SearchPage<AlbumView>> SearchAlbumsAsync(string query, int page = 0, CancellationToken cancellationToken = default);
+
+    /// <summary>Searches the catalogue for playlists, one page at a time.</summary>
+    /// <param name="query">The search text.</param>
+    /// <param name="page">The zero-based result page.</param>
+    /// <param name="cancellationToken">A token to cancel the request.</param>
+    /// <returns>The page of matching playlists and the total match count.</returns>
+    Task<SearchPage<PlaylistView>> SearchPlaylistsAsync(string query, int page = 0, CancellationToken cancellationToken = default);
 
     /// <summary>Gets the signed-in user's liked albums.</summary>
     /// <param name="cancellationToken">A token to cancel the request.</param>
@@ -40,10 +55,46 @@ public interface IMusicCatalog
     /// <returns>The liked tracks.</returns>
     Task<IReadOnlyList<TrackView>> GetLikedTracksAsync(CancellationToken cancellationToken = default);
 
+    /// <summary>Gets the identifiers of the user's liked tracks, for like-state indicators.</summary>
+    /// <param name="cancellationToken">A token to cancel the request.</param>
+    /// <returns>The liked track ids.</returns>
+    Task<IReadOnlyList<string>> GetLikedTrackIdsAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>Adds or removes the "liked" mark of a track.</summary>
+    /// <param name="trackId">The track identifier.</param>
+    /// <param name="liked"><see langword="true"/> to like, <see langword="false"/> to un-like.</param>
+    /// <param name="cancellationToken">A token to cancel the request.</param>
+    /// <returns>Whether the API accepted the change.</returns>
+    Task<bool> SetTrackLikedAsync(string trackId, bool liked, CancellationToken cancellationToken = default);
+
+    /// <summary>Marks a track as disliked (and removes the like), steering future recommendations away.</summary>
+    /// <param name="trackId">The track identifier.</param>
+    /// <param name="cancellationToken">A token to cancel the request.</param>
+    /// <returns>Whether the API accepted the change.</returns>
+    Task<bool> DislikeTrackAsync(string trackId, CancellationToken cancellationToken = default);
+
     /// <summary>Gets a batch of tracks from the user's personal "My Wave" radio station.</summary>
     /// <param name="cancellationToken">A token to cancel the request.</param>
-    /// <returns>The wave's tracks.</returns>
-    Task<IReadOnlyList<TrackView>> GetMyWaveAsync(CancellationToken cancellationToken = default);
+    /// <returns>The wave batch.</returns>
+    Task<RadioBatch> GetMyWaveAsync(CancellationToken cancellationToken = default);
+
+    /// <summary>Gets a batch from an arbitrary radio station, identified as <c>type:tag</c>.</summary>
+    /// <param name="station">The station identity, for example <c>user:onyourwave</c> or <c>track:{id}</c>.</param>
+    /// <param name="cancellationToken">A token to cancel the request.</param>
+    /// <returns>The station batch.</returns>
+    Task<RadioBatch> GetRadioAsync(string station, CancellationToken cancellationToken = default);
+
+    /// <summary>Gets a batch of a radio station seeded from a track (its "similar tracks" stream).</summary>
+    /// <param name="trackId">The track to seed the station with.</param>
+    /// <param name="cancellationToken">A token to cancel the request.</param>
+    /// <returns>The similar-tracks batch.</returns>
+    Task<RadioBatch> GetSimilarRadioAsync(string trackId, CancellationToken cancellationToken = default);
+
+    /// <summary>Downloads the lyrics of a track, when they are available.</summary>
+    /// <param name="trackId">The track identifier.</param>
+    /// <param name="cancellationToken">A token to cancel the request.</param>
+    /// <returns>The lyrics text, or <see langword="null"/> when the track has none.</returns>
+    Task<string?> GetLyricsAsync(string trackId, CancellationToken cancellationToken = default);
 
     /// <summary>Resolves a direct media URL for a track, when one is available.</summary>
     /// <param name="trackId">The track identifier.</param>

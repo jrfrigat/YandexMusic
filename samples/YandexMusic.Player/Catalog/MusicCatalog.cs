@@ -9,13 +9,17 @@ using YandexMusic.Models.Tracks;
 namespace YandexMusic.Player.Catalog;
 
 /// <summary>The default <see cref="IMusicCatalog"/> over an <see cref="IYandexMusicClient"/>.</summary>
-public sealed class MusicCatalog : IMusicCatalog
+public sealed class MusicCatalog : IMusicCatalog, IDisposable
 {
     private const string MyWaveStation = "user:onyourwave";
     private const int MaxTrackBatch = 100;
 
     private readonly IYandexMusicClient _client;
+    private readonly HttpClient _lyricsClient = new();
     private string? _uid;
+
+    /// <inheritdoc />
+    public void Dispose() => _lyricsClient.Dispose();
 
     /// <summary>Creates a catalog over the given client.</summary>
     /// <param name="client">The Yandex Music client.</param>
@@ -26,11 +30,27 @@ public sealed class MusicCatalog : IMusicCatalog
     }
 
     /// <inheritdoc />
-    public async Task<IReadOnlyList<TrackView>> SearchTracksAsync(string query, CancellationToken cancellationToken = default)
+    public async Task<SearchPage<TrackView>> SearchTracksAsync(string query, int page = 0, CancellationToken cancellationToken = default)
     {
-        var result = await _client.Search.SearchAsync(query, SearchType.Track, cancellationToken: cancellationToken).ConfigureAwait(false);
-        var tracks = result?.Tracks?.Results ?? [];
-        return tracks.Select(ToTrackView).ToList();
+        var result = await _client.Search.SearchAsync(query, SearchType.Track, page, cancellationToken: cancellationToken).ConfigureAwait(false);
+        var section = result?.Tracks;
+        return new SearchPage<TrackView>((section?.Results ?? []).Select(ToTrackView).ToList(), section?.Total ?? 0);
+    }
+
+    /// <inheritdoc />
+    public async Task<SearchPage<AlbumView>> SearchAlbumsAsync(string query, int page = 0, CancellationToken cancellationToken = default)
+    {
+        var result = await _client.Search.SearchAsync(query, SearchType.Album, page, cancellationToken: cancellationToken).ConfigureAwait(false);
+        var section = result?.Albums;
+        return new SearchPage<AlbumView>((section?.Results ?? []).Select(ToAlbumView).ToList(), section?.Total ?? 0);
+    }
+
+    /// <inheritdoc />
+    public async Task<SearchPage<PlaylistView>> SearchPlaylistsAsync(string query, int page = 0, CancellationToken cancellationToken = default)
+    {
+        var result = await _client.Search.SearchAsync(query, SearchType.Playlist, page, cancellationToken: cancellationToken).ConfigureAwait(false);
+        var section = result?.Playlists;
+        return new SearchPage<PlaylistView>((section?.Results ?? []).Select(ToPlaylistView).ToList(), section?.Total ?? 0);
     }
 
     /// <inheritdoc />
@@ -135,19 +155,97 @@ public sealed class MusicCatalog : IMusicCatalog
     }
 
     /// <inheritdoc />
-    public async Task<IReadOnlyList<TrackView>> GetMyWaveAsync(CancellationToken cancellationToken = default)
+    public async Task<IReadOnlyList<string>> GetLikedTrackIdsAsync(CancellationToken cancellationToken = default)
     {
-        var result = await _client.Radio.GetStationTracksAsync(MyWaveStation, cancellationToken: cancellationToken).ConfigureAwait(false);
-        return (result?.Sequence ?? [])
-            .Select(s => s.Track)
-            .Where(t => t is not null)
-            .Select(t => ToTrackView(t!))
+        var uid = await GetUidAsync(cancellationToken).ConfigureAwait(false);
+        if (uid is null)
+        {
+            return [];
+        }
+
+        var liked = await _client.Library.GetLikedTracksAsync(uid, cancellationToken: cancellationToken).ConfigureAwait(false);
+        return (liked?.Tracks ?? [])
+            .Select(t => t.Id)
+            .Where(id => !string.IsNullOrEmpty(id))
             .ToList();
+    }
+
+    /// <inheritdoc />
+    public async Task<bool> SetTrackLikedAsync(string trackId, bool liked, CancellationToken cancellationToken = default)
+    {
+        var uid = await GetUidAsync(cancellationToken).ConfigureAwait(false);
+        if (uid is null)
+        {
+            return false;
+        }
+
+        var ids = new[] { trackId };
+        return liked
+            ? await _client.Library.AddLikedTracksAsync(uid, ids, cancellationToken).ConfigureAwait(false)
+            : await _client.Library.RemoveLikedTracksAsync(uid, ids, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
+    public async Task<bool> DislikeTrackAsync(string trackId, CancellationToken cancellationToken = default)
+    {
+        var uid = await GetUidAsync(cancellationToken).ConfigureAwait(false);
+        if (uid is null)
+        {
+            return false;
+        }
+
+        // A disliked track must not stay liked at the same time.
+        await _client.Library.RemoveLikedTracksAsync(uid, new[] { trackId }, cancellationToken).ConfigureAwait(false);
+        return await _client.Library.AddDislikedTracksAsync(uid, new[] { trackId }, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
+    public Task<RadioBatch> GetMyWaveAsync(CancellationToken cancellationToken = default)
+        => GetStationBatchAsync(MyWaveStation, cancellationToken);
+
+    /// <inheritdoc />
+    public Task<RadioBatch> GetRadioAsync(string station, CancellationToken cancellationToken = default)
+        => GetStationBatchAsync(station, cancellationToken);
+
+    /// <inheritdoc />
+    public async Task<RadioBatch> GetSimilarRadioAsync(string trackId, CancellationToken cancellationToken = default)
+        => await GetStationBatchAsync("track:" + trackId, cancellationToken).ConfigureAwait(false);
+
+    /// <inheritdoc />
+    public async Task<string?> GetLyricsAsync(string trackId, CancellationToken cancellationToken = default)
+    {
+        var lyrics = await _client.Tracks.GetLyricsAsync(trackId, cancellationToken: cancellationToken).ConfigureAwait(false);
+        if (lyrics is null || string.IsNullOrEmpty(lyrics.DownloadUrl))
+        {
+            return null;
+        }
+
+        // The download URL is a pre-signed UGC link; it works without the session headers.
+        using var response = await _lyricsClient.GetAsync(lyrics.DownloadUrl, cancellationToken).ConfigureAwait(false);
+        if (!response.IsSuccessStatusCode)
+        {
+            return null;
+        }
+
+        return await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
     }
 
     /// <inheritdoc />
     public Task<string?> ResolveStreamUrlAsync(string trackId, CancellationToken cancellationToken = default)
         => _client.Tracks.GetDirectLinkAsync(trackId, cancellationToken);
+
+    private async Task<RadioBatch> GetStationBatchAsync(string station, CancellationToken cancellationToken)
+    {
+        var result = await _client.Radio.GetStationTracksAsync(station, cancellationToken: cancellationToken).ConfigureAwait(false);
+        var tracks = (result?.Sequence ?? [])
+            .Select(s => s.Track)
+            .Where(t => t is not null)
+            .Select(t => ToTrackView(t!))
+            .ToList();
+        var id = result?.Id;
+        var stationId = id is { Type.Length: > 0, Tag.Length: > 0 } ? $"{id.Type}:{id.Tag}" : station;
+        return new RadioBatch(tracks, stationId, result?.BatchId ?? string.Empty);
+    }
 
     private async Task<string?> GetUidAsync(CancellationToken cancellationToken)
     {
@@ -166,7 +264,8 @@ public sealed class MusicCatalog : IMusicCatalog
         track.Title,
         JoinArtists(track.Artists),
         track.Albums.Count > 0 ? track.Albums[0].Title : null,
-        TimeSpan.FromMilliseconds(track.DurationMs));
+        TimeSpan.FromMilliseconds(track.DurationMs),
+        track.Albums.Count > 0 ? track.Albums[0].Id : null);
 
     private static TrackView? ToTrackView(TrackShort trackShort)
     {

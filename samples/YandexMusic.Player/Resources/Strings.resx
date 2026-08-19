@@ -290,7 +290,55 @@
     <value>Track {0}/{1}</value>
   </data>
   <data name="NowPlayingKeys" xml:space="preserve">
-    <value>[grey]space[/] play/pause   [grey]←/→[/] prev/next   [grey]↑/↓[/] volume   [grey]s[/] stop   [grey]q[/] back</value>
+    <value>[grey]space[/] play/pause   [grey]←/→[/] prev/next   [grey]↑/↓[/] volume   [grey]l[/] like   [grey]x[/] dislike   [grey]t[/] lyrics   [grey]i[/] similar   [grey]s[/] stop   [grey]q[/] back</value>
+  </data>
+  <data name="LikeMarker" xml:space="preserve">
+    <value>♥ Liked</value>
+  </data>
+  <data name="NotLikedMarker" xml:space="preserve">
+    <value>♡ Not liked</value>
+  </data>
+  <data name="LikeAdded" xml:space="preserve">
+    <value>Added to your liked tracks</value>
+  </data>
+  <data name="LikeRemoved" xml:space="preserve">
+    <value>Removed from your liked tracks</value>
+  </data>
+  <data name="DislikeDone" xml:space="preserve">
+    <value>Disliked — recommendations will avoid it — skipping</value>
+  </data>
+  <data name="ActionFailed" xml:space="preserve">
+    <value>Action failed</value>
+  </data>
+  <data name="SimilarStarting" xml:space="preserve">
+    <value>Starting a radio of similar tracks…</value>
+  </data>
+  <data name="LyricsLoading" xml:space="preserve">
+    <value>Fetching lyrics…</value>
+  </data>
+  <data name="LyricsUnavailable" xml:space="preserve">
+    <value>This track has no lyrics.</value>
+  </data>
+  <data name="LyricsHeader" xml:space="preserve">
+    <value>Lyrics</value>
+  </data>
+  <data name="LyricsKeys" xml:space="preserve">
+    <value>[grey]↑/↓[/] scroll   [grey]PgUp/PgDn[/] page   [grey]q[/] back</value>
+  </data>
+  <data name="SearchTabsTitle" xml:space="preserve">
+    <value>Search in:</value>
+  </data>
+  <data name="SearchTabTracks" xml:space="preserve">
+    <value>Tracks</value>
+  </data>
+  <data name="SearchTabAlbums" xml:space="preserve">
+    <value>Albums</value>
+  </data>
+  <data name="SearchTabPlaylists" xml:space="preserve">
+    <value>Playlists</value>
+  </data>
+  <data name="LoadMore" xml:space="preserve">
+    <value>More…</value>
   </data>
   <data name="MenuRemote" xml:space="preserve">
     <value>Remote control</value>

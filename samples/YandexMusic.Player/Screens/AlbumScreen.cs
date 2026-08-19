@@ -1,6 +1,7 @@
 using System.Globalization;
 using Spectre.Console;
 using YandexMusic.Player.Catalog;
+using YandexMusic.Player.Playback;
 using YandexMusic.Player.Ui;
 
 namespace YandexMusic.Player.Screens;
@@ -42,6 +43,6 @@ public sealed class AlbumScreen
             .ShowAsync(cancellationToken)
             .ConfigureAwait(false);
 
-        return picked is null ? null : new PlayRequest(detail.Tracks, TrackList.IndexOfId(detail.Tracks, picked.Id));
+        return picked is null ? null : new PlayRequest(detail.Tracks, TrackList.IndexOfId(detail.Tracks, picked.Id), new PlaybackOrigin("album", AlbumId: albumId));
     }
 }

@@ -113,15 +113,21 @@ public sealed class PlayerApp
             return;
         }
 
-        var items = request.Tracks.Select(ToPlaybackItem).ToList();
-        await _controller.PlayAsync(items, request.StartIndex, cancellationToken).ConfigureAwait(false);
+        var origin = request.Origin ?? new PlaybackOrigin("app");
+        var items = request.Tracks.Select(t => TrackList.ToPlaybackItem(t, origin, _catalog)).ToList();
+        Func<CancellationToken, Task<IReadOnlyList<PlaybackItem>>>? continuation = null;
+        if (request.Origin?.Station is { Length: > 0 } station)
+        {
+            continuation = ct => FetchRadioItemsAsync(station, ct);
+        }
+        await _controller.PlayAsync(items, request.StartIndex, continuation, cancellationToken).ConfigureAwait(false);
         await _nowPlaying.RunAsync(cancellationToken).ConfigureAwait(false);
     }
 
-    private PlaybackItem ToPlaybackItem(TrackView track) => new(
-        track.Id,
-        track.Title,
-        track.Artist,
-        track.Duration,
-        ct => _catalog.ResolveStreamUrlAsync(track.Id, ct));
+    private async Task<IReadOnlyList<PlaybackItem>> FetchRadioItemsAsync(string station, CancellationToken cancellationToken)
+    {
+        var batch = await _catalog.GetRadioAsync(station, cancellationToken).ConfigureAwait(false);
+        var origin = new PlaybackOrigin("radio", Station: batch.Station, BatchId: batch.BatchId);
+        return batch.Tracks.Select(t => TrackList.ToPlaybackItem(t, origin, _catalog)).ToList();
+    }
 }

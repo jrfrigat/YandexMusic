@@ -1,6 +1,8 @@
 using System.Text;
+using YandexMusic;
 using Spectre.Console;
 using Spectre.Console.Rendering;
+using YandexMusic.Player.Catalog;
 using YandexMusic.Player.Playback;
 using YandexMusic.Player.Ui;
 
@@ -8,22 +10,44 @@ namespace YandexMusic.Player.Screens;
 
 /// <summary>
 /// The live "now playing" view: an animated equalizer, a progress bar that advances in real time, a
-/// volume meter and keyboard transport controls. It renders the <see cref="PlaybackController"/>'s
-/// state and translates key presses into transport commands.
+/// volume meter, keyboard transport controls, and the per-track actions — like, dislike, lyrics and
+/// the "similar tracks" radio. It renders the <see cref="PlaybackController"/>'s state and
+/// translates key presses into commands.
 /// </summary>
 public sealed class NowPlayingScreen
 {
     private const string EqualizerBlocks = "▁▂▃▄▅▆▇█";
 
     private readonly PlaybackController _controller;
+    private readonly IMusicCatalog _catalog;
+    private readonly LyricsScreen _lyrics;
+    private HashSet<string> _likedIds = [];
+    private bool _likedLoaded;
+    private string _toast = string.Empty;
     private int _frame;
 
     /// <summary>Creates the now-playing screen.</summary>
     /// <param name="controller">The playback controller to render and drive.</param>
-    public NowPlayingScreen(PlaybackController controller)
+    /// <param name="catalog">The catalog for like/dislike, lyrics and similar-radio actions.</param>
+    /// <param name="lyrics">The lyrics view opened by the <c>t</c> key.</param>
+    public NowPlayingScreen(PlaybackController controller, IMusicCatalog catalog, LyricsScreen lyrics)
     {
         ArgumentNullException.ThrowIfNull(controller);
+        ArgumentNullException.ThrowIfNull(catalog);
+        ArgumentNullException.ThrowIfNull(lyrics);
         _controller = controller;
+        _catalog = catalog;
+        _lyrics = lyrics;
+    }
+
+    /// <summary>What the live view asked for when it closed.</summary>
+    private enum ViewExit
+    {
+        /// <summary>The user pressed <c>q</c>/<c>Esc</c> — leave the screen.</summary>
+        Back,
+
+        /// <summary>The lyrics view was requested; reopen the live view afterwards.</summary>
+        Lyrics,
     }
 
     /// <summary>Runs the live view until the user presses <c>q</c>/<c>Esc</c>.</summary>
@@ -36,12 +60,30 @@ public sealed class NowPlayingScreen
             return;
         }
 
-        var exit = false;
+        while (!cancellationToken.IsCancellationRequested)
+        {
+            var exit = await RunViewAsync(cancellationToken).ConfigureAwait(false);
+            if (exit != ViewExit.Lyrics)
+            {
+                return;
+            }
+
+            if (_controller.Current is { } item)
+            {
+                await _lyrics.RunAsync(item.Id, cancellationToken).ConfigureAwait(false);
+            }
+        }
+    }
+
+    private async Task<ViewExit> RunViewAsync(CancellationToken cancellationToken)
+    {
+        var exit = ViewExit.Back;
         await AnsiConsole.Live(Build())
             .AutoClear(true)
             .StartAsync(async live =>
             {
-                while (!exit && !cancellationToken.IsCancellationRequested)
+                var running = true;
+                while (running && !cancellationToken.IsCancellationRequested)
                 {
                     _frame++;
                     live.UpdateTarget(Build());
@@ -68,15 +110,156 @@ public sealed class NowPlayingScreen
                             case ConsoleKey.S:
                                 _controller.Stop();
                                 break;
-                            case ConsoleKey.Q or ConsoleKey.Escape:
-                                exit = true;
+                            case ConsoleKey.L:
+                                await ToggleLikeAsync(cancellationToken).ConfigureAwait(false);
                                 break;
+                            case ConsoleKey.X:
+                                await DislikeAsync(cancellationToken).ConfigureAwait(false);
+                                break;
+                            case ConsoleKey.T:
+                                // The lyrics view needs the console; close the live display first.
+                                exit = ViewExit.Lyrics;
+                                running = false;
+                                break;
+                            case ConsoleKey.I:
+                                await StartSimilarRadioAsync(cancellationToken).ConfigureAwait(false);
+                                break;
+                            case ConsoleKey.Q or ConsoleKey.Escape:
+                                running = false;
+                                break;
+                        }
+
+                        if (!running)
+                        {
+                            break;
                         }
                     }
 
-                    await Task.Delay(120, cancellationToken).ConfigureAwait(false);
+                    if (running)
+                    {
+                        await Task.Delay(120, cancellationToken).ConfigureAwait(false);
+                    }
                 }
             }).ConfigureAwait(false);
+
+        return exit;
+    }
+
+    private async Task EnsureLikedLoadedAsync(CancellationToken cancellationToken)
+    {
+        if (_likedLoaded)
+        {
+            return;
+        }
+
+        try
+        {
+            _likedIds = [.. await _catalog.GetLikedTrackIdsAsync(cancellationToken).ConfigureAwait(false)];
+            _likedLoaded = true;
+        }
+        catch (YandexMusicException)
+        {
+            // No like markers this run — the actions below still work, just without the indicator.
+        }
+    }
+
+    private async Task ToggleLikeAsync(CancellationToken cancellationToken)
+    {
+        if (_controller.Current is not { } item)
+        {
+            return;
+        }
+
+        await EnsureLikedLoadedAsync(cancellationToken).ConfigureAwait(false);
+        var liked = !_likedIds.Contains(item.Id);
+        try
+        {
+            if (await _catalog.SetTrackLikedAsync(item.Id, liked, cancellationToken).ConfigureAwait(false))
+            {
+                if (liked)
+                {
+                    _ = _likedIds.Add(item.Id);
+                }
+                else
+                {
+                    _ = _likedIds.Remove(item.Id);
+                }
+
+                _toast = liked ? Strings.LikeAdded : Strings.LikeRemoved;
+            }
+            else
+            {
+                _toast = Strings.ActionFailed;
+            }
+        }
+        catch (YandexMusicException)
+        {
+            _toast = Strings.ActionFailed;
+        }
+    }
+
+    private async Task DislikeAsync(CancellationToken cancellationToken)
+    {
+        if (_controller.Current is not { } item)
+        {
+            return;
+        }
+
+        await EnsureLikedLoadedAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            if (await _catalog.DislikeTrackAsync(item.Id, cancellationToken).ConfigureAwait(false))
+            {
+                _ = _likedIds.Remove(item.Id);
+                _toast = Strings.DislikeDone;
+                await _controller.NextAsync(cancellationToken).ConfigureAwait(false);
+            }
+            else
+            {
+                _toast = Strings.ActionFailed;
+            }
+        }
+        catch (YandexMusicException)
+        {
+            _toast = Strings.ActionFailed;
+        }
+    }
+
+    private async Task StartSimilarRadioAsync(CancellationToken cancellationToken)
+    {
+        if (_controller.Current is not { } item)
+        {
+            return;
+        }
+
+        _toast = Strings.SimilarStarting;
+        try
+        {
+            var batch = await _catalog.GetSimilarRadioAsync(item.Id, cancellationToken).ConfigureAwait(false);
+            if (batch.Tracks.Count == 0)
+            {
+                _toast = Strings.NothingFound;
+                return;
+            }
+
+            var origin = new PlaybackOrigin("similar", Station: batch.Station, BatchId: batch.BatchId);
+            var items = batch.Tracks.Select(t => TrackList.ToPlaybackItem(t, origin, _catalog)).ToList();
+            await _controller.PlayAsync(
+                items,
+                continuation: ct => FetchRadioItemsAsync(batch.Station, ct),
+                cancellationToken: cancellationToken).ConfigureAwait(false);
+        }
+        catch (YandexMusicException)
+        {
+            _toast = Strings.ActionFailed;
+        }
+    }
+
+    private async Task<IReadOnlyList<PlaybackItem>> FetchRadioItemsAsync(string station, CancellationToken cancellationToken)
+    {
+        var batch = await _catalog.GetRadioAsync(station, cancellationToken).ConfigureAwait(false);
+        var origin = new PlaybackOrigin("similar", Station: batch.Station, BatchId: batch.BatchId);
+        return batch.Tracks.Select(t => TrackList.ToPlaybackItem(t, origin, _catalog)).ToList();
     }
 
     private static bool TryReadKey(out ConsoleKey key)
@@ -109,12 +292,18 @@ public sealed class NowPlayingScreen
         {
             new Markup($"[bold white]{Markup.Escape(Format.Truncate(item.Title, 60))}[/]"),
             new Markup($"[grey]{Markup.Escape(Format.Truncate(item.Artist, 60))}[/]"),
+            new Markup(LikeLine(item)),
             new Markup(StatusLine()),
             new Markup(ProgressLine(position, duration)),
             new Markup(VolumeLine()),
             new Markup($"[grey]{Strings.TrackCounter(_controller.QueuePosition, _controller.QueueLength)}{(_controller.ProducesSound ? string.Empty : Strings.SimulatedSuffix)}[/]"),
-            new Markup(Strings.NowPlayingKeys),
         };
+        if (!string.IsNullOrEmpty(_toast))
+        {
+            rows.Add(new Markup($"[yellow]{_toast}[/]"));
+        }
+
+        rows.Add(new Markup(Strings.NowPlayingKeys));
 
         return new Panel(new Rows(rows))
             .Header(Strings.NowPlayingHeader)
@@ -122,6 +311,9 @@ public sealed class NowPlayingScreen
             .BorderColor(Color.Green)
             .Padding(2, 1);
     }
+
+    private string LikeLine(PlaybackItem item)
+        => _likedIds.Contains(item.Id) ? $"[red]{Strings.LikeMarker}[/]" : $"[grey]{Strings.NotLikedMarker}[/]";
 
     private string StatusLine() => _controller.State switch
     {

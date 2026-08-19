@@ -285,7 +285,55 @@
     <value>Трек {0}/{1}</value>
   </data>
   <data name="NowPlayingKeys" xml:space="preserve">
-    <value>[grey]space[/] пауза   [grey]←/→[/] пред/след   [grey]↑/↓[/] громкость   [grey]s[/] стоп   [grey]q[/] назад</value>
+    <value>[grey]space[/] пауза   [grey]←/→[/] пред/след   [grey]↑/↓[/] громкость   [grey]l[/] лайк   [grey]x[/] дизлайк   [grey]t[/] текст   [grey]i[/] похожие   [grey]s[/] стоп   [grey]q[/] назад</value>
+  </data>
+  <data name="LikeMarker" xml:space="preserve">
+    <value>♥ В любимом</value>
+  </data>
+  <data name="NotLikedMarker" xml:space="preserve">
+    <value>♡ Не в любимом</value>
+  </data>
+  <data name="LikeAdded" xml:space="preserve">
+    <value>Добавлено в «Мои треки»</value>
+  </data>
+  <data name="LikeRemoved" xml:space="preserve">
+    <value>Удалено из «Мои треки»</value>
+  </data>
+  <data name="DislikeDone" xml:space="preserve">
+    <value>Дизлайк — рекомендации будут обходить — пропускаю</value>
+  </data>
+  <data name="ActionFailed" xml:space="preserve">
+    <value>Не удалось выполнить</value>
+  </data>
+  <data name="SimilarStarting" xml:space="preserve">
+    <value>Запускаю радио похожих треков…</value>
+  </data>
+  <data name="LyricsLoading" xml:space="preserve">
+    <value>Загружаю текст…</value>
+  </data>
+  <data name="LyricsUnavailable" xml:space="preserve">
+    <value>У этого трека нет текста.</value>
+  </data>
+  <data name="LyricsHeader" xml:space="preserve">
+    <value>Текст песни</value>
+  </data>
+  <data name="LyricsKeys" xml:space="preserve">
+    <value>[grey]↑/↓[/] прокрутка   [grey]PgUp/PgDn[/] страница   [grey]q[/] назад</value>
+  </data>
+  <data name="SearchTabsTitle" xml:space="preserve">
+    <value>Искать в:</value>
+  </data>
+  <data name="SearchTabTracks" xml:space="preserve">
+    <value>Треки</value>
+  </data>
+  <data name="SearchTabAlbums" xml:space="preserve">
+    <value>Альбомы</value>
+  </data>
+  <data name="SearchTabPlaylists" xml:space="preserve">
+    <value>Плейлисты</value>
+  </data>
+  <data name="LoadMore" xml:space="preserve">
+    <value>Ещё…</value>
   </data>
   <data name="MenuRemote" xml:space="preserve">
     <value>Пульт</value>

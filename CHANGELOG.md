@@ -6,6 +6,18 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+- Sample player: per-track actions on the now-playing screen — like (`l`), dislike with an auto-skip
+  (`x`), lyrics (`t`), and an endless "similar tracks" radio seeded from the current track (`i`).
+- Sample player: play reporting — every playback start sends a play-audio event, and radio queues
+  (My Wave, similar tracks) report radio-started/track-started/finished/skipped feedback, so
+  recommendations react to what is actually played.
+- Sample player: search with tabs (tracks, albums, playlists), "load more" paging, and drill-in to
+  a picked album's or playlist's tracklist; radio queues keep fetching batches instead of stopping
+  at the end of the first one.
+
 ## [0.3.0] - 2026-08-19
 
 ### Fixed

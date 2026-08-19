@@ -24,6 +24,18 @@ public sealed class PlaybackController : IAsyncDisposable
     /// <summary>Raised when the current track or playback state changes; the UI re-renders on this.</summary>
     public event Action? Changed;
 
+    /// <summary>Raised when a track starts playing (also on repeats and re-queues); used by play reporting.</summary>
+    public event Action<PlaybackItem>? TrackStarted;
+
+    /// <summary>Raised when the current track stops being the current one. The flag tells natural end from a user skip.</summary>
+    public event Action<PlaybackItem, bool>? TrackLeft;
+
+    /// <summary>
+    /// When set, is called as the queue is about to run dry to fetch more tracks — this is how radio
+    /// queues (the wave, similar tracks) keep playing forever.
+    /// </summary>
+    public Func<CancellationToken, Task<IReadOnlyList<PlaybackItem>>>? Continuation { get; set; }
+
     /// <summary>The track currently loaded, or <see langword="null"/> when the queue is empty.</summary>
     public PlaybackItem? Current => _index >= 0 && _index < _queue.Count ? _queue[_index] : null;
 
@@ -51,13 +63,20 @@ public sealed class PlaybackController : IAsyncDisposable
     /// <summary>Replaces the queue and starts playing from <paramref name="startIndex"/>.</summary>
     /// <param name="items">The tracks to enqueue.</param>
     /// <param name="startIndex">The index to start from.</param>
+    /// <param name="continuation">Fetches more tracks when the queue runs dry, when set.</param>
     /// <param name="cancellationToken">A token to cancel loading.</param>
-    public async Task PlayAsync(IEnumerable<PlaybackItem> items, int startIndex = 0, CancellationToken cancellationToken = default)
+    public async Task PlayAsync(
+        IEnumerable<PlaybackItem> items,
+        int startIndex = 0,
+        Func<CancellationToken, Task<IReadOnlyList<PlaybackItem>>>? continuation = null,
+        CancellationToken cancellationToken = default)
     {
         ArgumentNullException.ThrowIfNull(items);
+        RaiseTrackLeft(endedNaturally: false);
         _queue.Clear();
         _queue.AddRange(items);
         _index = _queue.Count == 0 ? -1 : Math.Clamp(startIndex, 0, _queue.Count - 1);
+        Continuation = continuation;
         await LoadAndPlayCurrentAsync(cancellationToken).ConfigureAwait(false);
     }
 
@@ -80,21 +99,9 @@ public sealed class PlaybackController : IAsyncDisposable
         Changed?.Invoke();
     }
 
-    /// <summary>Skips to the next track, if any.</summary>
+    /// <summary>Skips to the next track, fetching a radio continuation when the queue runs dry.</summary>
     /// <param name="cancellationToken">A token to cancel loading.</param>
-    public async Task NextAsync(CancellationToken cancellationToken = default)
-    {
-        if (_index + 1 < _queue.Count)
-        {
-            _index++;
-            await LoadAndPlayCurrentAsync(cancellationToken).ConfigureAwait(false);
-        }
-        else
-        {
-            _player.Stop();
-            Changed?.Invoke();
-        }
-    }
+    public Task NextAsync(CancellationToken cancellationToken = default) => AdvanceAsync(endedNaturally: false, cancellationToken);
 
     /// <summary>Returns to the previous track, if any.</summary>
     /// <param name="cancellationToken">A token to cancel loading.</param>
@@ -102,6 +109,7 @@ public sealed class PlaybackController : IAsyncDisposable
     {
         if (_index > 0)
         {
+            RaiseTrackLeft(endedNaturally: false);
             _index--;
             await LoadAndPlayCurrentAsync(cancellationToken).ConfigureAwait(false);
         }
@@ -118,6 +126,7 @@ public sealed class PlaybackController : IAsyncDisposable
     /// <summary>Stops playback.</summary>
     public void Stop()
     {
+        RaiseTrackLeft(endedNaturally: false);
         _player.Stop();
         Changed?.Invoke();
     }
@@ -129,6 +138,35 @@ public sealed class PlaybackController : IAsyncDisposable
         await _player.DisposeAsync().ConfigureAwait(false);
     }
 
+    private async Task AdvanceAsync(bool endedNaturally, CancellationToken cancellationToken)
+    {
+        if (_index + 1 < _queue.Count)
+        {
+            RaiseTrackLeft(endedNaturally);
+            _index++;
+            await LoadAndPlayCurrentAsync(cancellationToken).ConfigureAwait(false);
+            return;
+        }
+
+        if (Continuation is { } fetchMore && Current is not null)
+        {
+            // A radio queue fetches the next batch and keeps going; on failure it just ends.
+            var more = await fetchMore(cancellationToken).ConfigureAwait(false);
+            if (more.Count > 0)
+            {
+                RaiseTrackLeft(endedNaturally);
+                _queue.AddRange(more);
+                _index++;
+                await LoadAndPlayCurrentAsync(cancellationToken).ConfigureAwait(false);
+                return;
+            }
+        }
+
+        RaiseTrackLeft(endedNaturally: true);
+        _player.Stop();
+        Changed?.Invoke();
+    }
+
     private async Task LoadAndPlayCurrentAsync(CancellationToken cancellationToken)
     {
         if (Current is not { } item)
@@ -138,7 +176,16 @@ public sealed class PlaybackController : IAsyncDisposable
 
         await _player.LoadAsync(item, cancellationToken).ConfigureAwait(false);
         _player.Play();
+        TrackStarted?.Invoke(item);
         Changed?.Invoke();
+    }
+
+    private void RaiseTrackLeft(bool endedNaturally)
+    {
+        if (Current is { } item)
+        {
+            TrackLeft?.Invoke(item, endedNaturally);
+        }
     }
 
     private void OnPlayerStateChanged(object? sender, PlaybackState state)
@@ -146,7 +193,8 @@ public sealed class PlaybackController : IAsyncDisposable
         if (state == PlaybackState.Ended)
         {
             // Auto-advance to the next track. Fire-and-forget is fine for a console app.
-            _ = NextAsync();
+            _ = AdvanceAsync(endedNaturally: true, CancellationToken.None);
+            return;
         }
 
         Changed?.Invoke();

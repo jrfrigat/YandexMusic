@@ -129,4 +129,26 @@ public static class Strings
     public static string RemoteStartedOn(string device) => Fmt(nameof(RemoteStartedOn), device);
     public static string RemoteCommandFailed(string reason) => Fmt(nameof(RemoteCommandFailed), reason);
     public static string RemoteKeys => Get(nameof(RemoteKeys));
+
+    // Per-track actions (now playing).
+    public static string LikeMarker => Get(nameof(LikeMarker));
+    public static string NotLikedMarker => Get(nameof(NotLikedMarker));
+    public static string LikeAdded => Get(nameof(LikeAdded));
+    public static string LikeRemoved => Get(nameof(LikeRemoved));
+    public static string DislikeDone => Get(nameof(DislikeDone));
+    public static string ActionFailed => Get(nameof(ActionFailed));
+    public static string SimilarStarting => Get(nameof(SimilarStarting));
+
+    // Lyrics.
+    public static string LyricsLoading => Get(nameof(LyricsLoading));
+    public static string LyricsUnavailable => Get(nameof(LyricsUnavailable));
+    public static string LyricsHeader => Get(nameof(LyricsHeader));
+    public static string LyricsKeys => Get(nameof(LyricsKeys));
+
+    // Search tabs.
+    public static string SearchTabsTitle => Get(nameof(SearchTabsTitle));
+    public static string SearchTabTracks => Get(nameof(SearchTabTracks));
+    public static string SearchTabAlbums => Get(nameof(SearchTabAlbums));
+    public static string SearchTabPlaylists => Get(nameof(SearchTabPlaylists));
+    public static string LoadMore => Get(nameof(LoadMore));
 }

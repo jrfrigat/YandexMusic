@@ -1,5 +1,6 @@
 using Spectre.Console;
 using YandexMusic.Player.Catalog;
+using YandexMusic.Player.Playback;
 using YandexMusic.Player.Ui;
 
 namespace YandexMusic.Player.Screens;
@@ -25,19 +26,47 @@ public sealed class TrackListScreen
     /// <param name="cancellationToken">A token to cancel.</param>
     /// <returns>A play request, or <see langword="null"/> to go back.</returns>
     public Task<PlayRequest?> RunLikedAsync(CancellationToken cancellationToken = default)
-        => RunAsync(Strings.LoadingLiked, _catalog.GetLikedTracksAsync, Strings.LikedTitle, Strings.NoLiked, cancellationToken);
+        => RunTracksAsync(
+            Strings.LoadingLiked,
+            _catalog.GetLikedTracksAsync,
+            Strings.LikedTitle,
+            Strings.NoLiked,
+            new PlaybackOrigin("library"),
+            cancellationToken);
 
     /// <summary>Shows a batch of tracks from "My Wave".</summary>
     /// <param name="cancellationToken">A token to cancel.</param>
     /// <returns>A play request, or <see langword="null"/> to go back.</returns>
-    public Task<PlayRequest?> RunWaveAsync(CancellationToken cancellationToken = default)
-        => RunAsync(Strings.LoadingWave, _catalog.GetMyWaveAsync, Strings.WaveTitle, Strings.NoWave, cancellationToken);
+    public async Task<PlayRequest?> RunWaveAsync(CancellationToken cancellationToken = default)
+    {
+        var batch = await AnsiConsole.Status()
+            .StartAsync(Strings.LoadingWave, _ => _catalog.GetMyWaveAsync(cancellationToken))
+            .ConfigureAwait(false);
 
-    private static async Task<PlayRequest?> RunAsync(
+        if (batch.Tracks.Count == 0)
+        {
+            AnsiConsole.MarkupLine(Strings.NoWave);
+            return null;
+        }
+
+        var picked = await new SelectionView<TrackView>(Strings.WaveTitle(batch.Tracks.Count), batch.Tracks, TrackConverter)
+            .ShowAsync(cancellationToken)
+            .ConfigureAwait(false);
+
+        return picked is null
+            ? null
+            : new PlayRequest(
+                batch.Tracks,
+                TrackList.IndexOfId(batch.Tracks, picked.Id),
+                new PlaybackOrigin("mywave", Station: batch.Station, BatchId: batch.BatchId));
+    }
+
+    private static async Task<PlayRequest?> RunTracksAsync(
         string loadingMessage,
         Func<CancellationToken, Task<IReadOnlyList<TrackView>>> loader,
         Func<int, string> title,
         string emptyMessage,
+        PlaybackOrigin origin,
         CancellationToken cancellationToken)
     {
         var tracks = await AnsiConsole.Status()
@@ -54,7 +83,7 @@ public sealed class TrackListScreen
             .ShowAsync(cancellationToken)
             .ConfigureAwait(false);
 
-        return picked is null ? null : new PlayRequest(tracks, TrackList.IndexOfId(tracks, picked.Id));
+        return picked is null ? null : new PlayRequest(tracks, TrackList.IndexOfId(tracks, picked.Id), origin);
     }
 
     internal static string TrackConverter(TrackView track)
@@ -79,4 +108,17 @@ internal static class TrackList
 
         return 0;
     }
+
+    /// <summary>Maps a catalog track to a playable item with a lazily-resolved stream URL.</summary>
+    /// <param name="track">The track to map.</param>
+    /// <param name="origin">Where the track's queue came from, for play reporting.</param>
+    /// <param name="catalog">The catalog resolving the stream URL.</param>
+    public static PlaybackItem ToPlaybackItem(TrackView track, PlaybackOrigin? origin, IMusicCatalog catalog)
+        => new(
+            track.Id,
+            track.Title,
+            track.Artist,
+            track.Duration,
+            ct => catalog.ResolveStreamUrlAsync(track.Id, ct),
+            origin);
 }

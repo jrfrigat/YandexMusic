@@ -50,6 +50,11 @@ dotnet run --project samples/YandexMusic.Player
   cross-platform backend changes one line.
 - **Remote control** — the Ynison screen shows what is playing on every device of the account (web,
   phone, smart speakers) and controls it: pause, tracks, volume, and "play here" by pressing `1-9`.
+- **Per-track actions** (now-playing view) — `l` like · `x` dislike (and skip) · `t` lyrics ·
+  `i` an endless radio of similar tracks. Playback starts and skips are reported back to the API,
+  so "My Wave" keeps learning from what you play.
+- **Search** — tabs for tracks, albums and playlists, paging via a "more" row, and drill-in to a
+  picked album's or playlist's tracklist.
 - **Main menu** is cursor-driven with a hotkey bar along the bottom — single-key shortcuts jump
   straight to a section (`s` search · `a` albums · `l` playlists · `p` open player · `r` remote ·
   `q` quit).

@@ -56,6 +56,7 @@ services.AddSingleton<IAudioPlayer>(_ =>
     return new ResilientAudioPlayer(real, new SimulatedAudioPlayer());
 });
 services.AddSingleton<PlaybackController>();
+services.AddSingleton<PlayReporter>();
 
 // Screens.
 services.AddSingleton<MainMenuScreen>();
@@ -66,10 +67,14 @@ services.AddSingleton<PlaylistScreen>();
 services.AddSingleton<PlaylistsScreen>();
 services.AddSingleton<TrackListScreen>();
 services.AddSingleton<NowPlayingScreen>();
+services.AddSingleton<LyricsScreen>();
 services.AddSingleton<RemoteScreen>();
 services.AddSingleton<PlayerApp>();
 
 await using var provider = services.BuildServiceProvider();
+
+// The reporter only observes playback, so nothing injects it — pull it once to activate.
+_ = provider.GetRequiredService<PlayReporter>();
 
 if (!AnsiConsole.Profile.Capabilities.Interactive)
 {

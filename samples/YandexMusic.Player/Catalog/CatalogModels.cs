@@ -6,7 +6,8 @@ namespace YandexMusic.Player.Catalog;
 /// <param name="Artist">The display artist(s).</param>
 /// <param name="Album">The album title, when known.</param>
 /// <param name="Duration">The track duration.</param>
-public sealed record TrackView(string Id, string Title, string Artist, string? Album, TimeSpan Duration);
+/// <param name="AlbumId">The album identifier, when known; used by play reporting.</param>
+public sealed record TrackView(string Id, string Title, string Artist, string? Album, TimeSpan Duration, string? AlbumId = null);
 
 /// <summary>An album summary as the UI needs it.</summary>
 /// <param name="Id">The album identifier.</param>
@@ -31,3 +32,15 @@ public sealed record PlaylistView(string Id, string Title, int TrackCount);
 /// <param name="Playlist">The playlist summary.</param>
 /// <param name="Tracks">The playlist's tracks, in order.</param>
 public sealed record PlaylistDetail(PlaylistView Playlist, IReadOnlyList<TrackView> Tracks);
+
+/// <summary>A batch of tracks from a radio station, with the identity needed to report feedback.</summary>
+/// <param name="Tracks">The tracks of the batch.</param>
+/// <param name="Station">The station identity, for example "user:onyourwave" or "track:{id}".</param>
+/// <param name="BatchId">The batch identifier, echoed back in radio feedback.</param>
+public sealed record RadioBatch(IReadOnlyList<TrackView> Tracks, string Station, string BatchId);
+
+/// <summary>One page of search results together with the total number of matches.</summary>
+/// <param name="Items">The items on this page.</param>
+/// <param name="Total">The total number of matches across all pages.</param>
+public sealed record SearchPage<T>(IReadOnlyList<T> Items, int Total)
+    where T : class;
