@@ -59,7 +59,7 @@ dotnet run --project samples/YandexMusic.Player
   straight to a section (`s` search · `a` albums · `l` playlists · `p` open player · `r` remote ·
   `q` quit).
 - **Controls** (now-playing view): `space` play/pause · `←/→` prev/next · `↑/↓` volume · `s` stop ·
-  `q` back.
+  `q` back — plus `l`/`x`/`t`/`i` for like, dislike, lyrics and similar (see above).
 
 See the sample's [README](samples/YandexMusic.Player/README.md) for the architecture.
 

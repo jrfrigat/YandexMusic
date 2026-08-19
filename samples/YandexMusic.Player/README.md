@@ -43,9 +43,13 @@ The **main menu**:
 | `s` · `a` · `l` | search · my albums · my playlists |
 | `f` · `w` | liked · my wave |
 | `p` | open player (now playing) |
+| `r` | Ynison remote control |
 | `o` · `q` | sign out · quit |
 
 Any **selection screen**: `↑`/`↓` move · `enter` select · `Esc` back.
+
+The **search screen** picks a category first (tracks, albums, playlists), pages through results with
+a "More…" row, and drills into a picked album's or playlist's tracklist; `Esc` returns to the tabs.
 
 In the **now-playing view**:
 
@@ -55,6 +59,10 @@ In the **now-playing view**:
 | `→` / `n` | next track |
 | `←` / `b` | previous track |
 | `↑` / `↓` | volume up / down |
+| `l` | like / unlike the current track (shown as `♥`/`♡`) |
+| `x` | dislike the track and skip it |
+| `t` | lyrics (scroll with `↑`/`↓`, page with `PgUp`/`PgDn`) |
+| `i` | endless radio of similar tracks |
 | `s` | stop |
 | `q` / `Esc` | back to menu |
 

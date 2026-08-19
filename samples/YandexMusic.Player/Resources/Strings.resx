@@ -337,6 +337,9 @@
   <data name="SearchTabPlaylists" xml:space="preserve">
     <value>Playlists</value>
   </data>
+  <data name="ScreenFailed" xml:space="preserve">
+    <value>Screen failed: {0} — back to the menu</value>
+  </data>
   <data name="LoadMore" xml:space="preserve">
     <value>More…</value>
   </data>

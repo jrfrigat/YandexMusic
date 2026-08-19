@@ -155,8 +155,9 @@ public sealed class RemoteScreen
         {
             await run.ConfigureAwait(false);
         }
-        catch (OperationCanceledException)
+        catch (Exception)
         {
+            // Whatever the session died of, closing the remote must never exit the app.
         }
     }
 

@@ -332,6 +332,9 @@
   <data name="SearchTabPlaylists" xml:space="preserve">
     <value>Плейлисты</value>
   </data>
+  <data name="ScreenFailed" xml:space="preserve">
+    <value>Экран завершился с ошибкой: {0} — возврат в меню</value>
+  </data>
   <data name="LoadMore" xml:space="preserve">
     <value>Ещё…</value>
   </data>

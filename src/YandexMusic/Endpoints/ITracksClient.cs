@@ -52,6 +52,11 @@ public interface ITracksClient
     /// Gets the lyrics metadata for a track. Requires authentication. The returned
     /// <see cref="TrackLyrics.DownloadUrl"/> hosts the actual text.
     /// </summary>
+    /// <remarks>
+    /// As of 2026-08 the server rejects this endpoint's request signature ("Invalid Sign") even when
+    /// it is computed exactly like the reference implementations do, so the call currently fails with
+    /// 403. Prefer <see cref="GetSupplementAsync"/>: its response carries the lyrics text directly.
+    /// </remarks>
     /// <param name="trackId">The track identifier.</param>
     /// <param name="format">The lyrics format. Known values: <c>TEXT</c> (plain) and <c>LRC</c> (timed).</param>
     /// <param name="cancellationToken">A token to cancel the request.</param>

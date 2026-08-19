@@ -69,39 +69,48 @@ public sealed class PlayerApp
         while (!cancellationToken.IsCancellationRequested)
         {
             var action = await _menu.RunAsync(cancellationToken).ConfigureAwait(false);
-            switch (action)
+            try
             {
-                case MainMenuAction.Search:
-                    await PlayAndShowAsync(await _search.RunAsync(cancellationToken).ConfigureAwait(false), cancellationToken).ConfigureAwait(false);
-                    break;
-                case MainMenuAction.Albums:
-                    await PlayAndShowAsync(await _albums.RunAsync(cancellationToken).ConfigureAwait(false), cancellationToken).ConfigureAwait(false);
-                    break;
-                case MainMenuAction.Playlists:
-                    await PlayAndShowAsync(await _playlists.RunAsync(cancellationToken).ConfigureAwait(false), cancellationToken).ConfigureAwait(false);
-                    break;
-                case MainMenuAction.Liked:
-                    await PlayAndShowAsync(await _trackList.RunLikedAsync(cancellationToken).ConfigureAwait(false), cancellationToken).ConfigureAwait(false);
-                    break;
-                case MainMenuAction.MyWave:
-                    await PlayAndShowAsync(await _trackList.RunWaveAsync(cancellationToken).ConfigureAwait(false), cancellationToken).ConfigureAwait(false);
-                    break;
-                case MainMenuAction.NowPlaying:
-                    await _nowPlaying.RunAsync(cancellationToken).ConfigureAwait(false);
-                    break;
-                case MainMenuAction.Remote:
-                    await _remote.RunAsync(cancellationToken).ConfigureAwait(false);
-                    break;
-                case MainMenuAction.SignOut:
-                    _auth.SignOut(_client);
-                    if (!await _auth.EnsureSignedInAsync(_client, cancellationToken).ConfigureAwait(false))
-                    {
-                        return;
-                    }
+                switch (action)
+                {
+                    case MainMenuAction.Search:
+                        await PlayAndShowAsync(await _search.RunAsync(cancellationToken).ConfigureAwait(false), cancellationToken).ConfigureAwait(false);
+                        break;
+                    case MainMenuAction.Albums:
+                        await PlayAndShowAsync(await _albums.RunAsync(cancellationToken).ConfigureAwait(false), cancellationToken).ConfigureAwait(false);
+                        break;
+                    case MainMenuAction.Playlists:
+                        await PlayAndShowAsync(await _playlists.RunAsync(cancellationToken).ConfigureAwait(false), cancellationToken).ConfigureAwait(false);
+                        break;
+                    case MainMenuAction.Liked:
+                        await PlayAndShowAsync(await _trackList.RunLikedAsync(cancellationToken).ConfigureAwait(false), cancellationToken).ConfigureAwait(false);
+                        break;
+                    case MainMenuAction.MyWave:
+                        await PlayAndShowAsync(await _trackList.RunWaveAsync(cancellationToken).ConfigureAwait(false), cancellationToken).ConfigureAwait(false);
+                        break;
+                    case MainMenuAction.NowPlaying:
+                        await _nowPlaying.RunAsync(cancellationToken).ConfigureAwait(false);
+                        break;
+                    case MainMenuAction.Remote:
+                        await _remote.RunAsync(cancellationToken).ConfigureAwait(false);
+                        break;
+                    case MainMenuAction.SignOut:
+                        _auth.SignOut(_client);
+                        if (!await _auth.EnsureSignedInAsync(_client, cancellationToken).ConfigureAwait(false))
+                        {
+                            return;
+                        }
 
-                    break;
-                case MainMenuAction.Quit:
-                    return;
+                        break;
+                    case MainMenuAction.Quit:
+                        return;
+                }
+            }
+            catch (Exception ex)
+            {
+                // A failing screen (network drop, API error, protocol quirk) must never exit the
+                // app: show the error and fall back to the menu.
+                AnsiConsole.MarkupLine(Strings.ScreenFailed(Markup.Escape(ex.Message)));
             }
         }
     }

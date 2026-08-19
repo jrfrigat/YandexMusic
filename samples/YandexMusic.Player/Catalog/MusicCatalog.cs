@@ -9,17 +9,13 @@ using YandexMusic.Models.Tracks;
 namespace YandexMusic.Player.Catalog;
 
 /// <summary>The default <see cref="IMusicCatalog"/> over an <see cref="IYandexMusicClient"/>.</summary>
-public sealed class MusicCatalog : IMusicCatalog, IDisposable
+public sealed class MusicCatalog : IMusicCatalog
 {
     private const string MyWaveStation = "user:onyourwave";
     private const int MaxTrackBatch = 100;
 
     private readonly IYandexMusicClient _client;
-    private readonly HttpClient _lyricsClient = new();
     private string? _uid;
-
-    /// <inheritdoc />
-    public void Dispose() => _lyricsClient.Dispose();
 
     /// <summary>Creates a catalog over the given client.</summary>
     /// <param name="client">The Yandex Music client.</param>
@@ -214,20 +210,16 @@ public sealed class MusicCatalog : IMusicCatalog, IDisposable
     /// <inheritdoc />
     public async Task<string?> GetLyricsAsync(string trackId, CancellationToken cancellationToken = default)
     {
-        var lyrics = await _client.Tracks.GetLyricsAsync(trackId, cancellationToken: cancellationToken).ConfigureAwait(false);
-        if (lyrics is null || string.IsNullOrEmpty(lyrics.DownloadUrl))
+        // The signed /lyrics endpoint is currently rejected by the server ("Invalid Sign"), but the
+        // supplement endpoint returns the text without any signing.
+        var supplement = await _client.Tracks.GetSupplementAsync(trackId, cancellationToken: cancellationToken).ConfigureAwait(false);
+        var lyrics = supplement?.Lyrics;
+        if (lyrics is null)
         {
             return null;
         }
 
-        // The download URL is a pre-signed UGC link; it works without the session headers.
-        using var response = await _lyricsClient.GetAsync(lyrics.DownloadUrl, cancellationToken).ConfigureAwait(false);
-        if (!response.IsSuccessStatusCode)
-        {
-            return null;
-        }
-
-        return await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
+        return lyrics.FullText ?? lyrics.Text;
     }
 
     /// <inheritdoc />
