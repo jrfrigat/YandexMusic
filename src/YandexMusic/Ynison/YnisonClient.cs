@@ -160,7 +160,7 @@ public sealed class YnisonClient : IAsyncDisposable
 
         var socket = Volatile.Read(ref _stateSocket)
             ?? throw new YandexMusicYnisonException("The Ynison state socket is not connected; start RunAsync first.");
-        var json = JsonSerializer.Serialize(request, YandexMusicJson.TypeInfo<PutYnisonStateRequest>());
+        var json = JsonSerializer.Serialize(request, YnisonJson.TypeInfo<PutYnisonStateRequest>());
         await socket.SendAsync(json, cancellationToken).ConfigureAwait(false);
     }
 
@@ -250,7 +250,7 @@ public sealed class YnisonClient : IAsyncDisposable
             RedirectResponse? redirection;
             try
             {
-                redirection = JsonSerializer.Deserialize(redirectJson, YandexMusicJson.TypeInfo<RedirectResponse>());
+                redirection = JsonSerializer.Deserialize(redirectJson, YnisonJson.TypeInfo<RedirectResponse>());
             }
             catch (JsonException ex)
             {
@@ -302,7 +302,7 @@ public sealed class YnisonClient : IAsyncDisposable
                     PutYnisonStateResponse? response;
                     try
                     {
-                        response = JsonSerializer.Deserialize(frame, YandexMusicJson.TypeInfo<PutYnisonStateResponse>());
+                        response = JsonSerializer.Deserialize(frame, YnisonJson.TypeInfo<PutYnisonStateResponse>());
                     }
                     catch (JsonException ex)
                     {

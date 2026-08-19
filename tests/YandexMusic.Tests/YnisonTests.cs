@@ -1,51 +1,50 @@
 using System.Text.Json;
 using YandexMusic.Exceptions;
-using YandexMusic.Serialization;
 using YandexMusic.Ynison;
 using Xunit;
 
 namespace YandexMusic.Tests;
 
 /// <summary>
-/// Verifies the Ynison subsystem: canonical protobuf-JSON parsing of server frames, the wire shape
+/// Verifies the Ynison subsystem: snake_case protobuf-JSON parsing of server frames, the wire shape
 /// of built requests, and the client's redirect-to-state handshake over a scripted transport.
 /// </summary>
 public sealed class YnisonTests
 {
     private const string RedirectFrame =
-        """{"host":"ynison-fallback.music.yandex.ru","redirectTicket":"ticket-1","sessionId":"42","keepAliveParams":{"keepAliveTimeSeconds":25,"keepAliveTimeoutSeconds":30}}""";
+        """{"host":"ynison-fallback.music.yandex.ru","redirect_ticket":"ticket-1","session_id":"42","keep_alive_params":{"keep_alive_time_seconds":25,"keep_alive_timeout_seconds":30}}""";
 
     private const string StateFrame =
         """
         {
-          "playerState": {
-            "status": {"progressMs": "42000", "durationMs": "180000", "paused": false, "playbackSpeed": 1,
-                       "version": {"deviceId": "device-a", "version": "123456789012345678", "timestampMs": "1700000000000"}},
-            "playerQueue": {
-              "entityId": "playlist:1000:123", "entityType": "PLAYLIST", "currentPlayableIndex": 1,
-              "playableList": [
-                {"playableId": "100", "playableType": "TRACK", "from": "mysmart", "title": "First"},
-                {"playableId": "200", "albumIdOptional": "300", "playableType": "TRACK", "from": "mysmart", "title": "Second",
-                 "trackInfo": {"trackSourceKey": 3}},
-                {"playableId": "400", "playableType": "TRACK", "from": "mysmart", "title": "Third"}
+          "player_state": {
+            "status": {"progress_ms": "42000", "duration_ms": "180000", "paused": false, "playback_speed": 1,
+                       "version": {"device_id": "device-a", "version": "123456789012345678", "timestamp_ms": "1700000000000"}},
+            "player_queue": {
+              "entity_id": "playlist:1000:123", "entity_type": "PLAYLIST", "current_playable_index": 1,
+              "playable_list": [
+                {"playable_id": "100", "playable_type": "TRACK", "from": "mysmart", "title": "First"},
+                {"playable_id": "200", "album_id_optional": "300", "playable_type": "TRACK", "from": "mysmart", "title": "Second",
+                 "track_info": {"track_source_key": 3}},
+                {"playable_id": "400", "playable_type": "TRACK", "from": "mysmart", "title": "Third"}
               ],
-              "options": {"repeatMode": "NONE"},
-              "version": {"deviceId": "device-a", "version": "99", "timestampMs": "5"},
-              "entityContext": "USER_TRACKS"}
+              "options": {"repeat_mode": "NONE"},
+              "version": {"device_id": "device-a", "version": "99", "timestamp_ms": "5"},
+              "entity_context": "USER_TRACKS"}
           },
           "devices": [
-            {"info": {"deviceId": "device-a", "title": "Web", "type": "WEB", "appName": "Web Player"},
-             "capabilities": {"canBePlayer": true, "canBeRemoteController": false, "volumeGranularity": 100},
-             "session": {"id": "777"}, "volumeInfo": {"volume": 0.6}}
+            {"info": {"device_id": "device-a", "title": "Web", "type": "WEB", "app_name": "Web Player"},
+             "capabilities": {"can_be_player": true, "can_be_remote_controller": false, "volume_granularity": 100},
+             "session": {"id": "777"}, "volume_info": {"volume": 0.6}}
           ],
-          "activeDeviceIdOptional": "device-a", "timestampMs": "1700000001000", "rid": "abc"
+          "active_device_id_optional": "device-a", "timestamp_ms": "1700000001000", "rid": "abc"
         }
         """;
 
     [Fact]
-    public void ResponseFrame_ParsesCanonicalProtobufJson()
+    public void ResponseFrame_ParsesSnakeCaseProtobufJson()
     {
-        var state = JsonSerializer.Deserialize(StateFrame, YandexMusicJson.TypeInfo<PutYnisonStateResponse>());
+        var state = JsonSerializer.Deserialize(StateFrame, YnisonJson.TypeInfo<PutYnisonStateResponse>());
 
         Assert.NotNull(state);
         Assert.Equal(1_700_000_001_000, state.TimestampMs);
@@ -79,9 +78,9 @@ public sealed class YnisonTests
     public void ResponseFrame_AcceptsNumericEnumsAndInt64s()
     {
         const string frame =
-            """{"playerState":{"playerQueue":{"entityType":5,"currentPlayableIndex":0}},"timestampMs":123,"devices":[{"session":{"id":5}}]}""";
+            """{"player_state":{"player_queue":{"entity_type":5,"current_playable_index":0}},"timestamp_ms":123,"devices":[{"session":{"id":5}}]}""";
 
-        var state = JsonSerializer.Deserialize(frame, YandexMusicJson.TypeInfo<PutYnisonStateResponse>());
+        var state = JsonSerializer.Deserialize(frame, YnisonJson.TypeInfo<PutYnisonStateResponse>());
 
         Assert.NotNull(state);
         Assert.Equal(QueueEntityType.Various, state.PlayerState!.PlayerQueue!.EntityType);
@@ -92,9 +91,9 @@ public sealed class YnisonTests
     [Fact]
     public void ResponseFrame_UnknownEnumValue_ReadsAsDefault()
     {
-        const string frame = """{"playerState":{"playerQueue":{"entityType":"SOME_FUTURE_TYPE"}}}""";
+        const string frame = """{"player_state":{"player_queue":{"entity_type":"SOME_FUTURE_TYPE"}}}""";
 
-        var state = JsonSerializer.Deserialize(frame, YandexMusicJson.TypeInfo<PutYnisonStateResponse>());
+        var state = JsonSerializer.Deserialize(frame, YnisonJson.TypeInfo<PutYnisonStateResponse>());
 
         Assert.NotNull(state);
         Assert.Equal(QueueEntityType.Unspecified, state.PlayerState!.PlayerQueue!.EntityType);
@@ -103,7 +102,7 @@ public sealed class YnisonTests
     [Fact]
     public void RedirectFrame_Parses()
     {
-        var redirect = JsonSerializer.Deserialize(RedirectFrame, YandexMusicJson.TypeInfo<RedirectResponse>());
+        var redirect = JsonSerializer.Deserialize(RedirectFrame, YnisonJson.TypeInfo<RedirectResponse>());
 
         Assert.NotNull(redirect);
         Assert.Equal("ynison-fallback.music.yandex.ru", redirect.Host);
@@ -113,29 +112,29 @@ public sealed class YnisonTests
     }
 
     [Fact]
-    public void UpdateFullStateRequest_WritesCanonicalEnumsAndNestedDevice()
+    public void UpdateFullStateRequest_WritesSnakeCaseEnumsAndNestedDevice()
     {
         var request = YnisonRequests.CreateUpdateFullStateRequest("device-x", "My Remote");
 
-        var json = JsonSerializer.Serialize(request, YandexMusicJson.TypeInfo<PutYnisonStateRequest>());
+        var json = JsonSerializer.Serialize(request, YnisonJson.TypeInfo<PutYnisonStateRequest>());
         using var document = JsonDocument.Parse(json);
         var root = document.RootElement;
 
-        Assert.Equal("DO_NOT_INTERCEPT_BY_DEFAULT", root.GetProperty("activityInterceptionType").GetString());
-        var fullState = root.GetProperty("updateFullState");
-        Assert.False(fullState.GetProperty("isCurrentlyActive").GetBoolean());
+        Assert.Equal("DO_NOT_INTERCEPT_BY_DEFAULT", root.GetProperty("activity_interception_type").GetString());
+        var fullState = root.GetProperty("update_full_state");
+        Assert.False(fullState.GetProperty("is_currently_active").GetBoolean());
         var device = fullState.GetProperty("device");
-        Assert.Equal("device-x", device.GetProperty("info").GetProperty("deviceId").GetString());
+        Assert.Equal("device-x", device.GetProperty("info").GetProperty("device_id").GetString());
         Assert.Equal("My Remote", device.GetProperty("info").GetProperty("title").GetString());
         Assert.Equal("WEB", device.GetProperty("info").GetProperty("type").GetString());
-        Assert.True(device.GetProperty("capabilities").GetProperty("canBeRemoteController").GetBoolean());
-        var queue = fullState.GetProperty("playerState").GetProperty("playerQueue");
-        Assert.Equal("VARIOUS", queue.GetProperty("entityType").GetString());
-        Assert.Equal("NONE", queue.GetProperty("options").GetProperty("repeatMode").GetString());
-        Assert.Equal(-1, queue.GetProperty("currentPlayableIndex").GetInt32());
+        Assert.True(device.GetProperty("capabilities").GetProperty("can_be_remote_controller").GetBoolean());
+        var queue = fullState.GetProperty("player_state").GetProperty("player_queue");
+        Assert.Equal("VARIOUS", queue.GetProperty("entity_type").GetString());
+        Assert.Equal("NONE", queue.GetProperty("options").GetProperty("repeat_mode").GetString());
+        Assert.Equal(-1, queue.GetProperty("current_playable_index").GetInt32());
 
         // Only the oneof member set by the builder may appear.
-        Assert.False(root.TryGetProperty("updatePlayerState", out _));
+        Assert.False(root.TryGetProperty("update_player_state", out _));
     }
 
     [Fact]
@@ -148,14 +147,14 @@ public sealed class YnisonTests
 
         var request = YnisonRequests.CreateSetPausedRequest("device-x", status, paused: true);
 
-        var json = JsonSerializer.Serialize(request, YandexMusicJson.TypeInfo<PutYnisonStateRequest>());
+        var json = JsonSerializer.Serialize(request, YnisonJson.TypeInfo<PutYnisonStateRequest>());
         using var document = JsonDocument.Parse(json);
-        var newStatus = document.RootElement.GetProperty("updatePlayingStatus").GetProperty("playingStatus");
+        var newStatus = document.RootElement.GetProperty("update_playing_status").GetProperty("playing_status");
 
         Assert.True(newStatus.GetProperty("paused").GetBoolean());
-        Assert.Equal(42_000, newStatus.GetProperty("progressMs").GetInt64());
-        Assert.Equal(1.5, newStatus.GetProperty("playbackSpeed").GetDouble(), precision: 5);
-        Assert.Equal("device-x", newStatus.GetProperty("version").GetProperty("deviceId").GetString());
+        Assert.Equal(42_000, newStatus.GetProperty("progress_ms").GetInt64());
+        Assert.Equal(1.5, newStatus.GetProperty("playback_speed").GetDouble(), precision: 5);
+        Assert.Equal("device-x", newStatus.GetProperty("version").GetProperty("device_id").GetString());
         Assert.NotEqual(1, newStatus.GetProperty("version").GetProperty("version").GetInt64());
     }
 
@@ -164,12 +163,12 @@ public sealed class YnisonTests
     {
         var request = YnisonRequests.CreateSetVolumeRequest("device-x", "device-a", 1.5);
 
-        var json = JsonSerializer.Serialize(request, YandexMusicJson.TypeInfo<PutYnisonStateRequest>());
+        var json = JsonSerializer.Serialize(request, YnisonJson.TypeInfo<PutYnisonStateRequest>());
         using var document = JsonDocument.Parse(json);
-        var volumeInfo = document.RootElement.GetProperty("updateVolumeInfo");
+        var volumeInfo = document.RootElement.GetProperty("update_volume_info");
 
-        Assert.Equal("device-a", volumeInfo.GetProperty("deviceId").GetString());
-        Assert.Equal(1.0, volumeInfo.GetProperty("volumeInfo").GetProperty("volume").GetDouble(), precision: 5);
+        Assert.Equal("device-a", volumeInfo.GetProperty("device_id").GetString());
+        Assert.Equal(1.0, volumeInfo.GetProperty("volume_info").GetProperty("volume").GetDouble(), precision: 5);
     }
 
     [Fact]
@@ -179,19 +178,18 @@ public sealed class YnisonTests
         var stateSocket = new FakeSocket([StateFrame]);
         var factory = new FakeSocketFactory([redirectSocket, stateSocket]);
         await using var client = new YnisonClient("token-1", "device-x", null, factory);
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+        var run = Task.Run(() => client.RunAsync(cts.Token));
 
         var frames = 0;
         client.StateReceived += (_, _) => frames++;
 
-        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
-        var run = Task.Run(() => client.RunAsync(cts.Token));
-
-        var state = await client.WaitForStateAsync(TimeSpan.FromSeconds(10));
+        await client.WaitForStateAsync(TimeSpan.FromSeconds(10));
         await client.SetPausedAsync(paused: true);
         await client.NextTrackAsync();
 
         Assert.Equal(123_456_789_012_345_678, client.LatestState!.PlayerState!.Status!.Version!.Version);
-        Assert.Equal(42_000, client.LatestState!.PlayerState!.Status!.ProgressMs);
+        Assert.Equal(42_000, client.LatestState.PlayerState!.Status!.ProgressMs);
         Assert.True(frames >= 1);
 
         // The redirect socket saw no ticket; the state socket carried it plus the session id.
@@ -216,16 +214,41 @@ public sealed class YnisonTests
 
         Assert.Equal(3, stateSocket.Sent.Count);
         using var registration = JsonDocument.Parse(stateSocket.Sent[0]);
-        Assert.True(registration.RootElement.GetProperty("updateFullState").GetProperty("device")
-            .GetProperty("capabilities").GetProperty("canBeRemoteController").GetBoolean());
+        Assert.True(registration.RootElement.GetProperty("update_full_state").GetProperty("device")
+            .GetProperty("capabilities").GetProperty("can_be_remote_controller").GetBoolean());
         using var pause = JsonDocument.Parse(stateSocket.Sent[1]);
-        Assert.True(pause.RootElement.GetProperty("updatePlayingStatus").GetProperty("playingStatus").GetProperty("paused").GetBoolean());
+        Assert.True(pause.RootElement.GetProperty("update_playing_status").GetProperty("playing_status").GetProperty("paused").GetBoolean());
         using var next = JsonDocument.Parse(stateSocket.Sent[2]);
-        Assert.Equal(2, next.RootElement.GetProperty("updatePlayerState").GetProperty("playerState")
-            .GetProperty("playerQueue").GetProperty("currentPlayableIndex").GetInt32());
+        Assert.Equal(2, next.RootElement.GetProperty("update_player_state").GetProperty("player_state")
+            .GetProperty("player_queue").GetProperty("current_playable_index").GetInt32());
         Assert.Empty(redirectSocket.Sent);
 
         await client.DisposeAsync().AsTask().ContinueWith(_ => { }, TaskScheduler.Default);
+        await run.WaitAsync(TimeSpan.FromSeconds(10));
+    }
+
+    [Fact]
+    public async Task PlayOnDevice_SwitchesActiveDeviceAndResumes()
+    {
+        var redirectSocket = new FakeSocket([RedirectFrame]);
+        var stateSocket = new FakeSocket([StateFrame]);
+        var factory = new FakeSocketFactory([redirectSocket, stateSocket]);
+        await using var client = new YnisonClient("token-1", "device-x", null, factory);
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+        var run = Task.Run(() => client.RunAsync(cts.Token));
+
+        await client.WaitForStateAsync(TimeSpan.FromSeconds(10));
+        await client.PlayOnDeviceAsync("device-a");
+
+        // Registration, then the device switch, then the resume.
+        Assert.Equal(3, stateSocket.Sent.Count);
+        using var activation = JsonDocument.Parse(stateSocket.Sent[1]);
+        var activeDevice = activation.RootElement.GetProperty("update_active_device");
+        Assert.Equal("device-a", activeDevice.GetProperty("device_id_optional").GetString());
+        using var resume = JsonDocument.Parse(stateSocket.Sent[2]);
+        Assert.False(resume.RootElement.GetProperty("update_playing_status").GetProperty("playing_status").GetProperty("paused").GetBoolean());
+
+        await client.DisposeAsync();
         await run.WaitAsync(TimeSpan.FromSeconds(10));
     }
 
@@ -251,31 +274,6 @@ public sealed class YnisonTests
 
         await Assert.ThrowsAsync<YandexMusicYnisonException>(
             () => client.WaitForStateAsync(TimeSpan.FromMilliseconds(200)));
-
-        await client.DisposeAsync();
-        await run.WaitAsync(TimeSpan.FromSeconds(10));
-    }
-
-    [Fact]
-    public async Task PlayOnDevice_SwitchesActiveDeviceAndResumes()
-    {
-        var redirectSocket = new FakeSocket([RedirectFrame]);
-        var stateSocket = new FakeSocket([StateFrame]);
-        var factory = new FakeSocketFactory([redirectSocket, stateSocket]);
-        await using var client = new YnisonClient("token-1", "device-x", null, factory);
-        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
-        var run = Task.Run(() => client.RunAsync(cts.Token));
-
-        await client.WaitForStateAsync(TimeSpan.FromSeconds(10));
-        await client.PlayOnDeviceAsync("device-a");
-
-        // Registration, then the device switch, then the resume.
-        Assert.Equal(3, stateSocket.Sent.Count);
-        using var activation = JsonDocument.Parse(stateSocket.Sent[1]);
-        var activeDevice = activation.RootElement.GetProperty("updateActiveDevice");
-        Assert.Equal("device-a", activeDevice.GetProperty("deviceIdOptional").GetString());
-        using var resume = JsonDocument.Parse(stateSocket.Sent[2]);
-        Assert.False(resume.RootElement.GetProperty("updatePlayingStatus").GetProperty("playingStatus").GetProperty("paused").GetBoolean());
 
         await client.DisposeAsync();
         await run.WaitAsync(TimeSpan.FromSeconds(10));
