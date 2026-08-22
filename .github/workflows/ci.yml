@@ -16,6 +16,41 @@ permissions:
   contents: read
 
 jobs:
+  # The install scripts are fetched over the network and piped straight into a shell, so they get
+  # no second chance: whatever ships is what runs on someone's machine. Static analysis is the only
+  # gate they have — a real end-to-end install needs a published release to download from.
+  scripts:
+    name: Lint install scripts
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      # A CRLF shebang makes the kernel look for an interpreter named "/bin/sh\r"; .gitattributes
+      # pins *.sh to LF, and this is the guard that the pin keeps working.
+      - name: Reject CRLF in shell scripts
+        run: |
+          if grep -lU $'\r' scripts/*.sh; then
+            echo "::error::shell scripts must use LF line endings, or they will not run on Linux"
+            exit 1
+          fi
+
+      - name: ShellCheck
+        run: shellcheck --shell=sh scripts/install.sh
+
+      - name: PSScriptAnalyzer
+        shell: pwsh
+        run: |
+          Install-Module PSScriptAnalyzer -Force -Scope CurrentUser -ErrorAction Stop
+          $issues = Invoke-ScriptAnalyzer -Path scripts/install.ps1 -Severity Error, Warning
+          if ($issues) {
+            $issues | Format-Table -AutoSize | Out-String | Write-Host
+            Write-Host "::error::PSScriptAnalyzer reported $($issues.Count) issue(s)"
+            exit 1
+          }
+          Write-Host 'install.ps1 is clean.'
+
   build-test:
     name: Build & test (${{ matrix.os }})
     strategy:
@@ -23,6 +58,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, windows-latest]
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -90,6 +126,7 @@ jobs:
             rid: linux-x64
             tfm: net10.0
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
     steps:
       - name: Checkout
         uses: actions/checkout@v7

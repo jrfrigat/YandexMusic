@@ -52,10 +52,27 @@ No API-key secret is required — the workflow exchanges a short-lived token via
 1. Update `CHANGELOG.md` and `CHANGELOG.ru.md` (move items from *Unreleased* to the new version).
 2. Push a version tag: `git tag v0.1.0 && git push origin v0.1.0`.
    - The **Release** workflow builds, tests, packs and pushes both packages (`.nupkg` and
-     `.snupkg`) to nuget.org, then creates the GitHub Release itself and attaches the packages and
-     the player archives. Do not create the release manually first — the workflow's create step
-     would fail after the packages are already on NuGet.
+     `.snupkg`) to nuget.org, then creates the GitHub Release **as a draft**, attaches the player
+     archives, and only then makes it visible. The draft step is deliberate: `scripts/install.*`
+     resolve "latest release" and download the `ymt-*` archive out of it, so a visible release
+     without those archives would break the one-command install for everyone. If a player build
+     fails, the release stays a draft and the last good release remains "latest".
+   - Do not create the release manually first — let the workflow own it.
    - The **Docs** workflow publishes the documentation site.
+
+### When a release run fails
+
+The workflow is re-runnable. Packages already on NuGet are skipped (`--skip-duplicate`), an
+existing draft release is topped up instead of recreated, and the release is undrafted only once
+both player archives are attached. So: fix the cause, push the fix, and re-run the failed run — or,
+if the tag has to move because the fix is in a new commit and nothing was published yet:
+
+```bash
+git push origin main && git tag -f vX.Y.Z && git push origin -f vX.Y.Z
+```
+
+Moving a tag is only safe while nothing has been published under it. Once packages are on NuGet,
+cut a new patch version instead — NuGet does not allow re-publishing a version.
 
 The package version is derived from the tag by MinVer (the `v` prefix is stripped); an untagged
 local build gets a `preview` pre-release (`MinVerDefaultPreReleaseIdentifiers` in

@@ -28,6 +28,7 @@ jobs:
     name: Pack & push to NuGet
     runs-on: ubuntu-latest
     environment: nuget   # matches the Trusted Publishing policy (RELEASING.md); optionally protect it
+    timeout-minutes: 30
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -78,10 +79,25 @@ jobs:
           --source https://api.nuget.org/v3/index.json
           --skip-duplicate
 
-      - name: Create GitHub Release
+      # Created as a DRAFT on purpose. The install scripts resolve "latest release" and pick the
+      # ymt-* archive out of it, so a visible release without those archives is a broken install
+      # command for everyone. The release is undrafted by the finalize job, once the player
+      # archives are actually attached.
+      #
+      # Re-running a failed release must work, so an existing draft is topped up instead of failing.
+      - name: Create the GitHub Release (draft)
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release create "${{ github.ref_name }}" artifacts/*.nupkg artifacts/*.snupkg --generate-notes --title "${{ github.ref_name }}"
+          TAG: ${{ github.ref_name }}
+          REPO: ${{ github.repository }}
+        run: |
+          if gh release view "$TAG" -R "$REPO" >/dev/null 2>&1; then
+            echo "Release $TAG already exists (re-run) — refreshing its package assets."
+            gh release upload "$TAG" artifacts/*.nupkg artifacts/*.snupkg -R "$REPO" --clobber
+          else
+            gh release create "$TAG" artifacts/*.nupkg artifacts/*.snupkg -R "$REPO" \
+              --generate-notes --title "$TAG" --draft
+          fi
 
   # Publishes the sample terminal player as versioned, self-contained single-file CLIs and attaches
   # them to the GitHub Release. Two flavours ship: Windows (net*-windows TFM, real NAudio playback)
@@ -101,6 +117,7 @@ jobs:
             rid: linux-x64
             tfm: net10.0
     runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
     permissions:
       contents: write
     steps:
@@ -152,3 +169,29 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh release upload "${{ github.ref_name }}" "${{ steps.package.outputs.archive }}" --clobber
+
+  # The release becomes visible only once both player archives are on it, so "latest release" is
+  # never a state the install scripts cannot work with.
+  finalize:
+    name: Publish the release
+    needs: [ publish, player ]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - name: Undraft the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+          REPO: ${{ github.repository }}
+        run: |
+          assets=$(gh release view "$TAG" -R "$REPO" --json assets --jq '[.assets[].name] | join(" ")')
+          echo "Assets on $TAG: $assets"
+          for expected in win-x64.zip linux-x64.tar.gz; do
+            case "$assets" in
+              *"$expected"*) ;;
+              *) echo "::error::the release is missing a ymt-*-$expected archive; leaving it as a draft" && exit 1 ;;
+            esac
+          done
+          gh release edit "$TAG" -R "$REPO" --draft=false --latest

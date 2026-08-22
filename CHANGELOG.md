@@ -79,6 +79,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Ynison: the reconnect backoff never reset after a healthy connection, so a drop hours into a
   session waited out the 64-second ceiling instead of retrying promptly.
 
+- Release workflow: the GitHub Release is created as a draft and made visible only after both player
+  archives are attached, so "latest release" is never a state the install scripts cannot download
+  from. A failed run can be re-run: existing packages are skipped and an existing draft is topped up
+  instead of failing on re-creation.
+- CI: the install scripts are linted (ShellCheck, PSScriptAnalyzer) and guarded against CRLF line
+  endings, which would make the shell installer unrunnable on Linux.
+
 ### Removed
 - Sample player: eleven resource strings left over from the pre-live-view screens, which no code read.
 
