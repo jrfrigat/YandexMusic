@@ -1,4 +1,4 @@
-using YandexMusic.Player.Diagnostics;
+using YandexMusicTerminal.Diagnostics;
 using Xunit;
 
 namespace YandexMusic.Tests;

@@ -28,40 +28,59 @@ Unofficial asynchronous library for the Yandex Music API. Runs on **.NET 8, .NET
 
 ### Sample: terminal music player
 
-[`samples/YandexMusic.Player`](samples/YandexMusic.Player) is a full interactive TUI built on the
+[`samples/YandexMusicTerminal`](samples/YandexMusicTerminal) is a full interactive TUI built on the
 library — search, browse your albums and playlists, and a live "now playing" view with an animated
 equalizer, a real-time progress bar and keyboard volume/transport controls.
 
-**Download:** ready-to-run builds for **Windows** and **Linux** are published on the
-[**Releases**](https://github.com/jrfrigat/YandexMusic/releases) page —
-`yandexmusic-player-<version>-win-x64.zip` and `yandexmusic-player-<version>-linux-x64.tar.gz`
-(self-contained, no .NET install needed; extract and run `yandexmusic-player.exe` on Windows,
-`./yandexmusic-player` on Linux). Or run it from source:
+**Install** — one command, no .NET needed (the builds are self-contained). It installs into your
+user profile, needs no administrator rights, and puts `ymt` on your PATH:
+
+```powershell
+irm https://raw.githubusercontent.com/jrfrigat/YandexMusic/main/scripts/install.ps1 | iex
+```
 
 ```bash
-dotnet run --project samples/YandexMusic.Player
+curl -fsSL https://raw.githubusercontent.com/jrfrigat/YandexMusic/main/scripts/install.sh | sh
+```
+
+Then run it from anywhere:
+
+```bash
+ymt
+```
+
+Re-running the same command updates in place. The player checks GitHub for a newer release once a
+day and shows a line on the main menu when one exists; set `YM_PLAYER_NO_UPDATE_CHECK=1` to turn
+that off. To pin a version or change the location, see [`scripts/`](scripts).
+
+**Or** grab the archives by hand from the
+[**Releases**](https://github.com/jrfrigat/YandexMusic/releases) page (`ymt-<version>-win-x64.zip`,
+`ymt-<version>-linux-x64.tar.gz`), or run it from source:
+
+```bash
+dotnet run --project samples/YandexMusicTerminal
 ```
 
 - **Sign in** with an OAuth token, the device-code flow, a QR code, or login + password; the session
   is cached so the next run starts already signed in.
 - **Playback** uses [NAudio](https://github.com/naudio/NAudio) on Windows; everywhere else (and as a
   fallback) it runs a silent simulation that drives the same UI. The audio backend is a single
-  [`IAudioPlayer`](samples/YandexMusic.Player/Playback/IAudioPlayer.cs) seam, so swapping in a
+  [`IAudioPlayer`](samples/YandexMusicTerminal/Playback/IAudioPlayer.cs) seam, so swapping in a
   cross-platform backend changes one line.
 - **Remote control** — the Ynison screen shows what is playing on every device of the account (web,
   phone, smart speakers) and controls it: pause, tracks, volume, and "play here" by pressing `1-9`.
 - **Per-track actions** (now-playing view) — `l` like · `x` dislike (and skip) · `t` lyrics ·
   `i` an endless radio of similar tracks. Playback starts and skips are reported back to the API,
   so "My Wave" keeps learning from what you play.
-- **Search** — tabs for tracks, albums and playlists, paging via a "more" row, and drill-in to a
-  picked album's or playlist's tracklist.
+- **Search** — tabs for tracks, artists, albums and playlists, paging via a "more" row, and drill-in
+  to a picked artist's, album's or playlist's tracks.
 - **Main menu** is cursor-driven with a hotkey bar along the bottom — single-key shortcuts jump
   straight to a section (`s` search · `a` albums · `l` playlists · `p` open player · `r` remote ·
-  `q` quit).
+  `g` request log · `q` quit).
 - **Controls** (now-playing view): `space` play/pause · `←/→` prev/next · `↑/↓` volume · `s` stop ·
   `q` back — plus `l`/`x`/`t`/`i` for like, dislike, lyrics and similar (see above).
 
-See the sample's [README](samples/YandexMusic.Player/README.md) for the architecture.
+See the sample's [README](samples/YandexMusicTerminal/README.md) for the architecture.
 
 ## Installation
 
@@ -217,7 +236,8 @@ Full guides and API reference: **<https://jrfrigat.github.io/YandexMusic/>**
 ├── tests/
 │   └── YandexMusic.Tests/               # unit + (token-gated) integration tests (xUnit)
 ├── samples/
-│   └── YandexMusic.Player/              # interactive terminal music player (TUI demo)
+│   └── YandexMusicTerminal/              # interactive terminal music player (TUI demo)
+├── scripts/                             # one-command installers for the player (ps1 + sh)
 ├── docs/                                # documentation site (DocFX)
 └── .github/workflows/                   # CI, release (NuGet), docs publishing
 ```

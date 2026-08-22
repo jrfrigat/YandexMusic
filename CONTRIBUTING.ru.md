@@ -46,7 +46,7 @@ OAuth-токен Яндекс Музыки и **автоматически пр�
 
 - `src/YandexMusic` — основная клиентская библиотека.
 - `src/YandexMusic.DependencyInjection` — интеграция с DI (`AddYandexMusic()`).
-- `samples/YandexMusic.Player` — интерактивный терминальный музыкальный плеер (TUI), пример использования.
+- `samples/YandexMusicTerminal` — интерактивный терминальный музыкальный плеер (TUI), пример использования.
 - `tests/YandexMusic.Tests` — модульные и интеграционные тесты (xUnit; интеграционные используют атрибут `[IntegrationFact]` и запускаются только при заданной `YANDEX_MUSIC_TOKEN`).
 - `docs/` — документация (DocFX).
 

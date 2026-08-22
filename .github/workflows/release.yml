@@ -121,7 +121,7 @@ jobs:
 
       - name: Publish (${{ matrix.rid }}, self-contained, single file)
         run: >
-          dotnet publish samples/YandexMusic.Player/YandexMusic.Player.csproj
+          dotnet publish samples/YandexMusicTerminal/YandexMusicTerminal.csproj
           -c Release -r ${{ matrix.rid }} --self-contained true
           -p:PublishSingleFile=true -p:Version=${{ steps.version.outputs.value }}
           -p:PlayerTargetFramework=${{ matrix.tfm }} -o publish/player
@@ -133,11 +133,11 @@ jobs:
         run: |
           $version = '${{ steps.version.outputs.value }}'.Split('+')[0]
           if ('${{ matrix.rid }}' -eq 'win-x64') {
-            $archive = "yandexmusic-player-$version-win-x64.zip"
+            $archive = "ymt-$version-win-x64.zip"
             Compress-Archive -Path publish/player/* -DestinationPath $archive
           }
           else {
-            $archive = "yandexmusic-player-$version-linux-x64.tar.gz"
+            $archive = "ymt-$version-linux-x64.tar.gz"
             tar -czf $archive -C publish/player .
           }
           "archive=$archive" >> $env:GITHUB_OUTPUT
@@ -145,7 +145,7 @@ jobs:
       - name: Upload workflow artifact
         uses: actions/upload-artifact@v7
         with:
-          name: yandexmusic-player-${{ steps.version.outputs.value }}-${{ matrix.rid }}
+          name: ymt-${{ steps.version.outputs.value }}-${{ matrix.rid }}
           path: ${{ steps.package.outputs.archive }}
 
       - name: Attach to the GitHub Release

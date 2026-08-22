@@ -1,0 +1,48 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <!--
+      Two build flavours: a Windows TFM with the real NAudio backend and plain net10.0 with the
+      simulated one (runs anywhere). The default follows the build OS so local `dotnet run` needs no
+      flags; CI passes PlayerTargetFramework explicitly to publish Windows and Linux builds.
+    -->
+    <PlayerTargetFramework Condition="'$(PlayerTargetFramework)' == '' AND '$(OS)' == 'Windows_NT'">net10.0-windows10.0.19041.0</PlayerTargetFramework>
+    <PlayerTargetFramework Condition="'$(PlayerTargetFramework)' == ''">net10.0</PlayerTargetFramework>
+    <TargetFramework>$(PlayerTargetFramework)</TargetFramework>
+    <!--
+      The SDK does not define WINDOWS for *-windows TFMs on its own; the sources guard the real
+      audio backend on it.
+    -->
+    <DefineConstants Condition="$(PlayerTargetFramework.Contains('-windows'))">$(DefineConstants);WINDOWS</DefineConstants>
+    <RootNamespace>YandexMusicTerminal</RootNamespace>
+    <!-- The installed command name: users type "ymt". -->
+    <AssemblyName>ymt</AssemblyName>
+    <!-- A demonstration app, not a shipped package. -->
+    <IsPackable>false</IsPackable>
+    <!--
+      The solution defaults to globalization-invariant mode (Directory.Build.props) for the library.
+      The player needs real cultures so the UI follows the OS language and the .resx satellites load.
+    -->
+    <InvariantGlobalization>false</InvariantGlobalization>
+    <!-- The sample interops with native audio (NAudio); AOT/trim analysis is not meaningful here. -->
+    <IsAotCompatible>false</IsAotCompatible>
+    <NoWarn>$(NoWarn);CA1031;CA1303;CA2007;CA1416</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Spectre.Console" />
+    <PackageReference Include="QRCoder" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection" />
+  </ItemGroup>
+
+  <!-- Real audio backend — tied to the Windows TFM, not the build OS (NAudio is managed). -->
+  <ItemGroup Condition="$(PlayerTargetFramework.Contains('-windows'))">
+    <PackageReference Include="NAudio" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\YandexMusic\YandexMusic.csproj" />
+  </ItemGroup>
+
+</Project>

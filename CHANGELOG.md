@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ## [0.4.0] - 2026-08-22
 
 ### Added
+- The sample terminal installs with one command and runs as `ymt`. `scripts/install.ps1`
+  (`irm … | iex`) and `scripts/install.sh` (`curl … | sh`) fetch the self-contained release build,
+  unpack it into the user profile and put it on PATH — no administrator rights and no .NET install.
+  Re-running either command updates in place.
+- The terminal checks GitHub for a newer release, at most once a day and detached from startup, and
+  shows a line on the main menu when one exists. `YM_PLAYER_NO_UPDATE_CHECK=1` turns it off.
 - `YandexMusicClientOptions.HandlerFactory` — an optional `DelegatingHandler` placed in front of the
   client's own handler, so a directly-constructed client can be logged or traced. Consumers on
   `AddYandexMusic` already had `configureHttpClient` for this.
@@ -24,6 +30,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   are deliberately not recorded.
 
 ### Changed
+- The sample project is now **`YandexMusicTerminal`** (was `YandexMusic.Player`), its binary and
+  release archives are named `ymt`, and its data directory moved from `yandexmusic-player` to `ymt`.
+  An existing directory is carried over on first run, so saved sessions survive the rename.
 - **Breaking**: `IYandexMusicClient.CreateYnisonClient` returns the new `IYnisonClient` interface
   instead of the sealed `YnisonClient` class, so consumers can substitute and test it like every
   other endpoint group. `YnisonClient` implements it unchanged.

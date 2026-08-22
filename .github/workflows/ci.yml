@@ -102,7 +102,7 @@ jobs:
           dotnet-version: 10.0.x
 
       - name: Restore
-        run: dotnet restore samples/YandexMusic.Player/YandexMusic.Player.csproj -p:PlayerTargetFramework=${{ matrix.tfm }}
+        run: dotnet restore samples/YandexMusicTerminal/YandexMusicTerminal.csproj -p:PlayerTargetFramework=${{ matrix.tfm }}
 
       # MinVer computes the version inside a build target, so it can only be read after one has run;
       # invoking the target directly is much cheaper than a full build.
@@ -110,13 +110,13 @@ jobs:
         id: version
         shell: bash
         run: >
-          echo "value=$(dotnet msbuild samples/YandexMusic.Player/YandexMusic.Player.csproj
+          echo "value=$(dotnet msbuild samples/YandexMusicTerminal/YandexMusicTerminal.csproj
           -t:MinVer -getProperty:Version -p:Configuration=Release
           -p:PlayerTargetFramework=${{ matrix.tfm }} -v:q -nologo | tr -d '\r\n')" >> "$GITHUB_OUTPUT"
 
       - name: Publish (${{ matrix.rid }}, self-contained, single file)
         run: >
-          dotnet publish samples/YandexMusic.Player/YandexMusic.Player.csproj
+          dotnet publish samples/YandexMusicTerminal/YandexMusicTerminal.csproj
           -c Release -r ${{ matrix.rid }} --self-contained true -p:PublishSingleFile=true
           -p:PlayerTargetFramework=${{ matrix.tfm }} -o publish/player
 
@@ -127,11 +127,11 @@ jobs:
         run: |
           $version = '${{ steps.version.outputs.value }}'.Split('+')[0]
           if ('${{ matrix.rid }}' -eq 'win-x64') {
-            $archive = "yandexmusic-player-$version-win-x64.zip"
+            $archive = "ymt-$version-win-x64.zip"
             Compress-Archive -Path publish/player/* -DestinationPath $archive
           }
           else {
-            $archive = "yandexmusic-player-$version-linux-x64.tar.gz"
+            $archive = "ymt-$version-linux-x64.tar.gz"
             tar -czf $archive -C publish/player .
           }
           "archive=$archive" >> $env:GITHUB_OUTPUT
@@ -139,6 +139,6 @@ jobs:
       - name: Upload player artifact
         uses: actions/upload-artifact@v7
         with:
-          name: yandexmusic-player-${{ steps.version.outputs.value }}-${{ matrix.rid }}
+          name: ymt-${{ steps.version.outputs.value }}-${{ matrix.rid }}
           path: ${{ steps.package.outputs.archive }}
           if-no-files-found: error

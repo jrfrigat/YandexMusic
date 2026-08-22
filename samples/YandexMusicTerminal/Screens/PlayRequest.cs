@@ -1,0 +1,10 @@
+using YandexMusicTerminal.Catalog;
+using YandexMusicTerminal.Playback;
+
+namespace YandexMusicTerminal.Screens;
+
+/// <summary>A request to start playback of a list of tracks from a given index (returned by screens).</summary>
+/// <param name="Tracks">The tracks to enqueue (for example a set of search results or an album).</param>
+/// <param name="StartIndex">The index within <paramref name="Tracks"/> to start playing from.</param>
+/// <param name="Origin">Where the queue came from, for play reporting; see <see cref="PlaybackOrigin"/>.</param>
+public sealed record PlayRequest(IReadOnlyList<TrackView> Tracks, int StartIndex, PlaybackOrigin? Origin = null);

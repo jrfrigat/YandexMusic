@@ -28,40 +28,59 @@
 
 ### Пример: терминальный музыкальный плеер
 
-[`samples/YandexMusic.Player`](samples/YandexMusic.Player) — полноценный интерактивный TUI поверх
+[`samples/YandexMusicTerminal`](samples/YandexMusicTerminal) — полноценный интерактивный TUI поверх
 библиотеки: поиск, просмотр своих альбомов и плейлистов, экран «сейчас играет» с анимированным
 эквалайзером, прогресс-баром в реальном времени и управлением громкостью/воспроизведением с клавиатуры.
 
-**Скачать:** готовые сборки под **Windows** и **Linux** публикуются на странице
-[**Releases**](https://github.com/jrfrigat/YandexMusic/releases)
-(`yandexmusic-player-<version>-win-x64.zip` и `yandexmusic-player-<version>-linux-x64.tar.gz` —
-self-contained, .NET ставить не нужно; распакуйте и запустите `yandexmusic-player.exe` на Windows
-или `./yandexmusic-player` на Linux). Либо запустите из исходников:
+**Установка** — одной командой, .NET не нужен (сборки self-contained). Ставится в профиль
+пользователя, без прав администратора, и добавляет `ymt` в PATH:
+
+```powershell
+irm https://raw.githubusercontent.com/jrfrigat/YandexMusic/main/scripts/install.ps1 | iex
+```
 
 ```bash
-dotnet run --project samples/YandexMusic.Player
+curl -fsSL https://raw.githubusercontent.com/jrfrigat/YandexMusic/main/scripts/install.sh | sh
+```
+
+Дальше запуск откуда угодно:
+
+```bash
+ymt
+```
+
+Повторный запуск той же команды обновляет на месте. Плеер раз в сутки проверяет GitHub на новую
+версию и показывает строку в главном меню, когда она вышла; `YM_PLAYER_NO_UPDATE_CHECK=1` это
+отключает. Как закрепить версию или сменить каталог — см. [`scripts/`](scripts).
+
+**Либо** возьмите архивы вручную со страницы
+[**Releases**](https://github.com/jrfrigat/YandexMusic/releases) (`ymt-<version>-win-x64.zip`,
+`ymt-<version>-linux-x64.tar.gz`), либо запустите из исходников:
+
+```bash
+dotnet run --project samples/YandexMusicTerminal
 ```
 
 - **Вход** по OAuth-токену, через device-code flow, QR-код или логин/пароль; сессия кэшируется, поэтому
   следующий запуск стартует уже авторизованным.
 - **Воспроизведение** использует [NAudio](https://github.com/naudio/NAudio) на Windows; на остальных
   платформах (и как fallback) работает беззвучная симуляция, управляющая тем же интерфейсом. Аудио-бэкенд —
-  единственный шов [`IAudioPlayer`](samples/YandexMusic.Player/Playback/IAudioPlayer.cs), так что замена
+  единственный шов [`IAudioPlayer`](samples/YandexMusicTerminal/Playback/IAudioPlayer.cs), так что замена
   на кроссплатформенный движок меняет одну строку.
 - **Пульт** — экран Ynison показывает, что играет на каждом устройстве аккаунта (веб, телефон, умные
   колонки), и управляет этим: пауза, треки, громкость и «играть здесь» клавишами `1-9`.
 - **Действия с треком** (экран «сейчас играет») — `l` лайк · `x` дизлайк (и пропуск) · `t` текст
   песни · `i` бесконечное радио похожих треков. Старты и скипы отчитываются в API, поэтому
   «Моя волна» учится на том, что вы слушаете.
-- **Поиск** — вкладки треков, альбомов и плейлистов, пагинация строкой «ещё», drill-in в треклист
-  выбранного альбома или плейлиста.
+- **Поиск** — вкладки треков, артистов, альбомов и плейлистов, пагинация строкой «ещё», drill-in в
+  треки выбранного артиста, альбома или плейлиста.
 - **Главное меню** управляется курсором, снизу — строка горячих клавиш; одиночные клавиши сразу
   открывают раздел (`s` поиск · `a` альбомы · `l` плейлисты · `f` любимое · `w` волна · `p` плеер ·
-  `r` пульт · `q` выход), а `Esc` всегда возвращает назад.
+  `r` пульт · `g` журнал запросов · `q` выход), а `Esc` всегда возвращает назад.
 - **Управление** (экран «сейчас играет»): `space` пауза · `←/→` пред/след · `↑/↓` громкость · `s` стоп ·
   `q` назад — плюс `l`/`x`/`t`/`i`: лайк, дизлайк, текст, похожие (см. выше).
 
-Архитектура описана в [README примера](samples/YandexMusic.Player/README.md).
+Архитектура описана в [README примера](samples/YandexMusicTerminal/README.md).
 
 ## Установка
 
@@ -217,7 +236,7 @@ services.AddYandexMusic(options =>
 ├── tests/
 │   └── YandexMusic.Tests/               # модульные + (по токену) интеграционные тесты (xUnit)
 ├── samples/
-│   └── YandexMusic.Player/              # интерактивный терминальный плеер (TUI-демо)
+│   └── YandexMusicTerminal/              # интерактивный терминальный плеер (TUI-демо)
 ├── docs/                                # сайт документации (DocFX)
 └── .github/workflows/                   # CI, релиз (NuGet), публикация документации
 ```
