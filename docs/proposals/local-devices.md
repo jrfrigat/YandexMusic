@@ -225,6 +225,32 @@ hands it to clients at all is unclear. Pinning does not need it, so **this packa
 request it nor store it**. That is a deliberate decision, recorded here so it is not quietly undone
 later by someone who assumes an unused field is safe to keep.
 
+Pinning is not just plausible, it is measured: the certificate `device_list` reports for a given
+speaker and the certificate that speaker presents on port 1961 have the same thumbprint, checked on
+two devices across separate runs. The comparison is `X509Certificate2.GetCertHashString()` on the
+PEM from `device_list` against the certificate handed to the validation callback.
+
+### The system proxy must be turned off explicitly
+
+`ClientWebSocket` honours the machine's configured proxy by default, and it does so for LAN
+addresses too. On a machine with a system proxy this turns a connection to `wss://192.168.x.x:1961`
+into a `CONNECT` tunnel request that the proxy answers with `403`, and the failure surfaces as the
+thoroughly unhelpful "Unable to connect to the remote server" — with the certificate callback never
+firing, because the handshake never begins.
+
+So the control client must set `Options.Proxy = null`. Nothing on the local network should ever be
+proxied, and leaving this to the machine's configuration means the feature works on the developer's
+laptop and fails on every corporate one.
+
+### Speakers say nothing until spoken to
+
+A client that connects and stays silent receives no application data at all — twenty seconds of an
+open socket produced zero frames. The device does send websocket Ping control frames, but those are
+handled by the protocol layer and never reach an application.
+
+This rules out learning the message schema by observation alone. It also means a status query has to
+be the first thing a control client sends.
+
 ### Dependency cost — answered: no dependency needed
 
 The whole discovery path above was driven by a hand-written DNS-SD query and parser of roughly 150
