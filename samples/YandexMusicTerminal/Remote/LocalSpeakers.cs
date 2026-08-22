@@ -30,7 +30,7 @@ public sealed class LocalSpeakers : IAsyncDisposable
 
     private readonly IYandexMusicClient _client;
     private readonly RequestLog _log;
-    private readonly ILocalDeviceScanner _scanner = new LocalDeviceScanner();
+    private readonly LocalDeviceScanner _scanner = new();
     private readonly List<LocalSpeaker> _found = [];
     private readonly Lock _gate = new();
 
