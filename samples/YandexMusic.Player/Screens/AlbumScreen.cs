@@ -10,13 +10,17 @@ namespace YandexMusic.Player.Screens;
 public sealed class AlbumScreen
 {
     private readonly IMusicCatalog _catalog;
+    private readonly NoticeBoard _notices;
 
     /// <summary>Creates the album screen.</summary>
     /// <param name="catalog">The catalog to query.</param>
-    public AlbumScreen(IMusicCatalog catalog)
+    /// <param name="notices">The board an empty album reports to.</param>
+    public AlbumScreen(IMusicCatalog catalog, NoticeBoard notices)
     {
         ArgumentNullException.ThrowIfNull(catalog);
+        ArgumentNullException.ThrowIfNull(notices);
         _catalog = catalog;
+        _notices = notices;
     }
 
     /// <summary>Runs the screen for a given album.</summary>
@@ -31,7 +35,7 @@ public sealed class AlbumScreen
 
         if (detail is null || detail.Tracks.Count == 0)
         {
-            AnsiConsole.MarkupLine(Strings.AlbumNoTracks);
+            _notices.Post(Strings.AlbumNoTracks);
             return null;
         }
 

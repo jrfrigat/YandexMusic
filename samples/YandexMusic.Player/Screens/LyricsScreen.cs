@@ -113,6 +113,9 @@ public sealed class LyricsScreen
                 : $"[white]{Markup.Escape(line.Trim())}[/]"));
         }
 
+        rows.Add(new Markup(string.Empty));
+        rows.Add(new Markup(Strings.LyricsKeys));
+
         return new Panel(new Rows(rows))
             .Header(Strings.LyricsHeader)
             .Border(BoxBorder.Rounded)

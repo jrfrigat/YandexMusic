@@ -9,13 +9,17 @@ namespace YandexMusic.Player.Screens;
 public sealed class PlaylistScreen
 {
     private readonly IMusicCatalog _catalog;
+    private readonly NoticeBoard _notices;
 
     /// <summary>Creates the playlist screen.</summary>
     /// <param name="catalog">The catalog to query.</param>
-    public PlaylistScreen(IMusicCatalog catalog)
+    /// <param name="notices">The board an empty playlist reports to.</param>
+    public PlaylistScreen(IMusicCatalog catalog, NoticeBoard notices)
     {
         ArgumentNullException.ThrowIfNull(catalog);
+        ArgumentNullException.ThrowIfNull(notices);
         _catalog = catalog;
+        _notices = notices;
     }
 
     /// <summary>Runs the screen for a given playlist.</summary>
@@ -30,7 +34,7 @@ public sealed class PlaylistScreen
 
         if (detail is null || detail.Tracks.Count == 0)
         {
-            AnsiConsole.MarkupLine(Strings.PlaylistNoTracks);
+            _notices.Post(Strings.PlaylistNoTracks);
             return null;
         }
 

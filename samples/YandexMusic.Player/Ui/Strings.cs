@@ -37,14 +37,10 @@ public static class Strings
     public static string MenuHotkeys => Get(nameof(MenuHotkeys));
 
     // Shared list controls.
-    public static string Back => Get(nameof(Back));
-    public static string BackDim => Get(nameof(BackDim));
-    public static string MoreChoices => Get(nameof(MoreChoices));
     public static string ListHotkeys => Get(nameof(ListHotkeys));
 
     // Authentication.
     public static string HowToSignIn => Get(nameof(HowToSignIn));
-    public static string AuthQuit => Get(nameof(AuthQuit));
     public static string SignedIn => Get(nameof(SignedIn));
     public static string SignInIncomplete => Get(nameof(SignInIncomplete));
     public static string SignInFailed(string message) => Fmt(nameof(SignInFailed), message);
@@ -68,9 +64,7 @@ public static class Strings
 
     // Search.
     public static string SearchPrompt => Get(nameof(SearchPrompt));
-    public static string Searching => Get(nameof(Searching));
     public static string NothingFound => Get(nameof(NothingFound));
-    public static string SearchResultsTitle(int count, string query) => Fmt(nameof(SearchResultsTitle), count, query);
 
     // Albums.
     public static string LoadingAlbums => Get(nameof(LoadingAlbums));
@@ -78,7 +72,6 @@ public static class Strings
     public static string YourAlbums(int count) => Fmt(nameof(YourAlbums), count);
     public static string LoadingAlbum => Get(nameof(LoadingAlbum));
     public static string AlbumNoTracks => Get(nameof(AlbumNoTracks));
-    public static string PlayFromWhich => Get(nameof(PlayFromWhich));
 
     // Liked tracks and My Wave.
     public static string LoadingLiked => Get(nameof(LoadingLiked));
@@ -96,11 +89,6 @@ public static class Strings
     public static string LoadingPlaylist => Get(nameof(LoadingPlaylist));
     public static string PlaylistNoTracks => Get(nameof(PlaylistNoTracks));
 
-    // Table column headers.
-    public static string ColumnTitle => Get(nameof(ColumnTitle));
-    public static string ColumnArtist => Get(nameof(ColumnArtist));
-    public static string ColumnTime => Get(nameof(ColumnTime));
-
     // Now playing.
     public static string NowPlayingHeader => Get(nameof(NowPlayingHeader));
     public static string NothingPlayingYet => Get(nameof(NothingPlayingYet));
@@ -115,6 +103,7 @@ public static class Strings
     public static string SimulatedSuffix => Get(nameof(SimulatedSuffix));
     public static string TrackCounter(int position, int length) => Fmt(nameof(TrackCounter), position, length);
     public static string NowPlayingKeys => Get(nameof(NowPlayingKeys));
+    public static string PlaybackFailed(string reason) => Fmt(nameof(PlaybackFailed), reason);
 
     // Ynison remote control.
     public static string MenuRemote => Get(nameof(MenuRemote));
@@ -146,12 +135,12 @@ public static class Strings
     public static string LyricsKeys => Get(nameof(LyricsKeys));
 
     // Search tabs.
-    public static string SearchTabsTitle => Get(nameof(SearchTabsTitle));
     public static string SearchTabTracks => Get(nameof(SearchTabTracks));
     public static string SearchTabAlbums => Get(nameof(SearchTabAlbums));
     public static string SearchTabPlaylists => Get(nameof(SearchTabPlaylists));
     public static string LoadMore => Get(nameof(LoadMore));
     public static string LoadingMore => Get(nameof(LoadingMore));
+    public static string RetryHint => Get(nameof(RetryHint));
     public static string SearchTabsKeys => Get(nameof(SearchTabsKeys));
     public static string ScreenFailed(string reason) => Fmt(nameof(ScreenFailed), reason);
 }

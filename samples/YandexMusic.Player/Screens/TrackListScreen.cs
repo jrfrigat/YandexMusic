@@ -13,13 +13,17 @@ namespace YandexMusic.Player.Screens;
 public sealed class TrackListScreen
 {
     private readonly IMusicCatalog _catalog;
+    private readonly NoticeBoard _notices;
 
     /// <summary>Creates the track-list screen.</summary>
     /// <param name="catalog">The catalog to query.</param>
-    public TrackListScreen(IMusicCatalog catalog)
+    /// <param name="notices">The board an empty list reports to.</param>
+    public TrackListScreen(IMusicCatalog catalog, NoticeBoard notices)
     {
         ArgumentNullException.ThrowIfNull(catalog);
+        ArgumentNullException.ThrowIfNull(notices);
         _catalog = catalog;
+        _notices = notices;
     }
 
     /// <summary>Shows the user's liked tracks.</summary>
@@ -45,7 +49,7 @@ public sealed class TrackListScreen
 
         if (batch.Tracks.Count == 0)
         {
-            AnsiConsole.MarkupLine(Strings.NoWave);
+            _notices.Post(Strings.NoWave);
             return null;
         }
 
@@ -61,7 +65,7 @@ public sealed class TrackListScreen
                 new PlaybackOrigin("mywave", Station: batch.Station, BatchId: batch.BatchId));
     }
 
-    private static async Task<PlayRequest?> RunTracksAsync(
+    private async Task<PlayRequest?> RunTracksAsync(
         string loadingMessage,
         Func<CancellationToken, Task<IReadOnlyList<TrackView>>> loader,
         Func<int, string> title,
@@ -75,7 +79,7 @@ public sealed class TrackListScreen
 
         if (tracks.Count == 0)
         {
-            AnsiConsole.MarkupLine(emptyMessage);
+            _notices.Post(emptyMessage);
             return null;
         }
 

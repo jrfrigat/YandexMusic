@@ -55,6 +55,9 @@ public sealed class PlayerApp
         _nowPlaying = nowPlaying;
         _remote = remote;
         _notices = notices;
+
+        // The same failure, for when the user is not on the now-playing screen to see its toast.
+        _controller.Failed += ex => _notices.Post(Strings.PlaybackFailed(ex.Message));
     }
 
     /// <summary>Runs the app until the user quits.</summary>

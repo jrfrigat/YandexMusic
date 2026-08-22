@@ -92,4 +92,4 @@ catch (OperationCanceledException)
     // Ctrl+C — exit quietly.
 }
 
-AnsiConsole.MarkupLine("[grey]Bye.[/]");
+AnsiConsole.MarkupLine(Strings.Bye);

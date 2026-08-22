@@ -108,7 +108,7 @@
     <value>Загрузка любимых треков…</value>
   </data>
   <data name="NoLiked" xml:space="preserve">
-    <value>[grey]Пока нет любимых треков.[/]</value>
+    <value>Пока нет любимых треков.</value>
   </data>
   <data name="LikedTitle" xml:space="preserve">
     <value>Мне нравится ([green]{0}[/]):</value>
@@ -117,25 +117,13 @@
     <value>Настройка волны…</value>
   </data>
   <data name="NoWave" xml:space="preserve">
-    <value>[grey]Волна не вернула треков.[/]</value>
+    <value>Волна не вернула треков.</value>
   </data>
   <data name="WaveTitle" xml:space="preserve">
     <value>Моя волна ([green]{0}[/]):</value>
   </data>
-  <data name="Back" xml:space="preserve">
-    <value>← Назад</value>
-  </data>
-  <data name="BackDim" xml:space="preserve">
-    <value>[grey]← Назад[/]</value>
-  </data>
-  <data name="MoreChoices" xml:space="preserve">
-    <value>[grey](листайте вверх/вниз)[/]</value>
-  </data>
   <data name="HowToSignIn" xml:space="preserve">
     <value>Как вы хотите [yellow]войти[/]?</value>
-  </data>
-  <data name="AuthQuit" xml:space="preserve">
-    <value>Выход</value>
   </data>
   <data name="SignedIn" xml:space="preserve">
     <value>[green]Вход выполнен.[/]</value>
@@ -194,20 +182,14 @@
   <data name="SearchPrompt" xml:space="preserve">
     <value>[yellow]Поиск треков[/] [grey](пусто — назад)[/]:</value>
   </data>
-  <data name="Searching" xml:space="preserve">
-    <value>Поиск…</value>
-  </data>
   <data name="NothingFound" xml:space="preserve">
     <value>[grey]Ничего не найдено.[/]</value>
-  </data>
-  <data name="SearchResultsTitle" xml:space="preserve">
-    <value>[green]{0}[/] результатов по запросу [yellow]{1}[/]:</value>
   </data>
   <data name="LoadingAlbums" xml:space="preserve">
     <value>Загрузка ваших альбомов…</value>
   </data>
   <data name="NoAlbums" xml:space="preserve">
-    <value>[grey]Нет понравившихся альбомов (отметьте альбомы лайком и войдите в аккаунт).[/]</value>
+    <value>Нет понравившихся альбомов (отметьте альбомы лайком и войдите в аккаунт).</value>
   </data>
   <data name="YourAlbums" xml:space="preserve">
     <value>Ваши альбомы ([green]{0}[/]):</value>
@@ -216,16 +198,13 @@
     <value>Загрузка альбома…</value>
   </data>
   <data name="AlbumNoTracks" xml:space="preserve">
-    <value>[grey]В альбоме нет доступных треков.[/]</value>
-  </data>
-  <data name="PlayFromWhich" xml:space="preserve">
-    <value>С какого трека начать?</value>
+    <value>В альбоме нет доступных треков.</value>
   </data>
   <data name="LoadingPlaylists" xml:space="preserve">
     <value>Загрузка ваших плейлистов…</value>
   </data>
   <data name="NoPlaylists" xml:space="preserve">
-    <value>[grey]Плейлисты не найдены (войдите в аккаунт).[/]</value>
+    <value>Плейлисты не найдены (войдите в аккаунт).</value>
   </data>
   <data name="YourPlaylists" xml:space="preserve">
     <value>Ваши плейлисты ([green]{0}[/]):</value>
@@ -237,22 +216,13 @@
     <value>Загрузка плейлиста…</value>
   </data>
   <data name="PlaylistNoTracks" xml:space="preserve">
-    <value>[grey]В плейлисте нет доступных треков.[/]</value>
-  </data>
-  <data name="ColumnTitle" xml:space="preserve">
-    <value>Название</value>
-  </data>
-  <data name="ColumnArtist" xml:space="preserve">
-    <value>Исполнитель</value>
-  </data>
-  <data name="ColumnTime" xml:space="preserve">
-    <value>[grey]Время[/]</value>
+    <value>В плейлисте нет доступных треков.</value>
   </data>
   <data name="NowPlayingHeader" xml:space="preserve">
     <value>[green] ♪ Сейчас играет [/]</value>
   </data>
   <data name="NothingPlayingYet" xml:space="preserve">
-    <value>[grey]Сейчас ничего не играет.[/]</value>
+    <value>Сейчас ничего не играет.</value>
   </data>
   <data name="StatePlaying" xml:space="preserve">
     <value>[green]▶ Играет[/]</value>
@@ -320,9 +290,6 @@
   <data name="LyricsKeys" xml:space="preserve">
     <value>[grey]↑/↓[/] прокрутка   [grey]PgUp/PgDn[/] страница   [grey]q[/] назад</value>
   </data>
-  <data name="SearchTabsTitle" xml:space="preserve">
-    <value>Искать в:</value>
-  </data>
   <data name="SearchTabTracks" xml:space="preserve">
     <value>Треки</value>
   </data>
@@ -343,6 +310,12 @@
   </data>
   <data name="LoadMore" xml:space="preserve">
     <value>Ещё…</value>
+  </data>
+  <data name="RetryHint" xml:space="preserve">
+    <value>enter — повторить</value>
+  </data>
+  <data name="PlaybackFailed" xml:space="preserve">
+    <value>Воспроизведение остановлено: {0}</value>
   </data>
   <data name="MenuRemote" xml:space="preserve">
     <value>Пульт</value>

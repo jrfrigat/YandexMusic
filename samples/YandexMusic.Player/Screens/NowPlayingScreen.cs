@@ -22,6 +22,7 @@ public sealed class NowPlayingScreen
     private readonly PlaybackController _controller;
     private readonly IMusicCatalog _catalog;
     private readonly LyricsScreen _lyrics;
+    private readonly NoticeBoard _notices;
     private HashSet<string> _likedIds = [];
     private bool _likedLoaded;
     private string _toast = string.Empty;
@@ -32,14 +33,21 @@ public sealed class NowPlayingScreen
     /// <param name="controller">The playback controller to render and drive.</param>
     /// <param name="catalog">The catalog for like/dislike, lyrics and similar-radio actions.</param>
     /// <param name="lyrics">The lyrics view opened by the <c>t</c> key.</param>
-    public NowPlayingScreen(PlaybackController controller, IMusicCatalog catalog, LyricsScreen lyrics)
+    /// <param name="notices">The board an empty queue reports to.</param>
+    public NowPlayingScreen(PlaybackController controller, IMusicCatalog catalog, LyricsScreen lyrics, NoticeBoard notices)
     {
         ArgumentNullException.ThrowIfNull(controller);
         ArgumentNullException.ThrowIfNull(catalog);
         ArgumentNullException.ThrowIfNull(lyrics);
+        ArgumentNullException.ThrowIfNull(notices);
         _controller = controller;
         _catalog = catalog;
         _lyrics = lyrics;
+        _notices = notices;
+
+        // A radio queue that cannot fetch its next batch stops playing; say so in the view the user
+        // is almost certainly looking at when it happens.
+        _controller.Failed += ex => ShowToast(Strings.PlaybackFailed(ex.Message));
     }
 
     /// <summary>What the live view asked for when it closed.</summary>
@@ -58,7 +66,7 @@ public sealed class NowPlayingScreen
     {
         if (_controller.Current is null)
         {
-            AnsiConsole.MarkupLine(Strings.NothingPlayingYet);
+            _notices.Post(Strings.NothingPlayingYet);
             return;
         }
 
@@ -113,7 +121,7 @@ public sealed class NowPlayingScreen
                                 _controller.AdjustVolume(-5);
                                 break;
                             case ConsoleKey.S:
-                                _controller.Stop();
+                                await _controller.StopAsync(cancellationToken).ConfigureAwait(false);
                                 break;
                             case ConsoleKey.L:
                                 await ToggleLikeAsync(cancellationToken).ConfigureAwait(false);

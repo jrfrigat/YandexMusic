@@ -9,16 +9,20 @@ public sealed class PlaylistsScreen
 {
     private readonly IMusicCatalog _catalog;
     private readonly PlaylistScreen _playlistScreen;
+    private readonly NoticeBoard _notices;
 
     /// <summary>Creates the playlists screen.</summary>
     /// <param name="catalog">The catalog to query.</param>
     /// <param name="playlistScreen">The playlist detail screen to drill into.</param>
-    public PlaylistsScreen(IMusicCatalog catalog, PlaylistScreen playlistScreen)
+    /// <param name="notices">The board an empty library reports to.</param>
+    public PlaylistsScreen(IMusicCatalog catalog, PlaylistScreen playlistScreen, NoticeBoard notices)
     {
         ArgumentNullException.ThrowIfNull(catalog);
         ArgumentNullException.ThrowIfNull(playlistScreen);
+        ArgumentNullException.ThrowIfNull(notices);
         _catalog = catalog;
         _playlistScreen = playlistScreen;
+        _notices = notices;
     }
 
     /// <summary>Runs the screen.</summary>
@@ -32,7 +36,7 @@ public sealed class PlaylistsScreen
 
         if (playlists.Count == 0)
         {
-            AnsiConsole.MarkupLine(Strings.NoPlaylists);
+            _notices.Post(Strings.NoPlaylists);
             return null;
         }
 

@@ -107,7 +107,7 @@ public sealed class RemoteScreen
         await StopAsync(sessionCts, run).ConfigureAwait(false);
     }
 
-    private static async Task AdjustVolumeAsync(YnisonClient ynison, double delta, CancellationToken cancellationToken)
+    private static async Task AdjustVolumeAsync(IYnisonClient ynison, double delta, CancellationToken cancellationToken)
     {
         var state = ynison.LatestState;
         var activeId = state?.ActiveDeviceIdOptional;
@@ -121,7 +121,7 @@ public sealed class RemoteScreen
         await SafeAsync(() => ynison.SetVolumeAsync(activeId, current + delta, cancellationToken));
     }
 
-    private static async Task<string> PlayOnDeviceAsync(YnisonClient ynison, int deviceIndex, CancellationToken cancellationToken)
+    private static async Task<string> PlayOnDeviceAsync(IYnisonClient ynison, int deviceIndex, CancellationToken cancellationToken)
     {
         var state = ynison.LatestState;
         if (state is null || deviceIndex >= Math.Min(state.Devices.Count, MaxDeviceHotkeys))

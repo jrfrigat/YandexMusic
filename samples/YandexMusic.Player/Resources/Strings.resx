@@ -113,7 +113,7 @@
     <value>Loading your liked tracks…</value>
   </data>
   <data name="NoLiked" xml:space="preserve">
-    <value>[grey]No liked tracks yet.[/]</value>
+    <value>No liked tracks yet.</value>
   </data>
   <data name="LikedTitle" xml:space="preserve">
     <value>Liked ([green]{0}[/]):</value>
@@ -122,25 +122,13 @@
     <value>Tuning your wave…</value>
   </data>
   <data name="NoWave" xml:space="preserve">
-    <value>[grey]Your wave returned no tracks.[/]</value>
+    <value>Your wave returned no tracks.</value>
   </data>
   <data name="WaveTitle" xml:space="preserve">
     <value>My Wave ([green]{0}[/]):</value>
   </data>
-  <data name="Back" xml:space="preserve">
-    <value>← Back</value>
-  </data>
-  <data name="BackDim" xml:space="preserve">
-    <value>[grey]← Back[/]</value>
-  </data>
-  <data name="MoreChoices" xml:space="preserve">
-    <value>[grey](move up/down for more)[/]</value>
-  </data>
   <data name="HowToSignIn" xml:space="preserve">
     <value>How would you like to [yellow]sign in[/]?</value>
-  </data>
-  <data name="AuthQuit" xml:space="preserve">
-    <value>Quit</value>
   </data>
   <data name="SignedIn" xml:space="preserve">
     <value>[green]Signed in.[/]</value>
@@ -199,20 +187,14 @@
   <data name="SearchPrompt" xml:space="preserve">
     <value>[yellow]Search tracks[/] [grey](empty to go back)[/]:</value>
   </data>
-  <data name="Searching" xml:space="preserve">
-    <value>Searching…</value>
-  </data>
   <data name="NothingFound" xml:space="preserve">
     <value>[grey]Nothing found.[/]</value>
-  </data>
-  <data name="SearchResultsTitle" xml:space="preserve">
-    <value>[green]{0}[/] results for [yellow]{1}[/]:</value>
   </data>
   <data name="LoadingAlbums" xml:space="preserve">
     <value>Loading your albums…</value>
   </data>
   <data name="NoAlbums" xml:space="preserve">
-    <value>[grey]No liked albums (like some albums in the app, and make sure you are signed in).[/]</value>
+    <value>No liked albums (like some albums in the app, and make sure you are signed in).</value>
   </data>
   <data name="YourAlbums" xml:space="preserve">
     <value>Your albums ([green]{0}[/]):</value>
@@ -221,16 +203,13 @@
     <value>Loading album…</value>
   </data>
   <data name="AlbumNoTracks" xml:space="preserve">
-    <value>[grey]The album has no playable tracks.[/]</value>
-  </data>
-  <data name="PlayFromWhich" xml:space="preserve">
-    <value>Play from which track?</value>
+    <value>The album has no playable tracks.</value>
   </data>
   <data name="LoadingPlaylists" xml:space="preserve">
     <value>Loading your playlists…</value>
   </data>
   <data name="NoPlaylists" xml:space="preserve">
-    <value>[grey]No playlists found (make sure you are signed in).[/]</value>
+    <value>No playlists found (make sure you are signed in).</value>
   </data>
   <data name="YourPlaylists" xml:space="preserve">
     <value>Your playlists ([green]{0}[/]):</value>
@@ -242,22 +221,13 @@
     <value>Loading playlist…</value>
   </data>
   <data name="PlaylistNoTracks" xml:space="preserve">
-    <value>[grey]The playlist has no playable tracks.[/]</value>
-  </data>
-  <data name="ColumnTitle" xml:space="preserve">
-    <value>Title</value>
-  </data>
-  <data name="ColumnArtist" xml:space="preserve">
-    <value>Artist</value>
-  </data>
-  <data name="ColumnTime" xml:space="preserve">
-    <value>[grey]Time[/]</value>
+    <value>The playlist has no playable tracks.</value>
   </data>
   <data name="NowPlayingHeader" xml:space="preserve">
     <value>[green] ♪ Now Playing [/]</value>
   </data>
   <data name="NothingPlayingYet" xml:space="preserve">
-    <value>[grey]Nothing is playing yet.[/]</value>
+    <value>Nothing is playing yet.</value>
   </data>
   <data name="StatePlaying" xml:space="preserve">
     <value>[green]▶ Playing[/]</value>
@@ -325,9 +295,6 @@
   <data name="LyricsKeys" xml:space="preserve">
     <value>[grey]↑/↓[/] scroll   [grey]PgUp/PgDn[/] page   [grey]q[/] back</value>
   </data>
-  <data name="SearchTabsTitle" xml:space="preserve">
-    <value>Search in:</value>
-  </data>
   <data name="SearchTabTracks" xml:space="preserve">
     <value>Tracks</value>
   </data>
@@ -348,6 +315,12 @@
   </data>
   <data name="LoadMore" xml:space="preserve">
     <value>More…</value>
+  </data>
+  <data name="RetryHint" xml:space="preserve">
+    <value>enter to retry</value>
+  </data>
+  <data name="PlaybackFailed" xml:space="preserve">
+    <value>Playback stopped: {0}</value>
   </data>
   <data name="MenuRemote" xml:space="preserve">
     <value>Remote control</value>
