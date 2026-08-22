@@ -42,6 +42,34 @@ public sealed class MusicCatalog : IMusicCatalog
     }
 
     /// <inheritdoc />
+    public async Task<SearchPage<ArtistView>> SearchArtistsAsync(string query, int page = 0, CancellationToken cancellationToken = default)
+    {
+        var result = await _client.Search.SearchAsync(query, SearchType.Artist, page, cancellationToken: cancellationToken).ConfigureAwait(false);
+        var section = result?.Artists;
+        return new SearchPage<ArtistView>((section?.Results ?? []).Select(ToArtistView).ToList(), section?.Total ?? 0);
+    }
+
+    /// <inheritdoc />
+    public async Task<ArtistDetail?> GetArtistAsync(string artistId, CancellationToken cancellationToken = default)
+    {
+        // The popular-tracks page is what the official clients open an artist on, and it is the only
+        // one of the artist endpoints that gives something directly playable.
+        var page = await _client.Artists.GetTracksAsync(artistId, cancellationToken: cancellationToken).ConfigureAwait(false);
+        if (page is null)
+        {
+            return null;
+        }
+
+        var tracks = page.Tracks.Select(ToTrackView).ToList();
+        var brief = await _client.Artists.GetBriefInfoAsync(artistId, cancellationToken).ConfigureAwait(false);
+        var artist = brief?.Artist is { } info
+            ? ToArtistView(info)
+            : new ArtistView(artistId, tracks.Count > 0 ? tracks[0].Artist : artistId, tracks.Count);
+
+        return new ArtistDetail(artist, tracks);
+    }
+
+    /// <inheritdoc />
     public async Task<SearchPage<PlaylistView>> SearchPlaylistsAsync(string query, int page = 0, CancellationToken cancellationToken = default)
     {
         var result = await _client.Search.SearchAsync(query, SearchType.Playlist, page, cancellationToken: cancellationToken).ConfigureAwait(false);
@@ -277,6 +305,11 @@ public sealed class MusicCatalog : IMusicCatalog
         JoinArtists(album.Artists),
         album.Year,
         album.TrackCount);
+
+    private static ArtistView ToArtistView(Artist artist) => new(
+        artist.Id,
+        artist.Name,
+        artist.Counts?.Tracks ?? 0);
 
     private static PlaylistView ToPlaylistView(Playlist playlist) => new(
         playlist.Kind.ToString(CultureInfo.InvariantCulture),

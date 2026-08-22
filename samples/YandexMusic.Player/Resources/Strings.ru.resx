@@ -293,6 +293,15 @@
   <data name="SearchTabTracks" xml:space="preserve">
     <value>Треки</value>
   </data>
+  <data name="SearchTabArtists" xml:space="preserve">
+    <value>Артисты</value>
+  </data>
+  <data name="LoadingArtist" xml:space="preserve">
+    <value>Загружаю артиста…</value>
+  </data>
+  <data name="ArtistNoTracks" xml:space="preserve">
+    <value>У артиста нет треков для воспроизведения.</value>
+  </data>
   <data name="SearchTabAlbums" xml:space="preserve">
     <value>Альбомы</value>
   </data>
@@ -303,7 +312,7 @@
     <value>Загружаю ещё…</value>
   </data>
   <data name="SearchTabsKeys" xml:space="preserve">
-    <value>[grey]←/→ или 1-3[/] вкладка   [grey]↑/↓[/] выбор   [grey]enter[/] открыть   [grey]Esc[/] назад</value>
+    <value>[grey]←/→ или 1-4[/] вкладка   [grey]↑/↓[/] выбор   [grey]enter[/] открыть   [grey]Esc[/] назад</value>
   </data>
   <data name="ScreenFailed" xml:space="preserve">
     <value>Экран завершился с ошибкой: {0} — возврат в меню</value>

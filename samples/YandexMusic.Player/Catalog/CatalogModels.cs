@@ -22,6 +22,17 @@ public sealed record AlbumView(string Id, string Title, string Artist, int? Year
 /// <param name="Tracks">The album's tracks, in order.</param>
 public sealed record AlbumDetail(AlbumView Album, IReadOnlyList<TrackView> Tracks);
 
+/// <summary>An artist summary as the UI needs it.</summary>
+/// <param name="Id">The artist identifier, used to fetch the tracks.</param>
+/// <param name="Name">The artist name.</param>
+/// <param name="TrackCount">How many tracks the catalogue holds for the artist, or 0 when unknown.</param>
+public sealed record ArtistView(string Id, string Name, int TrackCount);
+
+/// <summary>An artist together with the tracks the player can start from.</summary>
+/// <param name="Artist">The artist summary.</param>
+/// <param name="Tracks">The artist's most popular tracks.</param>
+public sealed record ArtistDetail(ArtistView Artist, IReadOnlyList<TrackView> Tracks);
+
 /// <summary>A playlist summary as the UI needs it.</summary>
 /// <param name="Id">The playlist kind (unique per owner), used to fetch it.</param>
 /// <param name="Title">The playlist title.</param>

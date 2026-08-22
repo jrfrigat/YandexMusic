@@ -298,6 +298,15 @@
   <data name="SearchTabTracks" xml:space="preserve">
     <value>Tracks</value>
   </data>
+  <data name="SearchTabArtists" xml:space="preserve">
+    <value>Artists</value>
+  </data>
+  <data name="LoadingArtist" xml:space="preserve">
+    <value>Loading the artist…</value>
+  </data>
+  <data name="ArtistNoTracks" xml:space="preserve">
+    <value>The artist has no playable tracks.</value>
+  </data>
   <data name="SearchTabAlbums" xml:space="preserve">
     <value>Albums</value>
   </data>
@@ -308,7 +317,7 @@
     <value>Loading more…</value>
   </data>
   <data name="SearchTabsKeys" xml:space="preserve">
-    <value>[grey]←/→ or 1-3[/] switch tab   [grey]↑/↓[/] move   [grey]enter[/] select   [grey]Esc[/] back</value>
+    <value>[grey]←/→ or 1-4[/] switch tab   [grey]↑/↓[/] move   [grey]enter[/] select   [grey]Esc[/] back</value>
   </data>
   <data name="ScreenFailed" xml:space="preserve">
     <value>Screen failed: {0} — back to the menu</value>

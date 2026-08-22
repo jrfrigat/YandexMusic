@@ -21,19 +21,27 @@ public sealed class SearchScreen
     private readonly IMusicCatalog _catalog;
     private readonly AlbumScreen _albumScreen;
     private readonly PlaylistScreen _playlistScreen;
+    private readonly ArtistScreen _artistScreen;
 
     /// <summary>Creates the search screen.</summary>
     /// <param name="catalog">The catalog to query.</param>
     /// <param name="albumScreen">The album detail screen to drill into.</param>
     /// <param name="playlistScreen">The playlist detail screen to drill into.</param>
-    public SearchScreen(IMusicCatalog catalog, AlbumScreen albumScreen, PlaylistScreen playlistScreen)
+    /// <param name="artistScreen">The artist detail screen to drill into.</param>
+    public SearchScreen(
+        IMusicCatalog catalog,
+        AlbumScreen albumScreen,
+        PlaylistScreen playlistScreen,
+        ArtistScreen artistScreen)
     {
         ArgumentNullException.ThrowIfNull(catalog);
         ArgumentNullException.ThrowIfNull(albumScreen);
         ArgumentNullException.ThrowIfNull(playlistScreen);
+        ArgumentNullException.ThrowIfNull(artistScreen);
         _catalog = catalog;
         _albumScreen = albumScreen;
         _playlistScreen = playlistScreen;
+        _artistScreen = artistScreen;
     }
 
     /// <summary>Why the live view closed, and what the caller should do next.</summary>
@@ -50,6 +58,9 @@ public sealed class SearchScreen
 
         /// <summary>A playlist was picked; show its tracklist, then reopen the view.</summary>
         Playlist,
+
+        /// <summary>An artist was picked; show their tracks, then reopen the view.</summary>
+        Artist,
     }
 
     /// <summary>A row of a result list: a real item or the trailing "load more" sentinel.</summary>
@@ -72,10 +83,17 @@ public sealed class SearchScreen
         var tabs = new[]
         {
             new Tab { Load = (page, ct) => LoadTracksAsync(query, page, ct) },
+            new Tab { Load = (page, ct) => LoadArtistsAsync(query, page, ct) },
             new Tab { Load = (page, ct) => LoadAlbumsAsync(query, page, ct) },
             new Tab { Load = (page, ct) => LoadPlaylistsAsync(query, page, ct) },
         };
-        var labels = new[] { Strings.SearchTabTracks, Strings.SearchTabAlbums, Strings.SearchTabPlaylists };
+        var labels = new[]
+        {
+            Strings.SearchTabTracks,
+            Strings.SearchTabArtists,
+            Strings.SearchTabAlbums,
+            Strings.SearchTabPlaylists,
+        };
         var active = 0;
 
         while (!cancellationToken.IsCancellationRequested)
@@ -94,9 +112,12 @@ public sealed class SearchScreen
 
             // Spectre allows a single interactive display at a time, so the drill-in screens can only
             // run with the tab view closed; it reopens right after, with every tab's state intact.
-            var picked = outcome.Exit == ViewExit.Album
-                ? await _albumScreen.RunAsync(outcome.TargetId!, cancellationToken).ConfigureAwait(false)
-                : await _playlistScreen.RunAsync(outcome.TargetId!, cancellationToken).ConfigureAwait(false);
+            var picked = outcome.Exit switch
+            {
+                ViewExit.Album => await _albumScreen.RunAsync(outcome.TargetId!, cancellationToken).ConfigureAwait(false),
+                ViewExit.Artist => await _artistScreen.RunAsync(outcome.TargetId!, cancellationToken).ConfigureAwait(false),
+                _ => await _playlistScreen.RunAsync(outcome.TargetId!, cancellationToken).ConfigureAwait(false),
+            };
             if (picked is not null)
             {
                 return picked;
@@ -144,6 +165,9 @@ public sealed class SearchScreen
                                 break;
                             case ConsoleKey.D3 or ConsoleKey.NumPad3:
                                 active = 2;
+                                break;
+                            case ConsoleKey.D4 or ConsoleKey.NumPad4:
+                                active = 3;
                                 break;
                             case ConsoleKey.UpArrow or ConsoleKey.K:
                                 MoveCursor(tabs[active], -1);
@@ -213,7 +237,8 @@ public sealed class SearchScreen
                 new PlayRequest(
                     rows.TakeWhile(r => r.Item is not null).Select(r => (TrackView)r.Item!).ToList(),
                     tab.Cursor)),
-            1 => new ViewOutcome(ViewExit.Album, tabIndex, TargetId: ((AlbumView)row.Item).Id),
+            1 => new ViewOutcome(ViewExit.Artist, tabIndex, TargetId: ((ArtistView)row.Item).Id),
+            2 => new ViewOutcome(ViewExit.Album, tabIndex, TargetId: ((AlbumView)row.Item).Id),
             _ => new ViewOutcome(ViewExit.Playlist, tabIndex, TargetId: ((PlaylistView)row.Item).Id),
         };
     }
@@ -222,6 +247,12 @@ public sealed class SearchScreen
     {
         var result = await _catalog.SearchTracksAsync(query, page, cancellationToken).ConfigureAwait(false);
         return new SearchPage<Row>(result.Items.Select(t => new Row(TrackListScreen.TrackConverter(t), t)).ToList(), result.Total);
+    }
+
+    private async Task<SearchPage<Row>> LoadArtistsAsync(string query, int page, CancellationToken cancellationToken)
+    {
+        var result = await _catalog.SearchArtistsAsync(query, page, cancellationToken).ConfigureAwait(false);
+        return new SearchPage<Row>(result.Items.Select(a => new Row(ArtistRow(a), a)).ToList(), result.Total);
     }
 
     private async Task<SearchPage<Row>> LoadAlbumsAsync(string query, int page, CancellationToken cancellationToken)
@@ -391,6 +422,10 @@ public sealed class SearchScreen
     private static string AlbumRow(AlbumView album)
         => $"{Markup.Escape(Format.Truncate(album.Title, 40))} [grey]— {Markup.Escape(Format.Truncate(album.Artist, 24))}" +
            (album.Year is { } year ? $" ({year})" : string.Empty) + "[/]";
+
+    private static string ArtistRow(ArtistView artist)
+        => Markup.Escape(Format.Truncate(artist.Name, 50))
+           + (artist.TrackCount > 0 ? $" [grey]· {Strings.TracksSuffix(artist.TrackCount)}[/]" : string.Empty);
 
     private static string PlaylistRow(PlaylistView playlist)
         => $"{Markup.Escape(Format.Truncate(playlist.Title, 50))} [grey]— {playlist.TrackCount}[/]";

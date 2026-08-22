@@ -73,6 +73,10 @@ public static class Strings
     public static string LoadingAlbum => Get(nameof(LoadingAlbum));
     public static string AlbumNoTracks => Get(nameof(AlbumNoTracks));
 
+    // Artists.
+    public static string LoadingArtist => Get(nameof(LoadingArtist));
+    public static string ArtistNoTracks => Get(nameof(ArtistNoTracks));
+
     // Liked tracks and My Wave.
     public static string LoadingLiked => Get(nameof(LoadingLiked));
     public static string NoLiked => Get(nameof(NoLiked));
@@ -140,6 +144,7 @@ public static class Strings
 
     // Search tabs.
     public static string SearchTabTracks => Get(nameof(SearchTabTracks));
+    public static string SearchTabArtists => Get(nameof(SearchTabArtists));
     public static string SearchTabAlbums => Get(nameof(SearchTabAlbums));
     public static string SearchTabPlaylists => Get(nameof(SearchTabPlaylists));
     public static string LoadMore => Get(nameof(LoadMore));

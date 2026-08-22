@@ -70,6 +70,7 @@ services.AddSingleton<NoticeBoard>();
 services.AddSingleton<MainMenuScreen>();
 services.AddSingleton<SearchScreen>();
 services.AddSingleton<AlbumScreen>();
+services.AddSingleton<ArtistScreen>();
 services.AddSingleton<AlbumsScreen>();
 services.AddSingleton<PlaylistScreen>();
 services.AddSingleton<PlaylistsScreen>();

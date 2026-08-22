@@ -21,6 +21,19 @@ public interface IMusicCatalog
     /// <returns>The page of matching albums and the total match count.</returns>
     Task<SearchPage<AlbumView>> SearchAlbumsAsync(string query, int page = 0, CancellationToken cancellationToken = default);
 
+    /// <summary>Searches the catalogue for artists, one page at a time.</summary>
+    /// <param name="query">The search query.</param>
+    /// <param name="page">The zero-based page index.</param>
+    /// <param name="cancellationToken">A token to cancel.</param>
+    /// <returns>The page of artists and the total number of matches.</returns>
+    Task<SearchPage<ArtistView>> SearchArtistsAsync(string query, int page = 0, CancellationToken cancellationToken = default);
+
+    /// <summary>Gets an artist with the tracks the player can start from.</summary>
+    /// <param name="artistId">The artist identifier.</param>
+    /// <param name="cancellationToken">A token to cancel.</param>
+    /// <returns>The artist and its popular tracks, or <see langword="null"/> when unavailable.</returns>
+    Task<ArtistDetail?> GetArtistAsync(string artistId, CancellationToken cancellationToken = default);
+
     /// <summary>Searches the catalogue for playlists, one page at a time.</summary>
     /// <param name="query">The search text.</param>
     /// <param name="page">The zero-based result page.</param>
