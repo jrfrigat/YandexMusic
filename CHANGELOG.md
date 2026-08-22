@@ -8,15 +8,55 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Changed
+- **Breaking**: `IYandexMusicClient.CreateYnisonClient` returns the new `IYnisonClient` interface
+  instead of the sealed `YnisonClient` class, so consumers can substitute and test it like every
+  other endpoint group. `YnisonClient` implements it unchanged.
+- **Breaking**: `TrackSupplement.Id` and `Lyrics.Id` are `string?` instead of `long`. The API sends
+  the id as a string on one response and a number on another, and user-uploaded tracks carry ids that
+  are not numbers at all — those threw while parsing. Nothing computes on the value.
+
 ### Fixed
 - Sample player: the remote crashed on open with "Encountered malformed markup tag at position 14".
   The device hotkey badge closed its style with `[/grey]`, which Spectre's markup parser rejects (only
   `[/]` closes a tag) — the 0.3.0 fix escaped the brackets but introduced this.
-- Sample player: a message a screen left behind (a screen failure, an unreachable Ynison, "this track
-  has no lyrics") stayed on screen for the rest of the session. Those were plain console writes, and
-  every screen that follows is a live view rendered below them, so nothing ever cleared them. They now
-  go through a notice board the main menu renders and expires after four seconds, and the lyrics
-  refusal appears as a toast in the now-playing view it returns to.
+- Sample player: a message a screen left behind (a screen failure, an unreachable Ynison, an empty
+  library, "this track has no lyrics") stayed on screen for the rest of the session. Those were plain
+  console writes, and every screen that follows is a live view rendered below them, so nothing ever
+  cleared them. They now go through a notice board the main menu renders and expires after four
+  seconds, and the lyrics refusal appears as a toast in the now-playing view it returns to.
+- Sample player: the search tabs showed "Nothing found" for a query that had results — a tab only
+  fetched its first page once `Enter` was pressed on it. Each tab now loads as soon as it is shown,
+  beside the render loop, so the "loading" row is actually visible and the list stays live; a failed
+  fetch shows the reason and retries on `Enter` instead of hammering the API.
+- Sample player: drilling into an album or a playlist from search threw — the detail screens open
+  their own interactive display, and Spectre permits only one at a time. The tab view now closes
+  first and reopens afterwards with every tab's state intact.
+- Sample player: a failed automatic advance (a radio batch that could not be fetched, a stream that
+  would not resolve) stopped playback silently, as an unobserved task exception. It is reported
+  through the new `PlaybackController.Failed` event and shown by the player and the menu.
+- Sample player: the playback queue was a `List<T>` mutated both by the UI thread and by the audio
+  backend's "track ended" callback. Queue changes are serialized now, and the queue is an immutable
+  snapshot swapped by reference, so a skip racing with a track end can no longer corrupt it.
+- Sample player: a queue that ran out and was then stopped by hand reported the same track as "left"
+  twice, sending a duplicate skip to the recommendation feedback.
+- Sample player: play reporting counted paused time as listening, and a fast skip could stamp a
+  track's play-audio event with the next track's play id.
+- Sample player: the goodbye line was hardcoded in English instead of using its localized resource,
+  and the lyrics view never rendered the hotkey bar it had a resource for.
+- Ynison: a fatal handshake failure (a rejected token, a malformed redirect answer) left
+  `WaitForStateAsync` sitting out its whole timeout and then reporting a timeout, hiding the real
+  reason. The first-state wait now fails with the failure that actually happened.
+- Ynison: a command sent as the socket dropped escaped `SendAsync` as a raw `WebSocketException` or
+  `ObjectDisposedException`; both are wrapped in `YandexMusicYnisonException` now, which is what
+  callers already handle.
+- Ynison: connections were always aborted, never closed — `IYnisonSocket.CloseAsync` existed but was
+  never called. Shutdown now runs a bounded close handshake before aborting.
+- Ynison: the reconnect backoff never reset after a healthy connection, so a drop hours into a
+  session waited out the 64-second ceiling instead of retrying promptly.
+
+### Removed
+- Sample player: eleven resource strings left over from the pre-live-view screens, which no code read.
 
 ## [0.3.0] - 2026-08-19
 
