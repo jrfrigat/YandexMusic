@@ -107,6 +107,10 @@ public static class Strings
 
     // Ynison remote control.
     public static string MenuRemote => Get(nameof(MenuRemote));
+    public static string MenuLoggingOn => Get(nameof(MenuLoggingOn));
+    public static string MenuLoggingOff => Get(nameof(MenuLoggingOff));
+    public static string LoggingOn(string path) => Fmt(nameof(LoggingOn), path);
+    public static string LoggingOff => Get(nameof(LoggingOff));
     public static string RemoteHeader => Get(nameof(RemoteHeader));
     public static string RemoteFailed(string reason) => Fmt(nameof(RemoteFailed), reason);
     public static string RemoteDevices => Get(nameof(RemoteDevices));

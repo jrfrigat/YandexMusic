@@ -1,5 +1,6 @@
 using Spectre.Console;
 using Spectre.Console.Rendering;
+using YandexMusic.Player.Diagnostics;
 using YandexMusic.Player.Playback;
 using YandexMusic.Player.Ui;
 
@@ -29,6 +30,9 @@ public enum MainMenuAction
     /// <summary>Open the Ynison remote control.</summary>
     Remote,
 
+    /// <summary>Turn the request journal on or off.</summary>
+    Logging,
+
     /// <summary>Sign out.</summary>
     SignOut,
 
@@ -53,23 +57,28 @@ public sealed class MainMenuScreen
         (MainMenuAction.MyWave, ConsoleKey.W, 'w'),
         (MainMenuAction.NowPlaying, ConsoleKey.P, 'p'),
         (MainMenuAction.Remote, ConsoleKey.R, 'r'),
+        (MainMenuAction.Logging, ConsoleKey.G, 'g'),
         (MainMenuAction.SignOut, ConsoleKey.O, 'o'),
         (MainMenuAction.Quit, ConsoleKey.Q, 'q'),
     ];
 
     private readonly PlaybackController _controller;
     private readonly NoticeBoard _notices;
+    private readonly RequestLog _log;
     private int _index;
 
     /// <summary>Creates the main menu.</summary>
     /// <param name="controller">The playback controller, for the now-playing status line.</param>
     /// <param name="notices">The board carrying what the screen the user just left had to say.</param>
-    public MainMenuScreen(PlaybackController controller, NoticeBoard notices)
+    /// <param name="log">The request journal, whose menu entry shows and flips its state.</param>
+    public MainMenuScreen(PlaybackController controller, NoticeBoard notices, RequestLog log)
     {
         ArgumentNullException.ThrowIfNull(controller);
         ArgumentNullException.ThrowIfNull(notices);
+        ArgumentNullException.ThrowIfNull(log);
         _controller = controller;
         _notices = notices;
+        _log = log;
     }
 
     /// <summary>Runs the menu until the user makes a choice.</summary>
@@ -159,7 +168,6 @@ public sealed class MainMenuScreen
             rows.Add(new Text(string.Empty));
         }
 
-
         for (var i = 0; i < Items.Length; i++)
         {
             var (action, _, hint) = Items[i];
@@ -178,7 +186,7 @@ public sealed class MainMenuScreen
         return new Rows(panel, new Markup(Strings.MenuHotkeys));
     }
 
-    private static string LabelFor(MainMenuAction action) => action switch
+    private string LabelFor(MainMenuAction action) => action switch
     {
         MainMenuAction.Search => Strings.MenuSearch,
         MainMenuAction.Albums => Strings.MenuAlbums,
@@ -187,6 +195,7 @@ public sealed class MainMenuScreen
         MainMenuAction.MyWave => Strings.MenuMyWave,
         MainMenuAction.NowPlaying => Strings.MenuOpenPlayer,
         MainMenuAction.Remote => Strings.MenuRemote,
+        MainMenuAction.Logging => _log.IsEnabled ? Strings.MenuLoggingOn : Strings.MenuLoggingOff,
         MainMenuAction.SignOut => Strings.MenuSignOut,
         MainMenuAction.Quit => Strings.MenuQuit,
         _ => action.ToString(),

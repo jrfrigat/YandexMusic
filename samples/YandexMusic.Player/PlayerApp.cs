@@ -2,6 +2,7 @@ using Spectre.Console;
 using YandexMusic;
 using YandexMusic.Player.Auth;
 using YandexMusic.Player.Catalog;
+using YandexMusic.Player.Diagnostics;
 using YandexMusic.Player.Playback;
 using YandexMusic.Player.Screens;
 using YandexMusic.Player.Ui;
@@ -27,6 +28,7 @@ public sealed class PlayerApp
     private readonly NowPlayingScreen _nowPlaying;
     private readonly RemoteScreen _remote;
     private readonly NoticeBoard _notices;
+    private readonly RequestLog _log;
 
     /// <summary>Creates the application.</summary>
     public PlayerApp(
@@ -41,7 +43,8 @@ public sealed class PlayerApp
         TrackListScreen trackList,
         NowPlayingScreen nowPlaying,
         RemoteScreen remote,
-        NoticeBoard notices)
+        NoticeBoard notices,
+        RequestLog log)
     {
         _client = client;
         _auth = auth;
@@ -55,6 +58,7 @@ public sealed class PlayerApp
         _nowPlaying = nowPlaying;
         _remote = remote;
         _notices = notices;
+        _log = log;
 
         // The same failure, for when the user is not on the now-playing screen to see its toast.
         _controller.Failed += ex => _notices.Post(Strings.PlaybackFailed(ex.Message));
@@ -99,6 +103,11 @@ public sealed class PlayerApp
                         break;
                     case MainMenuAction.Remote:
                         await _remote.RunAsync(cancellationToken).ConfigureAwait(false);
+                        break;
+                    case MainMenuAction.Logging:
+                        _notices.Post(_log.Toggle()
+                            ? Strings.LoggingOn(_log.FilePath)
+                            : Strings.LoggingOff);
                         break;
                     case MainMenuAction.SignOut:
                         _auth.SignOut(_client);

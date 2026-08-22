@@ -98,7 +98,7 @@
     <value>[grey]♪ nothing playing[/]</value>
   </data>
   <data name="MenuHotkeys" xml:space="preserve">
-    <value>[grey]↑↓[/] move   [grey]enter[/] select   [grey]s[/] search   [grey]a[/] albums   [grey]l[/] playlists   [grey]f[/] liked   [grey]w[/] wave   [grey]p[/] player   [grey]r[/] remote   [grey]o[/] sign out   [grey]q[/] quit</value>
+    <value>[grey]↑↓[/] move   [grey]enter[/] select   [grey]s[/] search   [grey]a[/] albums   [grey]l[/] playlists   [grey]f[/] liked   [grey]w[/] wave   [grey]p[/] player   [grey]r[/] remote   [grey]g[/] log   [grey]o[/] sign out   [grey]q[/] quit</value>
   </data>
   <data name="MenuLiked" xml:space="preserve">
     <value>Liked</value>
@@ -324,6 +324,18 @@
   </data>
   <data name="MenuRemote" xml:space="preserve">
     <value>Remote control</value>
+  </data>
+  <data name="MenuLoggingOn" xml:space="preserve">
+    <value>Request log: on</value>
+  </data>
+  <data name="MenuLoggingOff" xml:space="preserve">
+    <value>Request log: off</value>
+  </data>
+  <data name="LoggingOn" xml:space="preserve">
+    <value>Recording requests to {0} (credentials are masked)</value>
+  </data>
+  <data name="LoggingOff" xml:space="preserve">
+    <value>Request recording stopped</value>
   </data>
   <data name="RemoteHeader" xml:space="preserve">
     <value>Ynison remote</value>

@@ -19,4 +19,10 @@
     <ProjectReference Include="..\..\src\YandexMusic.DependencyInjection\YandexMusic.DependencyInjection.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <!-- Linked rather than referenced: the player is a single-TFM, Windows-flavoured exe, but its
+         redaction is plain string work and it is what decides whether a shared log leaks a token. -->
+    <Compile Include="..\..\samples\YandexMusic.Player\Diagnostics\Redaction.cs" Link="Diagnostics\Redaction.cs" />
+  </ItemGroup>
+
 </Project>

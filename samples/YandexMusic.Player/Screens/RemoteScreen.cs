@@ -2,6 +2,7 @@ using Spectre.Console;
 using Spectre.Console.Rendering;
 using YandexMusic;
 using YandexMusic.Exceptions;
+using YandexMusic.Player.Diagnostics;
 using YandexMusic.Player.Ui;
 using YandexMusic.Ynison;
 
@@ -20,18 +21,22 @@ public sealed class RemoteScreen
 
     private readonly IYandexMusicClient _client;
     private readonly NoticeBoard _notices;
+    private readonly RequestLog _log;
     private string _toast = string.Empty;
     private DateTime _toastShownAt;
 
     /// <summary>Creates the remote screen.</summary>
     /// <param name="client">The signed-in client the Ynison session is created from.</param>
     /// <param name="notices">The board a failed connection reports to.</param>
-    public RemoteScreen(IYandexMusicClient client, NoticeBoard notices)
+    /// <param name="log">The request journal the raw Ynison frames go to.</param>
+    public RemoteScreen(IYandexMusicClient client, NoticeBoard notices, RequestLog log)
     {
         ArgumentNullException.ThrowIfNull(client);
         ArgumentNullException.ThrowIfNull(notices);
+        ArgumentNullException.ThrowIfNull(log);
         _client = client;
         _notices = notices;
+        _log = log;
     }
 
     /// <summary>Runs the remote until the user presses <c>q</c>/<c>Esc</c>.</summary>
@@ -39,6 +44,11 @@ public sealed class RemoteScreen
     public async Task RunAsync(CancellationToken cancellationToken = default)
     {
         await using var ynison = _client.CreateYnisonClient();
+
+        // The device list lives in these frames; when it looks wrong, the raw text is the evidence.
+        ynison.FrameReceived += (_, frame) => _log.Write("ynison <--", frame);
+        ynison.FrameSent += (_, frame) => _log.Write("ynison -->", frame);
+
         using var sessionCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         var run = Task.Run(() => ynison.RunAsync(sessionCts.Token), CancellationToken.None);
 

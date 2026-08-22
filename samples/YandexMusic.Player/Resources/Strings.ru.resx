@@ -93,7 +93,7 @@
     <value>[grey]♪ ничего не играет[/]</value>
   </data>
   <data name="MenuHotkeys" xml:space="preserve">
-    <value>[grey]↑↓[/] выбор   [grey]enter[/] открыть   [grey]s[/] поиск   [grey]a[/] альбомы   [grey]l[/] плейлисты   [grey]f[/] любимое   [grey]w[/] волна   [grey]p[/] плеер   [grey]r[/] пульт   [grey]o[/] аккаунт   [grey]q[/] выход</value>
+    <value>[grey]↑↓[/] выбор   [grey]enter[/] открыть   [grey]s[/] поиск   [grey]a[/] альбомы   [grey]l[/] плейлисты   [grey]f[/] любимое   [grey]w[/] волна   [grey]p[/] плеер   [grey]r[/] пульт   [grey]g[/] журнал   [grey]o[/] аккаунт   [grey]q[/] выход</value>
   </data>
   <data name="MenuLiked" xml:space="preserve">
     <value>Мне нравится</value>
@@ -319,6 +319,18 @@
   </data>
   <data name="MenuRemote" xml:space="preserve">
     <value>Пульт</value>
+  </data>
+  <data name="MenuLoggingOn" xml:space="preserve">
+    <value>Журнал запросов: вкл</value>
+  </data>
+  <data name="MenuLoggingOff" xml:space="preserve">
+    <value>Журнал запросов: выкл</value>
+  </data>
+  <data name="LoggingOn" xml:space="preserve">
+    <value>Записываю запросы в {0} (учётные данные скрыты)</value>
+  </data>
+  <data name="LoggingOff" xml:space="preserve">
+    <value>Запись запросов остановлена</value>
   </data>
   <data name="RemoteHeader" xml:space="preserve">
     <value>Пульт Ynison</value>

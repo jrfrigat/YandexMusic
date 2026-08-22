@@ -7,6 +7,7 @@ using YandexMusic;
 using YandexMusic.Player;
 using YandexMusic.Player.Auth;
 using YandexMusic.Player.Catalog;
+using YandexMusic.Player.Diagnostics;
 using YandexMusic.Player.Playback;
 using YandexMusic.Player.Screens;
 using YandexMusic.Player.Ui;
@@ -30,8 +31,14 @@ Console.CancelKeyPress += (_, e) =>
 
 var services = new ServiceCollection();
 
-// The library client and the app's services.
-services.AddSingleton<IYandexMusicClient>(_ => new YandexMusicClient());
+// The library client and the app's services. The journal is created first: the client's handler
+// pipeline logs through it, and it must exist before anything issues a request.
+services.AddSingleton<RequestLog>();
+services.AddSingleton<IYandexMusicClient>(provider =>
+{
+    var log = provider.GetRequiredService<RequestLog>();
+    return new YandexMusicClient(new YandexMusicClientOptions { HandlerFactory = () => new LoggingHttpHandler(log) });
+});
 services.AddSingleton<ISessionStore, FileSessionStore>();
 services.AddSingleton<IMusicCatalog, MusicCatalog>();
 
