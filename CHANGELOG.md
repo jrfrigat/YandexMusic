@@ -6,7 +6,7 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [0.4.0] - 2026-08-22
 
 ### Added
 - `YandexMusicClientOptions.HandlerFactory` — an optional `DelegatingHandler` placed in front of the
@@ -14,6 +14,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   `AddYandexMusic` already had `configureHttpClient` for this.
 - `IYnisonClient.FrameReceived` / `FrameSent` — the raw text of every Ynison frame, before parsing.
   Diagnostics: when the parsed state looks wrong, this is the only way to see what actually arrived.
+- Sample player: search covers artists — a fourth tab next to tracks, albums and playlists, drilling
+  into the artist's popular tracks to play from.
 - Sample player: a request journal, toggled from the main menu with `g` and off by default. It
   records the HTTP traffic (request line, headers, bodies, status and timing) and the raw Ynison
   frames to `%APPDATA%\yandexmusic-player\requests.log`. Every line is scrubbed of OAuth tokens,
