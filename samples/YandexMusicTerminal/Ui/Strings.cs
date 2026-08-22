@@ -21,6 +21,10 @@ public static class Strings
     // Application shell.
     public static string Subtitle => Get(nameof(Subtitle));
     public static string UpdateAvailable(string version) => Fmt(nameof(UpdateAvailable), version);
+    public static string UpdateAvailableManual(string version) => Fmt(nameof(UpdateAvailableManual), version);
+    public static string UpdateStarted => Get(nameof(UpdateStarted));
+    public static string UpdateInstalled => Get(nameof(UpdateInstalled));
+    public static string UpdateFailed(string command) => Fmt(nameof(UpdateFailed), command);
     public static string Bye => Get(nameof(Bye));
     public static string NeedsInteractive => Get(nameof(NeedsInteractive));
 
@@ -34,8 +38,24 @@ public static class Strings
     public static string MenuOpenPlayer => Get(nameof(MenuOpenPlayer));
     public static string MenuSignOut => Get(nameof(MenuSignOut));
     public static string MenuQuit => Get(nameof(MenuQuit));
+    public static string MenuAbout => Get(nameof(MenuAbout));
+    public static string MenuUpdate(string version) => Fmt(nameof(MenuUpdate), version);
     public static string NothingPlaying => Get(nameof(NothingPlaying));
     public static string MenuHotkeys => Get(nameof(MenuHotkeys));
+    public static string MenuHotkeyUpdate => Get(nameof(MenuHotkeyUpdate));
+
+    // About.
+    public static string About => Get(nameof(About));
+    public static string AboutDataDirectory(string path) => Fmt(nameof(AboutDataDirectory), path);
+    public static string AboutJournalOn(string path) => Fmt(nameof(AboutJournalOn), path);
+    public static string AboutJournalOff => Get(nameof(AboutJournalOff));
+    public static string AboutChecking => Get(nameof(AboutChecking));
+    public static string AboutNotChecked => Get(nameof(AboutNotChecked));
+    public static string AboutUpToDate(string version) => Fmt(nameof(AboutUpToDate), version);
+    public static string AboutUpdateFound(string version) => Fmt(nameof(AboutUpdateFound), version);
+    public static string AboutCheckFailed => Get(nameof(AboutCheckFailed));
+    public static string AboutHotkeys => Get(nameof(AboutHotkeys));
+    public static string AboutHotkeyUpdate => Get(nameof(AboutHotkeyUpdate));
 
     // Shared list controls.
     public static string ListHotkeys => Get(nameof(ListHotkeys));

@@ -49,9 +49,11 @@ Then run it from anywhere:
 ymt
 ```
 
-Re-running the same command updates in place. The player checks GitHub for a newer release once a
-day and shows a line on the main menu when one exists; set `YM_PLAYER_NO_UPDATE_CHECK=1` to turn
-that off. To pin a version or change the location, see [`scripts/`](scripts).
+Re-running the same command updates in place, but you rarely have to: the player checks GitHub for a
+newer release at startup and every half hour after that, says so on the main menu when one exists,
+and installs it on `u`. "About" (`i`) shows the current version and checks on demand. Set
+`YM_PLAYER_NO_UPDATE_CHECK=1` to turn the automatic check off; the manual one still works. To pin a
+version or change the location, see [`scripts/`](scripts).
 
 **Or** grab the archives by hand from the
 [**Releases**](https://github.com/jrfrigat/YandexMusic/releases) page (`ymt-<version>-win-x64.zip`,

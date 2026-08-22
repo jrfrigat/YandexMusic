@@ -6,6 +6,31 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+- Sample player: an **"About"** screen (`i`) — the running version, the data directory, the state of
+  the request journal, and an update check on demand (`r`). The automatic check can only ever report
+  bad news; this is the place that answers "am I up to date?" either way.
+- Sample player: an **"Update"** entry on the main menu (`u`), shown while an update is available. It
+  runs the same installer the README documents, so acting on the notice no longer means finding and
+  retyping the install command. On Windows the installer is started detached and waits for the player
+  to exit, because a running `ymt.exe` cannot be overwritten; on Linux it runs inline in the terminal
+  and the player exits afterwards. Either way the player ends, since the process in memory is still
+  the old build.
+- Sample player: the version is shown next to the subtitle in the startup banner.
+
+### Changed
+- Sample player: the update check now runs at startup and every 30 minutes, instead of at most once
+  a day. Two requests an hour are nowhere near GitHub's unauthenticated rate limit, and a release
+  published while the player is open is noticed without restarting it. The daily stamp file is gone;
+  a leftover one is deleted on first run.
+- Sample player: `YM_PLAYER_NO_UPDATE_CHECK` now only disables the automatic schedule. An explicit
+  check from the "About" screen still runs — opting out of being told is not the same as asking for
+  the button to do nothing.
+- Sample player: the main menu tracks the selected entry by action rather than by index, so the
+  arrival of the "Update" entry no longer moves the cursor under the user's hands.
+
 ## [0.5.0] - 2026-08-22
 
 ### Added

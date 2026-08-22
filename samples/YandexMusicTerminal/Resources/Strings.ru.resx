@@ -63,7 +63,19 @@
     <value>терминальный музыкальный плеер</value>
   </data>
   <data name="UpdateAvailable" xml:space="preserve">
+    <value>Доступна версия {0} — нажмите u, чтобы обновиться</value>
+  </data>
+  <data name="UpdateAvailableManual" xml:space="preserve">
     <value>Доступна версия {0} — запустите команду установки ещё раз, чтобы обновиться</value>
+  </data>
+  <data name="UpdateStarted" xml:space="preserve">
+    <value>Установщик запущен в отдельном окне и ждёт, пока это закроется. Когда закончит — запустите ymt снова.</value>
+  </data>
+  <data name="UpdateInstalled" xml:space="preserve">
+    <value>Обновлено. Запустите ymt снова, чтобы работала новая версия.</value>
+  </data>
+  <data name="UpdateFailed" xml:space="preserve">
+    <value>Не удалось запустить установщик. Запустите его сами: {0}</value>
   </data>
   <data name="Bye" xml:space="preserve">
     <value>[grey]Пока.[/]</value>
@@ -96,7 +108,49 @@
     <value>[grey]♪ ничего не играет[/]</value>
   </data>
   <data name="MenuHotkeys" xml:space="preserve">
-    <value>[grey]↑↓[/] выбор   [grey]enter[/] открыть   [grey]s[/] поиск   [grey]a[/] альбомы   [grey]l[/] плейлисты   [grey]f[/] любимое   [grey]w[/] волна   [grey]p[/] плеер   [grey]r[/] пульт   [grey]g[/] журнал   [grey]o[/] аккаунт   [grey]q[/] выход</value>
+    <value>[grey]↑↓[/] выбор   [grey]enter[/] открыть   [grey]s[/] поиск   [grey]a[/] альбомы   [grey]l[/] плейлисты   [grey]f[/] любимое   [grey]w[/] волна   [grey]p[/] плеер   [grey]r[/] пульт   [grey]g[/] журнал   [grey]i[/] о программе   [grey]o[/] аккаунт   [grey]q[/] выход</value>
+  </data>
+  <data name="MenuHotkeyUpdate" xml:space="preserve">
+    <value>   [yellow]u[/] обновиться</value>
+  </data>
+  <data name="MenuAbout" xml:space="preserve">
+    <value>О программе</value>
+  </data>
+  <data name="MenuUpdate" xml:space="preserve">
+    <value>Обновиться до {0}</value>
+  </data>
+  <data name="About" xml:space="preserve">
+    <value>[yellow] О программе [/]</value>
+  </data>
+  <data name="AboutDataDirectory" xml:space="preserve">
+    <value>Каталог данных: {0}</value>
+  </data>
+  <data name="AboutJournalOn" xml:space="preserve">
+    <value>Журнал запросов: включён — {0}</value>
+  </data>
+  <data name="AboutJournalOff" xml:space="preserve">
+    <value>Журнал запросов: выключен</value>
+  </data>
+  <data name="AboutChecking" xml:space="preserve">
+    <value>Проверяем обновления…</value>
+  </data>
+  <data name="AboutNotChecked" xml:space="preserve">
+    <value>Обновления: проверка ещё не выполнялась</value>
+  </data>
+  <data name="AboutUpToDate" xml:space="preserve">
+    <value>Версия {0} — самая свежая</value>
+  </data>
+  <data name="AboutUpdateFound" xml:space="preserve">
+    <value>Доступна версия {0}</value>
+  </data>
+  <data name="AboutCheckFailed" xml:space="preserve">
+    <value>Не удалось связаться с GitHub, чтобы проверить обновления</value>
+  </data>
+  <data name="AboutHotkeys" xml:space="preserve">
+    <value>[grey]r[/] проверить   [grey]q/esc[/] назад</value>
+  </data>
+  <data name="AboutHotkeyUpdate" xml:space="preserve">
+    <value>   [yellow]u[/] обновиться</value>
   </data>
   <data name="MenuLiked" xml:space="preserve">
     <value>Мне нравится</value>

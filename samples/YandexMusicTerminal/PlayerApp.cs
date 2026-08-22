@@ -27,6 +27,7 @@ public sealed class PlayerApp
     private readonly TrackListScreen _trackList;
     private readonly NowPlayingScreen _nowPlaying;
     private readonly RemoteScreen _remote;
+    private readonly AboutScreen _about;
     private readonly NoticeBoard _notices;
     private readonly RequestLog _log;
 
@@ -43,6 +44,7 @@ public sealed class PlayerApp
         TrackListScreen trackList,
         NowPlayingScreen nowPlaying,
         RemoteScreen remote,
+        AboutScreen about,
         NoticeBoard notices,
         RequestLog log)
     {
@@ -57,6 +59,7 @@ public sealed class PlayerApp
         _trackList = trackList;
         _nowPlaying = nowPlaying;
         _remote = remote;
+        _about = about;
         _notices = notices;
         _log = log;
 
@@ -69,7 +72,7 @@ public sealed class PlayerApp
     public async Task RunAsync(CancellationToken cancellationToken = default)
     {
         AnsiConsole.Write(new FigletText("Yandex Music").Color(Color.Yellow));
-        AnsiConsole.MarkupLine($"[grey]{Strings.Subtitle}[/]\n");
+        AnsiConsole.MarkupLine($"[grey]{Strings.Subtitle}[/] [yellow]{Markup.Escape(UpdateChecker.CurrentVersion)}[/]\n");
 
         if (!await _auth.EnsureSignedInAsync(_client, cancellationToken).ConfigureAwait(false))
         {
@@ -109,6 +112,21 @@ public sealed class PlayerApp
                             ? Strings.LoggingOn(_log.FilePath)
                             : Strings.LoggingOff);
                         break;
+                    case MainMenuAction.About:
+                        if (await _about.RunAsync(cancellationToken).ConfigureAwait(false) &&
+                            await ApplyUpdateAsync(cancellationToken).ConfigureAwait(false))
+                        {
+                            return;
+                        }
+
+                        break;
+                    case MainMenuAction.Update:
+                        if (await ApplyUpdateAsync(cancellationToken).ConfigureAwait(false))
+                        {
+                            return;
+                        }
+
+                        break;
                     case MainMenuAction.SignOut:
                         _auth.SignOut(_client);
                         if (!await _auth.EnsureSignedInAsync(_client, cancellationToken).ConfigureAwait(false))
@@ -127,6 +145,28 @@ public sealed class PlayerApp
                 // app: hand the error to the menu, which shows it briefly and lets it expire.
                 _notices.Post(Strings.ScreenFailed(ex.Message));
             }
+        }
+    }
+
+    /// <summary>
+    /// Hands the update to the installer and reports whether the app has to end for it to take
+    /// effect. It always does when the installer actually ran: on Windows the installer is waiting
+    /// for this process to release its own executable, and on Linux it has already replaced the
+    /// build this process is still running.
+    /// </summary>
+    private async Task<bool> ApplyUpdateAsync(CancellationToken cancellationToken)
+    {
+        switch (await Updater.StartAsync(cancellationToken).ConfigureAwait(false))
+        {
+            case UpdateLaunch.QuitToApply:
+                AnsiConsole.MarkupLine($"\n[yellow]{Markup.Escape(Strings.UpdateStarted)}[/]");
+                return true;
+            case UpdateLaunch.RestartToApply:
+                AnsiConsole.MarkupLine($"\n[green]{Markup.Escape(Strings.UpdateInstalled)}[/]");
+                return true;
+            default:
+                _notices.Post(Strings.UpdateFailed(Updater.Command));
+                return false;
         }
     }
 

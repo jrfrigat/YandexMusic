@@ -26,6 +26,7 @@
     <Compile Include="..\..\samples\YandexMusicTerminal\AppPaths.cs" Link="AppPaths.cs" />
     <Compile Include="..\..\samples\YandexMusicTerminal\Diagnostics\Redaction.cs" Link="Diagnostics\Redaction.cs" />
     <Compile Include="..\..\samples\YandexMusicTerminal\Diagnostics\UpdateChecker.cs" Link="Diagnostics\UpdateChecker.cs" />
+    <Compile Include="..\..\samples\YandexMusicTerminal\Diagnostics\Updater.cs" Link="Diagnostics\Updater.cs" />
   </ItemGroup>
 
 </Project>

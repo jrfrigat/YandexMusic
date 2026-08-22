@@ -68,7 +68,19 @@
     <value>terminal music player</value>
   </data>
   <data name="UpdateAvailable" xml:space="preserve">
+    <value>Version {0} is available — press u to install it</value>
+  </data>
+  <data name="UpdateAvailableManual" xml:space="preserve">
     <value>Version {0} is available — run the install command again to update</value>
+  </data>
+  <data name="UpdateStarted" xml:space="preserve">
+    <value>The installer is running in a separate window and is waiting for this one to close. Start ymt again when it is done.</value>
+  </data>
+  <data name="UpdateInstalled" xml:space="preserve">
+    <value>Updated. Start ymt again to run the new version.</value>
+  </data>
+  <data name="UpdateFailed" xml:space="preserve">
+    <value>Could not start the installer. Run it yourself: {0}</value>
   </data>
   <data name="Bye" xml:space="preserve">
     <value>[grey]Bye.[/]</value>
@@ -101,7 +113,49 @@
     <value>[grey]♪ nothing playing[/]</value>
   </data>
   <data name="MenuHotkeys" xml:space="preserve">
-    <value>[grey]↑↓[/] move   [grey]enter[/] select   [grey]s[/] search   [grey]a[/] albums   [grey]l[/] playlists   [grey]f[/] liked   [grey]w[/] wave   [grey]p[/] player   [grey]r[/] remote   [grey]g[/] log   [grey]o[/] sign out   [grey]q[/] quit</value>
+    <value>[grey]↑↓[/] move   [grey]enter[/] select   [grey]s[/] search   [grey]a[/] albums   [grey]l[/] playlists   [grey]f[/] liked   [grey]w[/] wave   [grey]p[/] player   [grey]r[/] remote   [grey]g[/] log   [grey]i[/] about   [grey]o[/] sign out   [grey]q[/] quit</value>
+  </data>
+  <data name="MenuHotkeyUpdate" xml:space="preserve">
+    <value>   [yellow]u[/] update</value>
+  </data>
+  <data name="MenuAbout" xml:space="preserve">
+    <value>About</value>
+  </data>
+  <data name="MenuUpdate" xml:space="preserve">
+    <value>Update to {0}</value>
+  </data>
+  <data name="About" xml:space="preserve">
+    <value>[yellow] About [/]</value>
+  </data>
+  <data name="AboutDataDirectory" xml:space="preserve">
+    <value>Data directory: {0}</value>
+  </data>
+  <data name="AboutJournalOn" xml:space="preserve">
+    <value>Request journal: on — {0}</value>
+  </data>
+  <data name="AboutJournalOff" xml:space="preserve">
+    <value>Request journal: off</value>
+  </data>
+  <data name="AboutChecking" xml:space="preserve">
+    <value>Checking for updates…</value>
+  </data>
+  <data name="AboutNotChecked" xml:space="preserve">
+    <value>Updates: not checked yet</value>
+  </data>
+  <data name="AboutUpToDate" xml:space="preserve">
+    <value>Version {0} is the latest release</value>
+  </data>
+  <data name="AboutUpdateFound" xml:space="preserve">
+    <value>Version {0} is available</value>
+  </data>
+  <data name="AboutCheckFailed" xml:space="preserve">
+    <value>Could not reach GitHub to check for updates</value>
+  </data>
+  <data name="AboutHotkeys" xml:space="preserve">
+    <value>[grey]r[/] check now   [grey]q/esc[/] back</value>
+  </data>
+  <data name="AboutHotkeyUpdate" xml:space="preserve">
+    <value>   [yellow]u[/] update</value>
   </data>
   <data name="MenuLiked" xml:space="preserve">
     <value>Liked</value>

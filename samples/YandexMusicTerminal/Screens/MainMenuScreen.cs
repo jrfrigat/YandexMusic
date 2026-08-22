@@ -33,6 +33,12 @@ public enum MainMenuAction
     /// <summary>Turn the request journal on or off.</summary>
     Logging,
 
+    /// <summary>Open the "About" screen.</summary>
+    About,
+
+    /// <summary>Install the available update.</summary>
+    Update,
+
     /// <summary>Sign out.</summary>
     SignOut,
 
@@ -48,7 +54,7 @@ public enum MainMenuAction
 /// </summary>
 public sealed class MainMenuScreen
 {
-    private static readonly (MainMenuAction Action, ConsoleKey Key, char Hint)[] Items =
+    private static readonly (MainMenuAction Action, ConsoleKey Key, char Hint)[] BaseItems =
     [
         (MainMenuAction.Search, ConsoleKey.S, 's'),
         (MainMenuAction.Albums, ConsoleKey.A, 'a'),
@@ -58,6 +64,7 @@ public sealed class MainMenuScreen
         (MainMenuAction.NowPlaying, ConsoleKey.P, 'p'),
         (MainMenuAction.Remote, ConsoleKey.R, 'r'),
         (MainMenuAction.Logging, ConsoleKey.G, 'g'),
+        (MainMenuAction.About, ConsoleKey.I, 'i'),
         (MainMenuAction.SignOut, ConsoleKey.O, 'o'),
         (MainMenuAction.Quit, ConsoleKey.Q, 'q'),
     ];
@@ -66,7 +73,10 @@ public sealed class MainMenuScreen
     private readonly NoticeBoard _notices;
     private readonly RequestLog _log;
     private readonly UpdateChecker _updates;
-    private int _index;
+
+    // The selection is an action, not an index, because the entry list grows the moment the update
+    // check finds something. Tracking the index would silently move the cursor under the user.
+    private MainMenuAction _selected = MainMenuAction.Search;
 
     /// <summary>Creates the main menu.</summary>
     /// <param name="controller">The playback controller, for the now-playing status line.</param>
@@ -103,16 +113,18 @@ public sealed class MainMenuScreen
 
                     while (TryReadKey(out var key))
                     {
+                        var items = CurrentItems();
+                        var index = IndexOf(items, _selected);
                         switch (key)
                         {
                             case ConsoleKey.UpArrow or ConsoleKey.K:
-                                _index = (_index - 1 + Items.Length) % Items.Length;
+                                _selected = items[(index - 1 + items.Length) % items.Length].Action;
                                 break;
                             case ConsoleKey.DownArrow or ConsoleKey.J:
-                                _index = (_index + 1) % Items.Length;
+                                _selected = items[(index + 1) % items.Length].Action;
                                 break;
                             case ConsoleKey.Enter:
-                                result = Items[_index].Action;
+                                result = _selected;
                                 chosen = true;
                                 break;
                             case ConsoleKey.Escape:
@@ -120,11 +132,11 @@ public sealed class MainMenuScreen
                                 chosen = true;
                                 break;
                             default:
-                                var shortcut = Array.FindIndex(Items, item => item.Key == key);
+                                var shortcut = Array.FindIndex(items, item => item.Key == key);
                                 if (shortcut >= 0)
                                 {
-                                    _index = shortcut;
-                                    result = Items[shortcut].Action;
+                                    _selected = items[shortcut].Action;
+                                    result = _selected;
                                     chosen = true;
                                 }
 
@@ -163,6 +175,19 @@ public sealed class MainMenuScreen
         }
     }
 
+    /// <summary>
+    /// The entries as they stand right now. "Update" only exists while there is one to install and
+    /// this platform has an installer to run; everywhere else the notice line carries the manual
+    /// command instead of offering a key that would do nothing.
+    /// </summary>
+    private (MainMenuAction Action, ConsoleKey Key, char Hint)[] CurrentItems()
+        => _updates.Available is not null && Updater.IsSupported
+            ? [(MainMenuAction.Update, ConsoleKey.U, 'u'), .. BaseItems]
+            : BaseItems;
+
+    private static int IndexOf((MainMenuAction Action, ConsoleKey Key, char Hint)[] items, MainMenuAction action)
+        => Math.Max(0, Array.FindIndex(items, item => item.Action == action));
+
     private Rows Build()
     {
         var rows = new List<IRenderable> { new Markup(NowPlayingLine()), new Text(string.Empty) };
@@ -171,7 +196,10 @@ public sealed class MainMenuScreen
         // interrupts anything either.
         if (_updates.Available is { } update)
         {
-            rows.Add(new Markup($"[yellow]{Markup.Escape(Strings.UpdateAvailable(update.Version))}[/]"));
+            var line = Updater.IsSupported
+                ? Strings.UpdateAvailable(update.Version)
+                : Strings.UpdateAvailableManual(update.Version);
+            rows.Add(new Markup($"[yellow]{Markup.Escape(line)}[/]"));
             rows.Add(new Text(string.Empty));
         }
 
@@ -181,11 +209,13 @@ public sealed class MainMenuScreen
             rows.Add(new Text(string.Empty));
         }
 
-        for (var i = 0; i < Items.Length; i++)
+        var items = CurrentItems();
+        var index = IndexOf(items, _selected);
+        for (var i = 0; i < items.Length; i++)
         {
-            var (action, _, hint) = Items[i];
+            var (action, _, hint) = items[i];
             var label = LabelFor(action);
-            rows.Add(new Markup(i == _index
+            rows.Add(new Markup(i == index
                 ? $"[green]▶[/] [white]{label}[/] [grey]({hint})[/]"
                 : $"  [grey]{label} ({hint})[/]"));
         }
@@ -196,7 +226,10 @@ public sealed class MainMenuScreen
             .BorderColor(Color.Grey)
             .Padding(2, 1);
 
-        return new Rows(panel, new Markup(Strings.MenuHotkeys));
+        var hotkeys = items.Length > BaseItems.Length
+            ? Strings.MenuHotkeys + Strings.MenuHotkeyUpdate
+            : Strings.MenuHotkeys;
+        return new Rows(panel, new Markup(hotkeys));
     }
 
     private string LabelFor(MainMenuAction action) => action switch
@@ -209,6 +242,8 @@ public sealed class MainMenuScreen
         MainMenuAction.NowPlaying => Strings.MenuOpenPlayer,
         MainMenuAction.Remote => Strings.MenuRemote,
         MainMenuAction.Logging => _log.IsEnabled ? Strings.MenuLoggingOn : Strings.MenuLoggingOff,
+        MainMenuAction.About => Strings.MenuAbout,
+        MainMenuAction.Update => Strings.MenuUpdate(_updates.Available?.Version ?? string.Empty),
         MainMenuAction.SignOut => Strings.MenuSignOut,
         MainMenuAction.Quit => Strings.MenuQuit,
         _ => action.ToString(),

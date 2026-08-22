@@ -79,6 +79,7 @@ services.AddSingleton<TrackListScreen>();
 services.AddSingleton<NowPlayingScreen>();
 services.AddSingleton<LyricsScreen>();
 services.AddSingleton<RemoteScreen>();
+services.AddSingleton<AboutScreen>();
 services.AddSingleton<PlayerApp>();
 
 await using var provider = services.BuildServiceProvider();
@@ -86,8 +87,8 @@ await using var provider = services.BuildServiceProvider();
 // The reporter only observes playback, so nothing injects it — pull it once to activate.
 _ = provider.GetRequiredService<PlayReporter>();
 
-// Ask GitHub about a newer release, at most once a day and never on the startup path.
-provider.GetRequiredService<UpdateChecker>().StartCheck();
+// Ask GitHub about a newer release: now, then every half hour, always off the startup path.
+provider.GetRequiredService<UpdateChecker>().Start(cts.Token);
 
 if (!AnsiConsole.Profile.Capabilities.Interactive)
 {

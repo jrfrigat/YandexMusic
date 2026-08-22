@@ -51,4 +51,31 @@ public sealed class UpdateCheckTests
         Assert.DoesNotContain("+", UpdateChecker.CurrentVersion, StringComparison.Ordinal);
         Assert.NotEmpty(UpdateChecker.CurrentVersion);
     }
+
+    [Fact]
+    public async Task CheckNowAsync_DoesNotThrowWhenCancelled()
+    {
+        // The About screen fires this off without awaiting it, so an escaping exception would be an
+        // unobserved one that takes the process down rather than an error anybody sees.
+        using var checker = new UpdateChecker();
+        using var cancelled = new CancellationTokenSource();
+        await cancelled.CancelAsync();
+
+        var status = await checker.CheckNowAsync(cancelled.Token);
+
+        Assert.Equal(UpdateStatus.Unknown, status);
+        Assert.False(checker.IsChecking);
+    }
+
+    [Fact]
+    public void Updater_RunsTheInstallerForThisPlatform()
+    {
+        // A swapped script (the PowerShell one on Linux) fails only on a user's machine, at the
+        // moment they press "update", which is the worst possible place to find out.
+        Assert.True(Updater.IsSupported);
+        Assert.Contains(
+            OperatingSystem.IsWindows() ? "install.ps1" : "install.sh",
+            Updater.Command,
+            StringComparison.Ordinal);
+    }
 }
