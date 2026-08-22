@@ -34,6 +34,13 @@ public interface IYnisonClient : IAsyncDisposable
     /// <summary>The most recent state frame, or <see langword="null"/> before the first one arrives.</summary>
     PutYnisonStateResponse? LatestState { get; }
 
+    /// <summary>
+    /// How long ago <see cref="LatestState"/> arrived, or <see cref="TimeSpan.Zero"/> before the
+    /// first frame. Ynison pushes a frame only when something changes, never a progress tick, so a
+    /// caller showing or sending a playback position must add this to the frame's position.
+    /// </summary>
+    TimeSpan TimeSinceLatestState { get; }
+
     /// <summary>Runs the connection until the client is disposed, the token is cancelled, or the server closes the session.</summary>
     /// <param name="cancellationToken">A token to stop the client.</param>
     Task RunAsync(CancellationToken cancellationToken = default);

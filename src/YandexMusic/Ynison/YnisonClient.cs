@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
@@ -34,6 +35,7 @@ public sealed class YnisonClient : IYnisonClient
     private IYnisonSocket? _stateSocket;
     private PutYnisonStateResponse? _latestState;
     private long _framesReceived;
+    private long _latestStateAt;
     private int _stopping;
 
     /// <summary>Creates a client with a generated device id and default options.</summary>
@@ -87,6 +89,21 @@ public sealed class YnisonClient : IYnisonClient
 
     /// <summary>The most recent state frame, or <see langword="null"/> before the first one arrives.</summary>
     public PutYnisonStateResponse? LatestState => Volatile.Read(ref _latestState);
+
+    /// <summary>
+    /// How long ago <see cref="LatestState"/> arrived, or <see cref="TimeSpan.Zero"/> before the
+    /// first frame. Ynison pushes a frame only when something changes, never a progress tick, so a
+    /// caller showing or sending a playback position has to add this to the frame's
+    /// <see cref="PlayingStatus.ProgressMs"/> to know where the track actually is.
+    /// </summary>
+    public TimeSpan TimeSinceLatestState
+    {
+        get
+        {
+            var at = Volatile.Read(ref _latestStateAt);
+            return at == 0 ? TimeSpan.Zero : Stopwatch.GetElapsedTime(at);
+        }
+    }
 
     /// <summary>Waits for the first state frame, so commands can be built from a known state.</summary>
     /// <param name="timeout">How long to wait for the frame.</param>
@@ -225,7 +242,7 @@ public sealed class YnisonClient : IYnisonClient
     {
         var state = RequireState();
         return SendAsync(
-            YnisonRequests.CreateSetPausedRequest(DeviceId, RequireStatus(state), paused),
+            YnisonRequests.CreateSetPausedRequest(DeviceId, CurrentStatus(RequireStatus(state)), paused),
             cancellationToken);
     }
 
@@ -261,7 +278,13 @@ public sealed class YnisonClient : IYnisonClient
     public async Task PlayOnDeviceAsync(string targetDeviceId, CancellationToken cancellationToken = default)
     {
         await SetActiveDeviceAsync(targetDeviceId, cancellationToken).ConfigureAwait(false);
-        await SetPausedAsync(paused: false, cancellationToken).ConfigureAwait(false);
+
+        // Only resume what is actually paused. Sending a redundant resume republishes the playback
+        // status, and the device that was already playing answers by flapping its own pause flag.
+        if (LatestState?.PlayerState?.Status?.Paused != false)
+        {
+            await SetPausedAsync(paused: false, cancellationToken).ConfigureAwait(false);
+        }
     }
 
     /// <inheritdoc />
@@ -371,6 +394,7 @@ public sealed class YnisonClient : IYnisonClient
                     }
 
                     Volatile.Write(ref _latestState, response);
+                    Volatile.Write(ref _latestStateAt, Stopwatch.GetTimestamp());
                     _ = Interlocked.Increment(ref _framesReceived);
                     _ = _firstState.TrySetResult();
                     RaiseStateReceived(response);
@@ -436,6 +460,29 @@ public sealed class YnisonClient : IYnisonClient
     private static PlayingStatus RequireStatus(PutYnisonStateResponse state)
         => state.PlayerState?.Status
             ?? throw new YandexMusicYnisonException("The Ynison player state carries no playing status.");
+
+    /// <summary>
+    /// Brings a frame's playback status up to now. Ynison never pushes progress ticks, so the
+    /// position in the latest frame is as old as the frame is; sending it back verbatim publishes a
+    /// rewind to the whole session. A playing track has advanced by exactly the time since the frame
+    /// arrived, and a paused one has not moved at all.
+    /// </summary>
+    private PlayingStatus CurrentStatus(PlayingStatus status)
+    {
+        if (status.Paused)
+        {
+            return status;
+        }
+
+        var elapsed = (long)(TimeSinceLatestState.TotalMilliseconds * (status.PlaybackSpeed is 0 ? 1 : status.PlaybackSpeed));
+        var progress = status.ProgressMs + elapsed;
+        if (status.DurationMs > 0)
+        {
+            progress = Math.Min(progress, status.DurationMs);
+        }
+
+        return status with { ProgressMs = Math.Max(0, progress) };
+    }
 
     private Uri BuildUri(string service, string? host = null)
     {

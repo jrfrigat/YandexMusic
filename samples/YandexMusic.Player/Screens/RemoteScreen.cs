@@ -2,6 +2,7 @@ using Spectre.Console;
 using Spectre.Console.Rendering;
 using YandexMusic;
 using YandexMusic.Exceptions;
+using YandexMusic.Player.Auth;
 using YandexMusic.Player.Diagnostics;
 using YandexMusic.Player.Ui;
 using YandexMusic.Ynison;
@@ -43,7 +44,11 @@ public sealed class RemoteScreen
     /// <param name="cancellationToken">A token to cancel.</param>
     public async Task RunAsync(CancellationToken cancellationToken = default)
     {
-        await using var ynison = _client.CreateYnisonClient();
+        // A stable id and a name that says which machine this is: the account's device list keeps
+        // every id that ever registered, so a per-run id would litter it with dead entries.
+        await using var ynison = _client.CreateYnisonClient(
+            DeviceIdentity.GetOrCreate(),
+            new YnisonClientOptions { AppName = DeviceIdentity.DisplayName() });
 
         // The device list lives in these frames; when it looks wrong, the raw text is the evidence.
         ynison.FrameReceived += (_, frame) => _log.Write("ynison <--", frame);
@@ -66,13 +71,13 @@ public sealed class RemoteScreen
         var exit = false;
         try
         {
-            await AnsiConsole.Live(Build(ynison.LatestState!))
+            await AnsiConsole.Live(Build(ynison.LatestState!, ynison.TimeSinceLatestState))
                 .AutoClear(true)
                 .StartAsync(async live =>
                 {
                     while (!exit && !cancellationToken.IsCancellationRequested)
                     {
-                        live.UpdateTarget(Build(ynison.LatestState!));
+                        live.UpdateTarget(Build(ynison.LatestState!, ynison.TimeSinceLatestState));
 
                         while (TryReadKey(out var key))
                         {
@@ -131,15 +136,29 @@ public sealed class RemoteScreen
         await SafeAsync(() => ynison.SetVolumeAsync(activeId, current + delta, cancellationToken));
     }
 
+    /// <summary>
+    /// The devices a hotkey may target: the ones that said they can play sound. The session also
+    /// lists pure remote controllers (other copies of this player, stale registrations from earlier
+    /// runs), and telling one of those to "play here" asks for something it cannot do.
+    /// </summary>
+    private static List<Device> PlayableDevices(PutYnisonStateResponse state)
+        => [.. state.Devices.Where(d => d.Capabilities?.CanBePlayer == true).Take(MaxDeviceHotkeys)];
+
     private static async Task<string> PlayOnDeviceAsync(IYnisonClient ynison, int deviceIndex, CancellationToken cancellationToken)
     {
         var state = ynison.LatestState;
-        if (state is null || deviceIndex >= Math.Min(state.Devices.Count, MaxDeviceHotkeys))
+        if (state is null)
         {
             return string.Empty;
         }
 
-        var device = state.Devices[deviceIndex];
+        var playable = PlayableDevices(state);
+        if (deviceIndex >= playable.Count)
+        {
+            return string.Empty;
+        }
+
+        var device = playable[deviceIndex];
         var title = device.Info?.Title ?? Strings.RemoteUnknownDevice;
         try
         {
@@ -206,12 +225,12 @@ public sealed class RemoteScreen
         _toastShownAt = DateTime.UtcNow;
     }
 
-    private Panel Build(PutYnisonStateResponse state)
+    private Panel Build(PutYnisonStateResponse state, TimeSpan sinceFrame)
     {
         var rows = new List<IRenderable>
         {
             new Markup(TrackLine(state)),
-            new Markup(ProgressLine(state)),
+            new Markup(ProgressLine(state, sinceFrame)),
             new Markup($"[grey]{Strings.RemoteDevices}[/]"),
         };
 
@@ -220,9 +239,13 @@ public sealed class RemoteScreen
             rows.Add(new Markup($"[grey]{Strings.RemoteNoDevices}[/]"));
         }
 
-        for (var i = 0; i < Math.Min(state.Devices.Count, MaxDeviceHotkeys); i++)
+        // Hotkeys are numbered over the playable devices only, so the number next to a device is the
+        // key that actually starts playback on it. Everything else is listed without one.
+        var playable = PlayableDevices(state);
+        foreach (var device in state.Devices)
         {
-            rows.Add(new Markup(DeviceLine(state, state.Devices[i], i)));
+            var hotkey = playable.IndexOf(device);
+            rows.Add(new Markup(DeviceLine(state, device, hotkey)));
         }
 
         rows.Add(new Markup(string.Empty));
@@ -254,16 +277,31 @@ public sealed class RemoteScreen
             : $"[bold white]{Markup.Escape(Format.Truncate(playable.Title, 60))}[/]";
     }
 
-    private static string ProgressLine(PutYnisonStateResponse state)
+    /// <summary>
+    /// The playback position, advanced by however long ago the frame arrived. Ynison sends a frame
+    /// only when something changes, so rendering its position verbatim shows a counter frozen on the
+    /// second the last change happened.
+    /// </summary>
+    private static string ProgressLine(PutYnisonStateResponse state, TimeSpan sinceFrame)
     {
         var status = state.PlayerState?.Status;
-        var stateText = status?.Paused == true ? Strings.StatePaused : Strings.StatePlaying;
-        var progress = TimeSpan.FromMilliseconds(Math.Max(0, status?.ProgressMs ?? 0));
-        var duration = TimeSpan.FromMilliseconds(Math.Max(0, status?.DurationMs ?? 0));
+        var playing = status?.Paused == false;
+        var stateText = playing ? Strings.StatePlaying : Strings.StatePaused;
+        var elapsed = playing ? (long)sinceFrame.TotalMilliseconds : 0;
+        var durationMs = Math.Max(0, status?.DurationMs ?? 0);
+        var progressMs = Math.Max(0, status?.ProgressMs ?? 0) + elapsed;
+        if (durationMs > 0)
+        {
+            progressMs = Math.Min(progressMs, durationMs);
+        }
+
+        var progress = TimeSpan.FromMilliseconds(progressMs);
+        var duration = TimeSpan.FromMilliseconds(durationMs);
         return $"[grey]{stateText}   {Format.Duration(progress)} / {Format.Duration(duration)}[/]";
     }
 
-    private static string DeviceLine(PutYnisonStateResponse state, Device device, int index)
+    /// <summary>Renders one device row; <paramref name="hotkey"/> is -1 for a device no key targets.</summary>
+    private static string DeviceLine(PutYnisonStateResponse state, Device device, int hotkey)
     {
         var id = device.Info?.DeviceId;
         var isActive = !string.IsNullOrEmpty(state.ActiveDeviceIdOptional) && state.ActiveDeviceIdOptional == id;
@@ -271,7 +309,8 @@ public sealed class RemoteScreen
         var offline = device.IsOffline ? $" [grey]({Strings.RemoteOffline})[/]" : string.Empty;
         var title = Markup.Escape(Format.Truncate(device.Info?.Title ?? Strings.RemoteUnknownDevice, 36));
         var volume = (int)Math.Round(Math.Clamp(device.VolumeInfo?.Volume ?? 0, 0, 1) * 100);
-        return $"[grey][[{index + 1}]] [/]{title}{marker}{offline}  [grey]{Strings.VolumeLabel}[/] [green]{volume,3}%[/]";
+        var badge = hotkey >= 0 ? $"[grey][[{hotkey + 1}]] [/]" : "[grey]    [/]";
+        return $"{badge}{title}{marker}{offline}  [grey]{Strings.VolumeLabel}[/] [green]{volume,3}%[/]";
     }
 
 }

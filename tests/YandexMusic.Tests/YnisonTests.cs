@@ -238,16 +238,66 @@ public sealed class YnisonTests
         using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
         var run = Task.Run(() => client.RunAsync(cts.Token));
 
-        await client.WaitForStateAsync(TimeSpan.FromSeconds(10));
+        _ = await client.WaitForStateAsync(TimeSpan.FromSeconds(10));
         await client.PlayOnDeviceAsync("device-a");
 
-        // Registration, then the device switch, then the resume.
-        Assert.Equal(3, stateSocket.Sent.Count);
+        // The session is already playing, so only the registration and the device switch go out: a
+        // redundant resume makes the device that was playing flap its own pause flag.
+        Assert.Equal(2, stateSocket.Sent.Count);
         using var activation = JsonDocument.Parse(stateSocket.Sent[1]);
         var activeDevice = activation.RootElement.GetProperty("update_active_device");
         Assert.Equal("device-a", activeDevice.GetProperty("device_id_optional").GetString());
+
+        await client.DisposeAsync();
+        await run.WaitAsync(TimeSpan.FromSeconds(10));
+    }
+
+    [Fact]
+    public async Task PlayOnDevice_ResumesWhenTheSessionIsPaused()
+    {
+        var pausedFrame = StateFrame.Replace("\"paused\": false", "\"paused\": true", StringComparison.Ordinal);
+        var stateSocket = new FakeSocket([pausedFrame]);
+        var factory = new FakeSocketFactory([new FakeSocket([RedirectFrame]), stateSocket]);
+        await using var client = new YnisonClient("token-1", "device-x", null, factory);
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+        var run = Task.Run(() => client.RunAsync(cts.Token));
+
+        _ = await client.WaitForStateAsync(TimeSpan.FromSeconds(10));
+        await client.PlayOnDeviceAsync("device-a");
+
+        // Registration, the device switch, and this time a resume, because it was actually paused.
+        Assert.Equal(3, stateSocket.Sent.Count);
         using var resume = JsonDocument.Parse(stateSocket.Sent[2]);
-        Assert.False(resume.RootElement.GetProperty("update_playing_status").GetProperty("playing_status").GetProperty("paused").GetBoolean());
+        var status = resume.RootElement.GetProperty("update_playing_status").GetProperty("playing_status");
+        Assert.False(status.GetProperty("paused").GetBoolean());
+
+        // A paused track has not moved, so its position is sent back untouched.
+        Assert.Equal(42_000, status.GetProperty("progress_ms").GetInt64());
+
+        await client.DisposeAsync();
+        await run.WaitAsync(TimeSpan.FromSeconds(10));
+    }
+
+    [Fact]
+    public async Task PauseCommand_CarriesThePositionBroughtUpToNow()
+    {
+        var stateSocket = new FakeSocket([StateFrame]);
+        var factory = new FakeSocketFactory([new FakeSocket([RedirectFrame]), stateSocket]);
+        await using var client = new YnisonClient("token-1", "device-x", null, factory);
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+        var run = Task.Run(() => client.RunAsync(cts.Token));
+
+        _ = await client.WaitForStateAsync(TimeSpan.FromSeconds(10));
+        await Task.Delay(250, cts.Token);
+        await client.SetPausedAsync(paused: true);
+
+        // The frame said 42000 ms and Ynison never sends progress ticks, so replaying that number a
+        // quarter-second later would publish a rewind to the whole session.
+        using var command = JsonDocument.Parse(stateSocket.Sent[^1]);
+        var progress = command.RootElement
+            .GetProperty("update_playing_status").GetProperty("playing_status")
+            .GetProperty("progress_ms").GetInt64();
+        Assert.InRange(progress, 42_200, 43_500);
 
         await client.DisposeAsync();
         await run.WaitAsync(TimeSpan.FromSeconds(10));
