@@ -1,5 +1,6 @@
 using Spectre.Console;
 using Spectre.Console.Rendering;
+using YandexMusic.Exceptions;
 using YandexMusic.Player.Catalog;
 using YandexMusic.Player.Playback;
 using YandexMusic.Player.Ui;
@@ -10,32 +11,12 @@ namespace YandexMusic.Player.Screens;
 /// Catalogue search as a tabbed screen: a horizontal tab bar (tracks, albums, playlists) on top and
 /// the active tab's result list below, in one live view. <c>←</c>/<c>→</c> (or <c>1-3</c>) switch
 /// tabs, the list pages through a "more" row, and a picked album or playlist drills into its
-/// tracklist. Each tab keeps its own loaded pages and cursor position.
+/// tracklist. Each tab keeps its own loaded pages and cursor position and fetches its first page the
+/// moment it is shown; the fetch runs beside the render loop, so the list stays live while it waits.
 /// </summary>
 public sealed class SearchScreen
 {
     private const int PageSize = 15;
-
-    /// <summary>A row of a result list: a real item or the trailing "load more" sentinel.</summary>
-    private sealed record Row(string Display, object? Item);
-
-    /// <summary>The per-tab state: loaded pages, the paging cursor and the list cursor.</summary>
-    private sealed class Tab
-    {
-        public required Func<int, CancellationToken, Task<SearchPage<Row>>> Load { get; init; }
-
-        public List<Row> Rows { get; } = [];
-
-        public int Page { get; set; } = -1;
-
-        public int Total { get; set; }
-
-        public bool Loading { get; set; }
-
-        public int Cursor { get; set; }
-
-        public int WindowStart { get; set; }
-    }
 
     private readonly IMusicCatalog _catalog;
     private readonly AlbumScreen _albumScreen;
@@ -54,6 +35,28 @@ public sealed class SearchScreen
         _albumScreen = albumScreen;
         _playlistScreen = playlistScreen;
     }
+
+    /// <summary>Why the live view closed, and what the caller should do next.</summary>
+    private enum ViewExit
+    {
+        /// <summary>The user pressed <c>q</c>/<c>Esc</c> — leave the screen.</summary>
+        Back,
+
+        /// <summary>A track was picked; the request is ready to play.</summary>
+        Chosen,
+
+        /// <summary>An album was picked; show its tracklist, then reopen the view.</summary>
+        Album,
+
+        /// <summary>A playlist was picked; show its tracklist, then reopen the view.</summary>
+        Playlist,
+    }
+
+    /// <summary>A row of a result list: a real item or the trailing "load more" sentinel.</summary>
+    private sealed record Row(string Display, object? Item);
+
+    /// <summary>What one run of the live view ended with.</summary>
+    private sealed record ViewOutcome(ViewExit Exit, int Active, PlayRequest? Request = null, string? TargetId = null);
 
     /// <summary>Runs the screen.</summary>
     /// <param name="cancellationToken">A token to cancel.</param>
@@ -74,15 +77,53 @@ public sealed class SearchScreen
         };
         var labels = new[] { Strings.SearchTabTracks, Strings.SearchTabAlbums, Strings.SearchTabPlaylists };
         var active = 0;
-        PlayRequest? result = null;
-        var exit = false;
 
+        while (!cancellationToken.IsCancellationRequested)
+        {
+            var outcome = await RunViewAsync(tabs, labels, active, query, cancellationToken).ConfigureAwait(false);
+            active = outcome.Active;
+            if (outcome.Exit == ViewExit.Back)
+            {
+                return null;
+            }
+
+            if (outcome.Exit == ViewExit.Chosen)
+            {
+                return outcome.Request;
+            }
+
+            // Spectre allows a single interactive display at a time, so the drill-in screens can only
+            // run with the tab view closed; it reopens right after, with every tab's state intact.
+            var picked = outcome.Exit == ViewExit.Album
+                ? await _albumScreen.RunAsync(outcome.TargetId!, cancellationToken).ConfigureAwait(false)
+                : await _playlistScreen.RunAsync(outcome.TargetId!, cancellationToken).ConfigureAwait(false);
+            if (picked is not null)
+            {
+                return picked;
+            }
+        }
+
+        return null;
+    }
+
+    private static async Task<ViewOutcome> RunViewAsync(
+        Tab[] tabs,
+        string[] labels,
+        int active,
+        string query,
+        CancellationToken cancellationToken)
+    {
+        var outcome = new ViewOutcome(ViewExit.Back, active);
         await AnsiConsole.Live(Build(tabs, labels, active, query))
             .AutoClear(true)
             .StartAsync(async live =>
             {
-                while (!exit && !cancellationToken.IsCancellationRequested)
+                var running = true;
+                while (running && !cancellationToken.IsCancellationRequested)
                 {
+                    // A tab the user is looking at fetches its first page by itself; the loop keeps
+                    // rendering while it does, which is what makes the "loading" row visible.
+                    EnsureFirstPage(tabs[active], cancellationToken);
                     live.UpdateTarget(Build(tabs, labels, active, query));
 
                     while (TryReadKey(out var key))
@@ -111,37 +152,70 @@ public sealed class SearchScreen
                                 MoveCursor(tabs[active], +1);
                                 break;
                             case ConsoleKey.Enter:
-                                result = await ActivateAsync(tabs[active], active, cancellationToken).ConfigureAwait(false);
-                                if (result is not null)
+                                if (Activate(tabs[active], active, cancellationToken) is { } chosen)
                                 {
-                                    exit = true;
-                                }
-                                else
-                                {
-                                    // A drill-in (album/playlist view) needed the console; re-render.
-                                    live.UpdateTarget(Build(tabs, labels, active, query));
+                                    outcome = chosen;
+                                    running = false;
                                 }
 
                                 break;
                             case ConsoleKey.Q or ConsoleKey.Escape:
-                                exit = true;
+                                outcome = new ViewOutcome(ViewExit.Back, active);
+                                running = false;
                                 break;
                         }
 
-                        if (exit)
+                        if (!running)
                         {
                             break;
                         }
                     }
 
-                    if (!exit)
+                    if (running)
                     {
                         await Task.Delay(60, cancellationToken).ConfigureAwait(false);
                     }
                 }
             }).ConfigureAwait(false);
 
-        return result;
+        return outcome with { Active = active };
+    }
+
+    /// <summary>Acts on <c>Enter</c>: retries, pages, or picks. Returns non-null only when the view should close.</summary>
+    private static ViewOutcome? Activate(Tab tab, int tabIndex, CancellationToken cancellationToken)
+    {
+        if (tab.Error is not null)
+        {
+            // Enter is the retry: a tab whose load failed does not hammer the API on its own.
+            StartLoad(tab, cancellationToken);
+            return null;
+        }
+
+        var rows = tab.Rows;
+        if (rows.Count == 0 || tab.Cursor >= rows.Count)
+        {
+            return null;
+        }
+
+        var row = rows[tab.Cursor];
+        if (row.Item is null)
+        {
+            // The "load more" sentinel.
+            StartLoad(tab, cancellationToken);
+            return null;
+        }
+
+        return tabIndex switch
+        {
+            0 => new ViewOutcome(
+                ViewExit.Chosen,
+                tabIndex,
+                new PlayRequest(
+                    rows.TakeWhile(r => r.Item is not null).Select(r => (TrackView)r.Item!).ToList(),
+                    tab.Cursor)),
+            1 => new ViewOutcome(ViewExit.Album, tabIndex, TargetId: ((AlbumView)row.Item).Id),
+            _ => new ViewOutcome(ViewExit.Playlist, tabIndex, TargetId: ((PlaylistView)row.Item).Id),
+        };
     }
 
     private async Task<SearchPage<Row>> LoadTracksAsync(string query, int page, CancellationToken cancellationToken)
@@ -162,69 +236,64 @@ public sealed class SearchScreen
         return new SearchPage<Row>(result.Items.Select(p => new Row(PlaylistRow(p), p)).ToList(), result.Total);
     }
 
-    private async Task<PlayRequest?> ActivateAsync(Tab tab, int tabIndex, CancellationToken cancellationToken)
+    /// <summary>Starts the first fetch of a tab the user has reached, once.</summary>
+    private static void EnsureFirstPage(Tab tab, CancellationToken cancellationToken)
     {
-        // Fetch the first page lazily, right before it is needed.
-        await EnsureLoadedAsync(tab, cancellationToken).ConfigureAwait(false);
-        if (tab.Rows.Count == 0 || tab.Cursor >= tab.Rows.Count)
+        if (!tab.Started)
         {
-            return null;
+            StartLoad(tab, cancellationToken);
         }
-
-        var row = tab.Rows[tab.Cursor];
-        if (row.Item is null)
-        {
-            // The "load more" sentinel.
-            await LoadNextPageAsync(tab, cancellationToken).ConfigureAwait(false);
-            return null;
-        }
-
-        if (tabIndex == 0)
-        {
-            var tracks = tab.Rows.TakeWhile(r => r.Item is not null).Select(r => (TrackView)r.Item!).ToList();
-            return new PlayRequest(tracks, tab.Cursor);
-        }
-
-        // The drill-in screens own the console while open; the live view re-renders afterwards.
-        return tabIndex == 1
-            ? await _albumScreen.RunAsync(((AlbumView)row.Item).Id, cancellationToken).ConfigureAwait(false)
-            : await _playlistScreen.RunAsync(((PlaylistView)row.Item).Id, cancellationToken).ConfigureAwait(false);
     }
 
-    private static async Task EnsureLoadedAsync(Tab tab, CancellationToken cancellationToken)
+    /// <summary>Kicks off the next page beside the render loop, so the view stays responsive.</summary>
+    private static void StartLoad(Tab tab, CancellationToken cancellationToken)
     {
-        if (tab.Page >= 0)
+        if (tab.Loading)
         {
             return;
         }
 
-        await LoadNextPageAsync(tab, cancellationToken).ConfigureAwait(false);
+        tab.Started = true;
+        tab.Loading = true;
+        tab.Error = null;
+        _ = LoadNextPageAsync(tab, cancellationToken);
     }
 
     private static async Task LoadNextPageAsync(Tab tab, CancellationToken cancellationToken)
     {
-        tab.Loading = true;
         try
         {
             var page = await tab.Load(tab.Page + 1, cancellationToken).ConfigureAwait(false);
-            tab.Rows.RemoveAll(r => r.Item is null);
+
+            // Build the new list aside and publish it with one reference write: the render loop reads
+            // Rows on its own thread and must never see a half-updated list.
+            var rows = tab.Rows.Where(r => r.Item is not null).ToList();
             if (page.Items.Count > 0)
             {
                 tab.Page++;
                 tab.Total = page.Total;
-                tab.Rows.AddRange(page.Items);
+                rows.AddRange(page.Items);
             }
             else
             {
-                tab.Total = tab.Rows.Count;
+                tab.Total = rows.Count;
             }
 
-            if (tab.Rows.Count < tab.Total)
+            if (rows.Count < tab.Total)
             {
-                tab.Rows.Add(new Row(Strings.LoadMore, null));
+                rows.Add(new Row(Strings.LoadMore, null));
             }
 
-            tab.Cursor = Math.Clamp(tab.Cursor, 0, Math.Max(0, tab.Rows.Count - 1));
+            tab.Rows = rows;
+            tab.Cursor = Math.Clamp(tab.Cursor, 0, Math.Max(0, rows.Count - 1));
+        }
+        catch (OperationCanceledException)
+        {
+            // The screen is closing.
+        }
+        catch (YandexMusicException ex)
+        {
+            tab.Error = ex.Message;
         }
         finally
         {
@@ -234,12 +303,13 @@ public sealed class SearchScreen
 
     private static void MoveCursor(Tab tab, int delta)
     {
-        if (tab.Rows.Count == 0)
+        var rows = tab.Rows;
+        if (rows.Count == 0)
         {
             return;
         }
 
-        tab.Cursor = (tab.Cursor + delta + tab.Rows.Count) % tab.Rows.Count;
+        tab.Cursor = (Math.Clamp(tab.Cursor, 0, rows.Count - 1) + delta + rows.Count) % rows.Count;
         if (tab.Cursor < tab.WindowStart)
         {
             tab.WindowStart = tab.Cursor;
@@ -284,23 +354,30 @@ public sealed class SearchScreen
                 $"  [grey]— {Markup.Escape(Format.Truncate(query, 30))}[/]"));
 
         var tab = tabs[active];
+        var tabRows = tab.Rows;
         var rows = new List<IRenderable>();
-        if (tab.Loading)
+        if (tab.Error is { } error)
         {
-            rows.Add(new Markup($"[grey]{Strings.LoadingMore}[/]"));
+            rows.Add(new Markup($"[red]{Markup.Escape(Format.Truncate(error, 70))}[/]"));
+            rows.Add(new Markup($"[grey]{Strings.RetryHint}[/]"));
         }
-        else if (tab.Rows.Count == 0)
+        else if (tabRows.Count == 0)
         {
-            rows.Add(new Markup($"[grey]{Strings.NothingFound}[/]"));
+            rows.Add(new Markup($"[grey]{(tab.Loading ? Strings.LoadingMore : Strings.NothingFound)}[/]"));
         }
         else
         {
-            var windowStart = Math.Max(0, Math.Min(tab.WindowStart, Math.Max(0, tab.Rows.Count - PageSize)));
-            for (var i = windowStart; i < tab.Rows.Count && i < windowStart + PageSize; i++)
+            var windowStart = Math.Max(0, Math.Min(tab.WindowStart, Math.Max(0, tabRows.Count - PageSize)));
+            for (var i = windowStart; i < tabRows.Count && i < windowStart + PageSize; i++)
             {
-                var row = tab.Rows[i];
+                var row = tabRows[i];
                 var display = row.Item is null ? $"[yellow]{Strings.LoadMore}[/]" : row.Display;
                 rows.Add(new Markup(i == tab.Cursor ? $"[green]▶[/] {display}" : $"  {display}"));
+            }
+
+            if (tab.Loading)
+            {
+                rows.Add(new Markup($"[grey]{Strings.LoadingMore}[/]"));
             }
         }
 
@@ -317,4 +394,30 @@ public sealed class SearchScreen
 
     private static string PlaylistRow(PlaylistView playlist)
         => $"{Markup.Escape(Format.Truncate(playlist.Title, 50))} [grey]— {playlist.TrackCount}[/]";
+
+    /// <summary>The per-tab state: loaded pages, the paging cursor and the list cursor.</summary>
+    private sealed class Tab
+    {
+        public required Func<int, CancellationToken, Task<SearchPage<Row>>> Load { get; init; }
+
+        /// <summary>
+        /// The loaded rows. Replaced wholesale rather than edited in place: the fetch completes off
+        /// the render loop's thread, and a single reference write is what keeps rendering safe.
+        /// </summary>
+        public IReadOnlyList<Row> Rows { get; set; } = [];
+
+        public int Page { get; set; } = -1;
+
+        public int Total { get; set; }
+
+        public bool Started { get; set; }
+
+        public bool Loading { get; set; }
+
+        public string? Error { get; set; }
+
+        public int Cursor { get; set; }
+
+        public int WindowStart { get; set; }
+    }
 }
