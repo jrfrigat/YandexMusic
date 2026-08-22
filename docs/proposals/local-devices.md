@@ -258,11 +258,68 @@ lines. One PTR query plus parsing of PTR/SRV/TXT/A records — including name co
 mDNS this package needs. Taking Makaretu.Dns or Zeroconf for that is not worth the dependency in a
 library whose selling point is a BCL-only core.
 
+### The message schema
+
+Measured by sending a single `ping` — a status query that changes nothing — and reading what came
+back. A request is one JSON text frame:
+
+```json
+{
+  "conversationToken": "<the per-device token from glagol/token>",
+  "id": "<a uuid the caller invents>",
+  "sentTime": 1787425216425,
+  "payload": { "command": "ping" }
+}
+```
+
+The reply echoes `id` as `requestId` and `sentTime` as `requestSentTime`, so responses can be matched
+to requests, and carries `status` (`SUCCESS`), `sentTime`, `processingTime`, two large blocks that a
+music client has no use for (`experiments`, and an `extra` holding a base64 protobuf `appState`), the
+device's capability lists, and the part that matters:
+
+```
+state
+  aliceState                IDLE
+  playing                   true
+  volume                    0.3            0..1
+  canStop                   true
+  timeSinceLastVoiceActivity 373
+  hdmi { capable, present }
+  playerState
+    id, title, subtitle     the track, its title and its artist
+    type                    Track
+    duration                168            SECONDS, not milliseconds
+    progress                67.11          seconds, fractional
+    hasPlay, hasPause       what is possible RIGHT NOW, not what the device can do:
+    hasNext, hasPrev        while playing, hasPause is true and hasPlay is false
+    hasProgressBar
+    playerType              music_thin
+    playlistId, playlistType, playlistPuid, playlistDescription
+    entityInfo { id, type, repeatMode, next { id, type }, prev { id, type } }
+    extra { coverURI, radioSessionID, requestID, stateType }
+    liveStreamText, showPlayer
+```
+
+Note the units: `duration` and `progress` are **seconds**, where Ynison uses milliseconds. A client
+that shares a progress bar between the two sources has to convert.
+
+`supported_features` lists 29 capability names — `absolute_volume_change`, `relative_volume_change`,
+`multiroom`, `stereo_pair`, `bluetooth_player`, `audio_bitrate320` and so on. It describes what the
+hardware can do, not the command vocabulary.
+
+### It is a state stream, not a request/response API
+
+One `ping` produced **fourteen** replies over the following twelve seconds. So the device does not
+answer a question and fall silent: once a client has sent one valid message, it starts pushing state
+on every change. That makes the shape of this client much closer to `IYnisonClient` than to the REST
+endpoint groups — connect, send one message to open the conversation, then subscribe.
+
 ## Open questions — still unanswered
 
-- **Command schema.** What a play/pause/volume message looks like, where the token goes inside it,
-  and what the device reports back. This is now the only thing standing between discovery and
-  control.
+- **The rest of the command vocabulary.** `ping` is confirmed on the wire. The names for play, pause,
+  next, previous and volume are not: they were not exercised, because doing so means making somebody's
+  speaker actually do something. They should be confirmed one at a time, deliberately, before being
+  written into the library.
 - **Cross-account control.** The official app controls speakers signed in to other accounts. Whether
   that holds for any device on the network or only in some pairing state changes the security posture
   of this feature substantially, and should be understood before shipping it.
