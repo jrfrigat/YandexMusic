@@ -4,15 +4,21 @@ using YandexMusic;
 using YandexMusic.Exceptions;
 using YandexMusicTerminal.Auth;
 using YandexMusicTerminal.Diagnostics;
+using YandexMusicTerminal.Remote;
 using YandexMusicTerminal.Ui;
 using YandexMusic.Ynison;
 
 namespace YandexMusicTerminal.Screens;
 
 /// <summary>
-/// The Ynison remote control: a live view of the account's playback on all devices (web, phone,
-/// smart speakers) with keyboard commands for pause, track switching, volume and "play on device".
-/// The screen owns its Ynison session: it connects on open and disconnects on exit.
+/// The remote control, over both ways of reaching a speaker.
+///
+/// The account session (Ynison) is a live view of what is playing on every device signed in to the
+/// account, and can hand playback to any of them. Beside it, this network is scanned for speakers
+/// that answer directly, which is the only way to reach one the session does not list.
+///
+/// The transport keys drive whichever is selected, and the screen says which that is. It owns both
+/// connections: they open when it opens and close when it exits.
 /// </summary>
 public sealed class RemoteScreen
 {
@@ -23,6 +29,7 @@ public sealed class RemoteScreen
     private readonly IYandexMusicClient _client;
     private readonly NoticeBoard _notices;
     private readonly RequestLog _log;
+    private LocalSpeakers? _speakers;
     private string _toast = string.Empty;
     private DateTime _toastShownAt;
 
@@ -57,6 +64,12 @@ public sealed class RemoteScreen
         using var sessionCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         var run = Task.Run(() => ynison.RunAsync(sessionCts.Token), CancellationToken.None);
 
+        // The two halves are independent: speakers on this network answer with no account involved,
+        // and the scan runs beside the Ynison handshake rather than after it.
+        await using var speakers = new LocalSpeakers(_client, _log);
+        _speakers = speakers;
+        speakers.StartScan(sessionCts.Token);
+
         try
         {
             await ynison.WaitForStateAsync(TimeSpan.FromSeconds(10), cancellationToken).ConfigureAwait(false);
@@ -81,28 +94,52 @@ public sealed class RemoteScreen
 
                         while (TryReadKey(out var key))
                         {
+                            // Transport keys act on whatever is being driven: the account's session
+                            // by default, or one speaker on this network once it is selected.
+                            var local = speakers.Connected is not null;
                             switch (key)
                             {
                                 case ConsoleKey.Spacebar or ConsoleKey.P:
+                                    if (local)
+                                    {
+                                        await speakers.TogglePauseAsync(cancellationToken).ConfigureAwait(false);
+                                        break;
+                                    }
+
                                     var paused = ynison.LatestState?.PlayerState?.Status?.Paused ?? true;
                                     await SafeAsync(() => ynison.SetPausedAsync(!paused, cancellationToken));
                                     break;
                                 case ConsoleKey.RightArrow or ConsoleKey.N:
-                                    await SafeAsync(() => ynison.NextTrackAsync(cancellationToken));
+                                    await (local
+                                        ? speakers.NextAsync(cancellationToken)
+                                        : SafeAsync(() => ynison.NextTrackAsync(cancellationToken))).ConfigureAwait(false);
                                     break;
                                 case ConsoleKey.LeftArrow or ConsoleKey.B:
-                                    await SafeAsync(() => ynison.PreviousTrackAsync(cancellationToken));
+                                    await (local
+                                        ? speakers.PreviousAsync(cancellationToken)
+                                        : SafeAsync(() => ynison.PreviousTrackAsync(cancellationToken))).ConfigureAwait(false);
                                     break;
                                 case ConsoleKey.UpArrow or ConsoleKey.Add or ConsoleKey.OemPlus:
-                                    await AdjustVolumeAsync(ynison, +VolumeStep, cancellationToken);
+                                    await (local
+                                        ? speakers.AdjustVolumeAsync(+VolumeStep, cancellationToken)
+                                        : AdjustVolumeAsync(ynison, +VolumeStep, cancellationToken)).ConfigureAwait(false);
                                     break;
                                 case ConsoleKey.DownArrow or ConsoleKey.Subtract or ConsoleKey.OemMinus:
-                                    await AdjustVolumeAsync(ynison, -VolumeStep, cancellationToken);
+                                    await (local
+                                        ? speakers.AdjustVolumeAsync(-VolumeStep, cancellationToken)
+                                        : AdjustVolumeAsync(ynison, -VolumeStep, cancellationToken)).ConfigureAwait(false);
                                     break;
                                 case ConsoleKey.D1 or ConsoleKey.D2 or ConsoleKey.D3 or ConsoleKey.D4
                                     or ConsoleKey.D5 or ConsoleKey.D6 or ConsoleKey.D7 or ConsoleKey.D8
                                     or ConsoleKey.D9:
-                                    ShowToast(await PlayOnDeviceAsync(ynison, (int)key - (int)ConsoleKey.D1, cancellationToken));
+                                    ShowToast(await SelectAsync(ynison, speakers, (int)key - (int)ConsoleKey.D1, cancellationToken));
+                                    break;
+                                case ConsoleKey.D0:
+                                    await speakers.DisconnectAsync().ConfigureAwait(false);
+                                    ShowToast(Strings.SpeakerBackToSession);
+                                    break;
+                                case ConsoleKey.R:
+                                    speakers.StartScan(cancellationToken);
                                     break;
                                 case ConsoleKey.Q or ConsoleKey.Escape:
                                     exit = true;
@@ -119,6 +156,7 @@ public sealed class RemoteScreen
             // Ctrl+C — exit quietly.
         }
 
+        _speakers = null;
         await StopAsync(sessionCts, run).ConfigureAwait(false);
     }
 
@@ -143,6 +181,39 @@ public sealed class RemoteScreen
     /// </summary>
     private static List<Device> PlayableDevices(PutYnisonStateResponse state)
         => [.. state.Devices.Where(d => d.Capabilities?.CanBePlayer == true).Take(MaxDeviceHotkeys)];
+
+    /// <summary>
+    /// The speakers a hotkey may target, numbered after the Ynison devices so one row of numbers
+    /// covers both lists.
+    /// </summary>
+    private static List<LocalSpeaker> HotkeySpeakers(LocalSpeakers speakers, int alreadyUsed)
+        => [.. speakers.Found.Take(Math.Max(0, MaxDeviceHotkeys - alreadyUsed))];
+
+    /// <summary>
+    /// Acts on a number key. A Ynison device is told to start playing; a speaker on this network is
+    /// connected to instead, because there is no session to hand it — the remote drives it directly.
+    /// </summary>
+    private static async Task<string> SelectAsync(
+        IYnisonClient ynison,
+        LocalSpeakers speakers,
+        int index,
+        CancellationToken cancellationToken)
+    {
+        var playable = ynison.LatestState is { } state ? PlayableDevices(state) : [];
+        if (index < playable.Count)
+        {
+            return await PlayOnDeviceAsync(ynison, index, cancellationToken).ConfigureAwait(false);
+        }
+
+        var local = HotkeySpeakers(speakers, playable.Count);
+        var localIndex = index - playable.Count;
+        if (localIndex >= local.Count)
+        {
+            return string.Empty;
+        }
+
+        return await speakers.ConnectAsync(local[localIndex], cancellationToken).ConfigureAwait(false);
+    }
 
     private static async Task<string> PlayOnDeviceAsync(IYnisonClient ynison, int deviceIndex, CancellationToken cancellationToken)
     {
@@ -231,6 +302,7 @@ public sealed class RemoteScreen
         {
             new Markup(TrackLine(state)),
             new Markup(ProgressLine(state, sinceFrame)),
+            new Markup(TargetLine()),
             new Markup($"[grey]{Strings.RemoteDevices}[/]"),
         };
 
@@ -248,6 +320,8 @@ public sealed class RemoteScreen
             rows.Add(new Markup(DeviceLine(state, device, hotkey)));
         }
 
+        AppendSpeakers(rows, playable.Count);
+
         rows.Add(new Markup(string.Empty));
         if (!string.IsNullOrEmpty(_toast) && DateTime.UtcNow - _toastShownAt < ToastLifetime)
         {
@@ -263,6 +337,57 @@ public sealed class RemoteScreen
             .Border(BoxBorder.Rounded)
             .BorderColor(Color.Cyan1)
             .Padding(2, 1);
+    }
+
+    /// <summary>Says what the transport keys are driving right now, because the same keys do both.</summary>
+    private string TargetLine()
+    {
+        if (_speakers?.Connected is not { } speaker)
+        {
+            return $"[grey]{Strings.RemoteTargetSession}[/]";
+        }
+
+        var player = _speakers.State?.State;
+        var mark = player?.Playing == true ? "[green]>[/]" : "[yellow]||[/]";
+        var volume = (int)Math.Round(Math.Clamp(player?.Volume ?? 0, 0, 1) * 100);
+        var title = player?.PlayerState?.Title is { Length: > 0 } name
+            ? $"  [white]{Markup.Escape(Format.Truncate(name, 34))}[/]"
+            : string.Empty;
+
+        return $"[cyan]{Markup.Escape(Strings.RemoteTargetSpeaker(Format.Truncate(speaker.Name, 28)))}[/] " +
+               $"{mark}{title}  [grey]{Strings.VolumeLabel}[/] [green]{volume,3}%[/]";
+    }
+
+    /// <summary>Renders the speakers found on this network, numbered on from the Ynison devices.</summary>
+    private void AppendSpeakers(List<IRenderable> rows, int hotkeysUsed)
+    {
+        if (_speakers is not { } speakers)
+        {
+            return;
+        }
+
+        rows.Add(new Markup(string.Empty));
+        rows.Add(new Markup($"[grey]{Strings.RemoteLocalSection}[/]"));
+
+        var found = HotkeySpeakers(speakers, hotkeysUsed);
+        if (found.Count == 0)
+        {
+            rows.Add(new Markup(speakers.IsScanning
+                ? $"[grey]{Strings.RemoteLocalScanning}[/]"
+                : $"[grey]{Strings.RemoteLocalNone}[/]"));
+            return;
+        }
+
+        for (var i = 0; i < found.Count; i++)
+        {
+            var speaker = found[i];
+            var connected = speakers.Connected?.DeviceId == speaker.DeviceId;
+            var badge = $"[grey][[{hotkeysUsed + i + 1}]] [/]";
+            var name = Markup.Escape(Format.Truncate(speaker.Name, 36));
+            var mark = connected ? $" [cyan]{Strings.RemoteLocalDriving}[/]" : string.Empty;
+            var model = $"  [grey]{Markup.Escape(speaker.Platform)}[/]";
+            rows.Add(new Markup($"{badge}{name}{mark}{model}"));
+        }
     }
 
     private static string TrackLine(PutYnisonStateResponse state)

@@ -17,6 +17,19 @@ public interface ILocalDeviceControl : IAsyncDisposable
     /// <summary>Raised when a <see cref="StateReceived"/> handler throws, so a broken listener cannot break the connection.</summary>
     event EventHandler<Exception>? ListenerError;
 
+    /// <summary>
+    /// Raised with the raw text of every frame the device sends, before it is parsed. A diagnostic
+    /// hook: for an undocumented protocol it is the only way to see what actually arrived when the
+    /// parsed state looks wrong.
+    /// </summary>
+    event EventHandler<string>? FrameReceived;
+
+    /// <summary>
+    /// Raised with the raw text of every frame this client sends, with the device token blanked —
+    /// a journal is written to be handed to somebody.
+    /// </summary>
+    event EventHandler<string>? FrameSent;
+
     /// <summary>The most recent frame, or <see langword="null"/> before the first one arrives.</summary>
     LocalDeviceFrame? LatestState { get; }
 

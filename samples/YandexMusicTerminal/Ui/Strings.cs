@@ -57,6 +57,18 @@ public static class Strings
     public static string AboutHotkeys => Get(nameof(AboutHotkeys));
     public static string AboutHotkeyUpdate => Get(nameof(AboutHotkeyUpdate));
 
+    // Remote: speakers on this network.
+    public static string RemoteTargetSession => Get(nameof(RemoteTargetSession));
+    public static string RemoteTargetSpeaker(string name) => Fmt(nameof(RemoteTargetSpeaker), name);
+    public static string RemoteLocalSection => Get(nameof(RemoteLocalSection));
+    public static string RemoteLocalScanning => Get(nameof(RemoteLocalScanning));
+    public static string RemoteLocalNone => Get(nameof(RemoteLocalNone));
+    public static string RemoteLocalDriving => Get(nameof(RemoteLocalDriving));
+    public static string SpeakerConnected(string name) => Fmt(nameof(SpeakerConnected), name);
+    public static string SpeakerFailed(string message) => Fmt(nameof(SpeakerFailed), message);
+    public static string SpeakerBackToSession => Get(nameof(SpeakerBackToSession));
+    public static string SpeakerNotOnAccount => Get(nameof(SpeakerNotOnAccount));
+
     // Shared list controls.
     public static string ListHotkeys => Get(nameof(ListHotkeys));
 

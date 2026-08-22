@@ -61,6 +61,12 @@ public sealed class LocalDeviceControl : ILocalDeviceControl
     public event EventHandler<Exception>? ListenerError;
 
     /// <inheritdoc />
+    public event EventHandler<string>? FrameReceived;
+
+    /// <inheritdoc />
+    public event EventHandler<string>? FrameSent;
+
+    /// <inheritdoc />
     public string DeviceId { get; }
 
     /// <inheritdoc />
@@ -210,6 +216,11 @@ public sealed class LocalDeviceControl : ILocalDeviceControl
             payload);
 
         var json = JsonSerializer.SerializeToUtf8Bytes(request, GlagolJson.TypeInfo<GlagolRequest>());
+        if (FrameSent is { } sent)
+        {
+            Announce(sent, JsonSerializer.Serialize(
+                request with { ConversationToken = "<redacted>" }, GlagolJson.TypeInfo<GlagolRequest>()));
+        }
 
         try
         {
@@ -254,8 +265,28 @@ public sealed class LocalDeviceControl : ILocalDeviceControl
         }
     }
 
+    /// <summary>Raises a diagnostic event without letting a listener's failure reach the caller.</summary>
+    private void Announce(EventHandler<string>? handler, string text)
+    {
+        try
+        {
+            handler?.Invoke(this, text);
+        }
+        catch (Exception)
+        {
+            // A diagnostic hook must never be able to break the thing it is observing.
+        }
+    }
+
     private void Absorb(ReadOnlySpan<byte> payload)
     {
+        // These frames are large and arrive on every change, so the text is only built when there is
+        // somebody to hand it to.
+        if (FrameReceived is { } received)
+        {
+            Announce(received, Encoding.UTF8.GetString(payload));
+        }
+
         LocalDeviceFrame? frame;
         try
         {

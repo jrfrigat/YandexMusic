@@ -434,6 +434,36 @@
     <value>Command failed: {0}</value>
   </data>
   <data name="RemoteKeys" xml:space="preserve">
-    <value>[grey]space[/] pause   [grey]←/→[/] prev/next   [grey]↑/↓[/] volume   [grey]1-9[/] play on device   [grey]q[/] back</value>
+    <value>[grey]space[/] pause   [grey]←/→[/] prev/next   [grey]↑/↓[/] volume   [grey]1-9[/] pick device   [grey]0[/] session   [grey]r[/] rescan   [grey]q[/] back</value>
+  </data>
+  <data name="RemoteTargetSession" xml:space="preserve">
+    <value>Controlling: the account session</value>
+  </data>
+  <data name="RemoteTargetSpeaker" xml:space="preserve">
+    <value>Controlling: {0}</value>
+  </data>
+  <data name="RemoteLocalSection" xml:space="preserve">
+    <value>Speakers on this network</value>
+  </data>
+  <data name="RemoteLocalScanning" xml:space="preserve">
+    <value>looking…</value>
+  </data>
+  <data name="RemoteLocalNone" xml:space="preserve">
+    <value>none answered — they may be asleep, or this network blocks multicast</value>
+  </data>
+  <data name="RemoteLocalDriving" xml:space="preserve">
+    <value>← keys go here</value>
+  </data>
+  <data name="SpeakerConnected" xml:space="preserve">
+    <value>Connected to {0}; the keys now drive it</value>
+  </data>
+  <data name="SpeakerFailed" xml:space="preserve">
+    <value>Could not connect: {0}</value>
+  </data>
+  <data name="SpeakerBackToSession" xml:space="preserve">
+    <value>The keys drive the account session again</value>
+  </data>
+  <data name="SpeakerNotOnAccount" xml:space="preserve">
+    <value>This speaker answered on the network but is not on your account, so there is no token for it.</value>
   </data>
 </root>
