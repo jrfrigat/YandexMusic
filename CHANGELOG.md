@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
+- **`YandexMusic.LocalDevices`** — a new package that finds Yandex speakers on the current network
+  over mDNS/DNS-SD (`_yandexio._tcp`). `ILocalDeviceScanner.DiscoverAsync` streams each device as it
+  answers, with its identifier, hardware platform and the endpoint to reach it. Discovery needs no
+  account, no token and no internet connection, and it takes no dependency: the slice of the DNS wire
+  format it needs is about 200 lines. Controlling a discovered device is **not** implemented — see
+  [the proposal](docs/proposals/local-devices.md) for what is still unknown.
 - Sample player: an **"About"** screen (`i`) — the running version, the data directory, the state of
   the request journal, and an update check on demand (`r`). The automatic check can only ever report
   bad news; this is the place that answers "am I up to date?" either way.

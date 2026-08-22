@@ -1,9 +1,10 @@
 # Local device discovery, and splitting the repository into three libraries
 
 **Status:** step 1 done — `YandexMusic.Ynison` shipped as its own package in 0.5.0 and the core is
-standalone. Step 2 is under way: discovery and transport are now measured on real hardware (see "What
-the wire says"), authentication and the command schema are not. `YandexMusic.LocalDevices` does not
-exist yet — an empty package would be worse than no package.
+standalone. Discovery and transport are measured on real hardware (see "What the wire says"), and
+`YandexMusic.LocalDevices` now exists on the `local-devices` branch with discovery implemented and
+verified. What remains unknown is authentication and the command schema, so nothing can be
+**controlled** yet.
 
 ## The problem
 
@@ -102,19 +103,22 @@ A useful first milestone is **discovery alone** — a `LocalDeviceScanner` that 
 network. It is independently valuable (the remote can list the speakers greyed out, and say why they
 cannot be controlled yet), it is verifiable without any credentials, and it de-risks the rest.
 
-### Sketch of the surface
+### The surface, as built
 
 ```csharp
 public interface ILocalDeviceScanner
 {
     IAsyncEnumerable<LocalDevice> DiscoverAsync(TimeSpan window, CancellationToken cancellationToken = default);
 }
-
-public sealed record LocalDevice(string DeviceId, string Name, string Model, IPEndPoint Endpoint);
 ```
 
 `IAsyncEnumerable` rather than a list: discovery is a stream of answers arriving over a window, and
 a UI wants to show each device the moment it replies.
+
+`LocalDevice` came out of the sketch changed in one way worth noting: the sketched `Name` is gone.
+Devices do not advertise the name their owner gave them, so a field for it could only ever have held
+something invented. What is there instead is `DeviceId`, `Platform`, `Endpoint`, `Host` and the raw
+`Attributes` — all of it measured rather than assumed.
 
 ## What the wire says
 
@@ -207,7 +211,8 @@ library whose selling point is a BCL-only core.
 2. Answer the open questions and write the findings down here before writing code. Discovery and
    transport are **done**; the credential and the command schema are what remain, and they need a
    capture of the official app talking to a speaker.
-3. Discovery only, behind `ILocalDeviceScanner`. It is now unblocked: it needs no credential, no
+3. ~~Discovery only, behind `ILocalDeviceScanner`.~~ **Done** on the `local-devices` branch, verified
+   against four real speakers. It needs no credential, no
    account and no answers from (2), and it is independently useful — the remote can list the speakers
    greyed out and say why they cannot be driven yet.
 4. Authorization and control, once (2) is actually known.
