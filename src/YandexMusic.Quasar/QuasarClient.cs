@@ -1,3 +1,7 @@
+using System.Net;
+using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
+using YandexMusic.Quasar.Control;
 using System.Globalization;
 using System.Net.Http.Headers;
 using System.Text.Json;
@@ -67,6 +71,22 @@ public sealed class QuasarClient : IQuasarClient
     }
 
     /// <inheritdoc />
+    public async Task<ILocalDeviceControl> ConnectAsync(
+        QuasarDevice device,
+        IPEndPoint? endpoint = null,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(device);
+
+        endpoint ??= ResolveEndpoint(device);
+
+        var certificate = ReadCertificate(device);
+        var deviceToken = await GetDeviceTokenAsync(device.Id, device.Platform, cancellationToken).ConfigureAwait(false);
+
+        return new LocalDeviceControl(device.Id, endpoint, deviceToken, certificate);
+    }
+
+    /// <inheritdoc />
     public void Dispose()
     {
         if (Interlocked.Exchange(ref _disposed, 1) != 0)
@@ -77,6 +97,45 @@ public sealed class QuasarClient : IQuasarClient
         if (_ownsHttpClient)
         {
             _httpClient.Dispose();
+        }
+    }
+
+    private static IPEndPoint ResolveEndpoint(QuasarDevice device)
+    {
+        var network = device.NetworkInfo
+            ?? throw new YandexMusicQuasarException(
+                $"The backend knows no local address for '{device.Name}' ({device.Id}). " +
+                "Devices only report one while they are reachable on a network.");
+
+        foreach (var candidate in network.IpAddresses)
+        {
+            if (IPAddress.TryParse(candidate, out var address))
+            {
+                return new IPEndPoint(address, network.ExternalPort);
+            }
+        }
+
+        throw new YandexMusicQuasarException($"The backend reported no usable address for device '{device.Id}'.");
+    }
+
+    private static X509Certificate2? ReadCertificate(QuasarDevice device)
+    {
+        var pem = device.Glagol?.Security?.ServerCertificate;
+        if (string.IsNullOrWhiteSpace(pem))
+        {
+            // Without a published certificate there is nothing to pin against. The connection is
+            // still possible, but it can no longer prove which speaker is on the other end.
+            return null;
+        }
+
+        try
+        {
+            return X509Certificate2.CreateFromPem(pem);
+        }
+        catch (CryptographicException exception)
+        {
+            throw new YandexMusicQuasarException(
+                $"The certificate the backend published for device '{device.Id}' could not be read.", exception);
         }
     }
 

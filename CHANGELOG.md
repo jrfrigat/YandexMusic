@@ -9,12 +9,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 ## [Unreleased]
 
 ### Added
-- **`YandexMusic.Quasar`** — a new package that finds Yandex speakers on the current network
-  over mDNS/DNS-SD (`_yandexio._tcp`). `ILocalDeviceScanner.DiscoverAsync` streams each device as it
-  answers, with its identifier, hardware platform and the endpoint to reach it. Discovery needs no
-  account, no token and no internet connection, and it takes no dependency: the slice of the DNS wire
-  format it needs is about 200 lines. Controlling a discovered device is **not** implemented — see
-  [the proposal](docs/proposals/local-devices.md) for what is still unknown.
+- **`YandexMusic.Quasar`** — a new package for Yandex smart speakers: find them on the local network
+  and drive them directly, without going through the cloud.
+  - **Discovery** over mDNS/DNS-SD (`_yandexio._tcp`). `ILocalDeviceScanner.DiscoverAsync` streams
+    each device as it answers, with its identifier, hardware platform and the endpoint to reach it.
+    It needs no account, no token and no internet connection, and it takes no dependency: the slice
+    of the DNS wire format required is about 200 lines. The scan queries every network interface
+    separately, because a socket bound to `0.0.0.0` sends its multicast out whichever adapter wins on
+    route metric — regularly a Hyper-V or VPN adapter with nothing behind it.
+  - **Control** over the device's own websocket. `ILocalDeviceControl` connects, subscribes to the
+    state the speaker pushes on every change, and offers play, pause, next, previous and volume. The
+    TLS certificate is **pinned** against the one the Quasar backend publishes for that device, which
+    is the only way to know which speaker is on the other end: the certificate is self-signed and
+    names `localhost`, so ordinary validation can never succeed. Expiry is deliberately not checked —
+    speakers are shipping certificates that expired years ago and still work.
+  - **`IQuasarClient`** for the account side: the device list, with the names their owner gave them,
+    and the per-device token a command message has to carry. `CreateQuasarClient()` is an extension
+    on `IYandexMusicClient`, in the shape of `CreateYnisonClient()`.
+  - The protocol was measured against real hardware rather than assumed; the findings, including two
+    traps that make a client look broken, are written down in
+    [the proposal](docs/proposals/local-devices.md).
 - Sample player: an **"About"** screen (`i`) — the running version, the data directory, the state of
   the request journal, and an update check on demand (`r`). The automatic check can only ever report
   bad news; this is the place that answers "am I up to date?" either way.

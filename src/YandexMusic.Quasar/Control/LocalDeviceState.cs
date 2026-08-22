@@ -2,13 +2,27 @@ using System.Text.Json.Serialization;
 
 namespace YandexMusic.Quasar.Control;
 
-/// <summary>What a speaker reports about itself. Every field is what the device sent, unmodified.</summary>
-/// <param name="Status">The outcome of the request this frame answers, normally <c>SUCCESS</c>.</param>
-/// <param name="RequestId">The <c>id</c> of the request this frame answers, when it answers one.</param>
+/// <summary>
+/// What a speaker reports about itself. Every field is what the device sent, unmodified.
+///
+/// Frames come in two kinds and it matters which one is in hand. A frame that answers a command
+/// carries <see cref="Status"/> and <see cref="RequestId"/>; a frame the device pushed on its own —
+/// which is most of them, since it announces every change — carries neither.
+/// </summary>
+/// <param name="Status">
+/// The outcome of the request this frame answers: <c>SUCCESS</c>, or <c>UNSUPPORTED</c> for a
+/// command the device does not know. <see langword="null"/> on a frame the device pushed by itself.
+/// </param>
+/// <param name="RequestId">The <c>id</c> of the request this frame answers, or <see langword="null"/> when it answers none.</param>
 /// <param name="SentTime">When the device sent this frame, as a Unix time in milliseconds.</param>
 /// <param name="State">The device's state.</param>
+/// <remarks>
+/// A reply's <see cref="State"/> is the state from <b>before</b> the command was applied. Confirming
+/// a command by reading its own answer therefore concludes, every time, that nothing happened; watch
+/// the frames that follow instead.
+/// </remarks>
 public sealed record LocalDeviceFrame(
-    string Status,
+    string? Status,
     string? RequestId,
     long SentTime,
     LocalDeviceStatus? State)
