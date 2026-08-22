@@ -4,6 +4,13 @@
 * text=auto
 
 ###############################################################################
+# Shell scripts must keep LF even when checked out on Windows: a CRLF shebang
+# makes the kernel look for an interpreter named "/bin/sh\r" and the script
+# dies with "bad interpreter". The installer is fetched and piped into a shell.
+###############################################################################
+*.sh text eol=lf
+
+###############################################################################
 # Set default behavior for command prompt diff.
 #
 # This is need for earlier builds of msysgit that does not have it on by
