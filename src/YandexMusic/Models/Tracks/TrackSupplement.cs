@@ -6,9 +6,12 @@ namespace YandexMusic.Models.Tracks;
 /// <summary>The lyrics of a track.</summary>
 public sealed class Lyrics
 {
-    /// <summary>The lyrics identifier. The API returns it as either a number or a string.</summary>
-    [JsonConverter(typeof(ProtoInt64Converter))]
-    public long Id { get; init; }
+    /// <summary>
+    /// The lyrics identifier. Kept as text because the API returns it as a number on some responses
+    /// and as a string on others, and nothing is ever computed from it.
+    /// </summary>
+    [JsonConverter(typeof(FlexibleStringConverter))]
+    public string? Id { get; init; }
 
     /// <summary>The lyrics text (may be truncated when rights are limited).</summary>
     [JsonPropertyName("lyrics")]
@@ -31,9 +34,12 @@ public sealed class Lyrics
 /// <summary>Supplementary information for a track, such as its lyrics.</summary>
 public sealed class TrackSupplement
 {
-    /// <summary>The supplement identifier (matches the track). The API returns it as a string.</summary>
-    [JsonConverter(typeof(ProtoInt64Converter))]
-    public long Id { get; init; }
+    /// <summary>
+    /// The supplement identifier (matches the track). Kept as text: the API answers with a string
+    /// here and a number elsewhere, and user-uploaded tracks carry ids that are not numbers at all.
+    /// </summary>
+    [JsonConverter(typeof(FlexibleStringConverter))]
+    public string? Id { get; init; }
 
     /// <summary>The track lyrics, when available.</summary>
     public Lyrics? Lyrics { get; init; }

@@ -133,9 +133,23 @@ public sealed class TrackDeserializationTests
         var response = JsonSerializer.Deserialize(json, YandexMusicJson.TypeInfo<ApiResponse<TrackSupplement>>());
         var supplement = response!.Result!;
 
-        Assert.Equal(1_710_808, supplement.Id);
-        Assert.Equal(1_710_808, supplement.Lyrics!.Id);
+        Assert.Equal("1710808", supplement.Id);
+        Assert.Equal("1710808", supplement.Lyrics!.Id);
         Assert.Equal("full text", supplement.Lyrics.FullText);
+    }
+
+    [Fact]
+    public void Deserializes_Supplement_WithNonNumericId()
+    {
+        // User-uploaded tracks carry ids that are not numbers; the supplement must still parse.
+        const string json =
+            """{ "result": { "id": "a1b2c3", "lyrics": { "id": "a1b2c3", "lyrics": "short" } } }""";
+
+        var response = JsonSerializer.Deserialize(json, YandexMusicJson.TypeInfo<ApiResponse<TrackSupplement>>());
+        var supplement = response!.Result!;
+
+        Assert.Equal("a1b2c3", supplement.Id);
+        Assert.Equal("short", supplement.Lyrics!.Text);
     }
 
     [Fact]
