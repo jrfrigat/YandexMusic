@@ -174,6 +174,57 @@ On top of TLS the device speaks **WebSocket** — `Server: WebSocket++/0.8.2`. T
 That places authentication at the message level, not at the connection level, and it means discovery
 and connection can be implemented and tested with no account involved at all.
 
+### The credential — a per-device token from the quasar backend
+
+Two undocumented endpoints, both answering `200` with `status: ok` when called with the account's
+OAuth token in an `Authorization: OAuth <token>` header:
+
+```
+GET https://quasar.yandex.net/glagol/device_list
+GET https://quasar.yandex.net/glagol/token?device_id=<id>&platform=<platform>
+```
+
+`device_list` returns every Quasar device on the account — **not just speakers**: a run on a
+four-speaker household also returned a camera (`platform: mike`) and seven phone-app registrations
+(`alice_app_android`, `iot_app_android`). Only some carry a `networkInfo`, and those are the ones
+that were recently reachable on a LAN. Anything driving playback has to filter.
+
+Each entry carries, among a large `config` block:
+
+| Field | Content |
+|---|---|
+| `id` | the same identifier mDNS advertises as `deviceId` — the two match exactly |
+| `name` | **the name the owner gave the speaker**, which mDNS does not carry |
+| `platform` | the same model key mDNS advertises |
+| `glagol.security.server_certificate` | the device's TLS certificate, ~1050 characters |
+| `glagol.security.server_private_key` | the device's TLS private key, ~1675 characters |
+| `networkInfo` | `external_port` (1961), `ip_addresses`, `mac_addresses`, `wifi_ssid`, `ts` |
+
+`glagol/token` then returns a per-device token of roughly 200-230 characters. It differs per device.
+
+Two notes for whoever implements the models. The JSON mixes conventions — `networkInfo` is camelCase
+while `external_port` and `ip_addresses` inside it are snake_case — so a single naming policy will
+not do; the snake_case members need explicit property names. And `device_list` carries a great deal
+that has nothing to do with music: the household's GPS coordinates, Wi-Fi SSID, MAC addresses and
+activation codes. The models should bind what the feature needs and leave the rest unread.
+
+### This settles the TLS question: pin, do not trust
+
+`server_certificate` is the device's own certificate, handed over by the backend. So a client does
+not have to choose between "accept everything" and "reject everything": it can compare the
+certificate the speaker presents against the one the backend says that speaker has, and refuse
+anything else. That is real pinning, and it is the design this package will use.
+
+It also disposes of the expired-certificate problem. Pinning compares the certificate itself, so a
+speaker still serving a certificate that expired in 2024 stays perfectly usable, while a substituted
+certificate is still rejected. Validating dates would have achieved the opposite of security here:
+locking out the real device while proving nothing about any other.
+
+`server_private_key` is a different matter. It is the device's private key, and why the backend
+hands it to clients at all is unclear. Pinning does not need it, so **this package will neither
+request it nor store it**. That is a deliberate decision, recorded here so it is not quietly undone
+later by someone who assumes an unused field is safe to keep.
+
 ### Dependency cost — answered: no dependency needed
 
 The whole discovery path above was driven by a hand-written DNS-SD query and parser of roughly 150
@@ -183,11 +234,9 @@ library whose selling point is a BCL-only core.
 
 ## Open questions — still unanswered
 
-- **Credential.** What a command message must carry for the device to act on it, where that comes
-  from, and how long it lives. The connection itself needs nothing, so this is a field inside the
-  payload. If it must be fetched from a Yandex backend, that endpoint is undocumented and outside the
-  Music API — an argument for keeping it in this package rather than the core.
-- **Command schema.** What a play/pause/volume message looks like, and what the device reports back.
+- **Command schema.** What a play/pause/volume message looks like, where the token goes inside it,
+  and what the device reports back. This is now the only thing standing between discovery and
+  control.
 - **Cross-account control.** The official app controls speakers signed in to other accounts. Whether
   that holds for any device on the network or only in some pairing state changes the security posture
   of this feature substantially, and should be understood before shipping it.
