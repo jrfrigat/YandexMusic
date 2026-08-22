@@ -8,6 +8,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 
 ## [Unreleased]
 
+### Added
+- `YandexMusicClientOptions.HandlerFactory` — an optional `DelegatingHandler` placed in front of the
+  client's own handler, so a directly-constructed client can be logged or traced. Consumers on
+  `AddYandexMusic` already had `configureHttpClient` for this.
+- `IYnisonClient.FrameReceived` / `FrameSent` — the raw text of every Ynison frame, before parsing.
+  Diagnostics: when the parsed state looks wrong, this is the only way to see what actually arrived.
+- Sample player: a request journal, toggled from the main menu with `g` and off by default. It
+  records the HTTP traffic (request line, headers, bodies, status and timing) and the raw Ynison
+  frames to `%APPDATA%\yandexmusic-player\requests.log`. Every line is scrubbed of OAuth tokens,
+  bearer tokens, cookies and passwords before it is written, because a journal is written to be
+  handed to somebody. The interactive sign-in flows use their own HTTP clients inside the library and
+  are deliberately not recorded.
+
 ### Changed
 - **Breaking**: `IYandexMusicClient.CreateYnisonClient` returns the new `IYnisonClient` interface
   instead of the sealed `YnisonClient` class, so consumers can substitute and test it like every
