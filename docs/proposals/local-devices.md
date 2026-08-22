@@ -1,9 +1,9 @@
 # Local device discovery, and splitting the repository into three libraries
 
 **Status:** step 1 done — `YandexMusic.Ynison` shipped as its own package in 0.5.0 and the core is
-standalone. The local protocol is still uninvestigated: nothing below the "Open questions" heading
-should be treated as settled, and `YandexMusic.LocalDevices` does not exist yet — an empty package
-would be worse than no package.
+standalone. Step 2 is under way: discovery and transport are now measured on real hardware (see "What
+the wire says"), authentication and the command schema are not. `YandexMusic.LocalDevices` does not
+exist yet — an empty package would be worse than no package.
 
 ## The problem
 
@@ -116,27 +116,82 @@ public sealed record LocalDevice(string DeviceId, string Name, string Model, IPE
 `IAsyncEnumerable` rather than a list: discovery is a stream of answers arriving over a window, and
 a UI wants to show each device the moment it replies.
 
-## Open questions — none of these are answered yet
+## What the wire says
 
-These need investigation with a packet capture from the official app before any code is written. I
-have not verified any of it, and the issue should not pretend otherwise.
+Measured against four speakers (Mini, Station 2, Station 3, Station Midi) on one home Wi-Fi network,
+2026-08-22. Everything in this section was observed directly, not inferred: discovery answers, a TLS
+handshake and a websocket upgrade. No command was sent to any device.
 
-- **Discovery mechanism.** mDNS/DNS-SD is the strong hypothesis (the service type is commonly cited
-  as `_yandexio._tcp`), but this needs confirming on the wire, along with what the TXT records carry.
-- **Dependency cost.** .NET has no mDNS in the BCL. Either take a dependency (Makaretu.Dns,
-  Zeroconf) or implement the subset needed. For a library that advertises a BCL-only core, this
-  choice deserves its own discussion — it lands in `LocalDevices` only, but it is still a dependency.
-- **Transport and TLS.** Local control is reportedly a websocket to the device itself, with a
-  certificate that will not chain to a public root. Whatever validation is used must be a deliberate,
-  documented decision, not a blanket "accept everything".
-- **Credential.** What the device requires to accept commands, where it comes from, and its lifetime.
-  If it must be fetched from a Yandex backend, that endpoint is undocumented and outside the Music
-  API — which is an argument for keeping it in this package rather than the core.
+### Discovery — mDNS/DNS-SD, `_yandexio._tcp`
+
+The hypothesis was right. `_services._dns-sd._udp.local` lists `_yandexio._tcp.local`, and a PTR
+query for it returns one instance per speaker. Each instance resolves to:
+
+| Record | Content |
+|---|---|
+| PTR | `YandexIOReceiver-<deviceId>._yandexio._tcp.local` |
+| SRV | `<model>-<deviceId>.local` : **1961**, priority 0, weight 0 |
+| TXT | `deviceId=<id>`, `platform=<model>`, `cluster=yes` |
+| A / AAAA | the LAN address, plus a link-local IPv6 |
+
+`platform` is the model key — `yandexmini`, `yandexstation_2`, `orion` (Station 3), `cucumber`
+(Station Midi). It is what a UI should map to a display name; the mDNS instance name carries no
+user-visible label, so the friendly name a user recognizes ("Speaker in the kitchen") is **not**
+available locally and has to come from an account-level source.
+
+Two practical notes for the implementation. The port is in the SRV record and must be read from
+there, not hard-coded — and 1961 is what these four report. And one device advertised a generic
+hostname (`Android.local`) rather than a model-derived one, so the hostname is not a reliable
+identity: `deviceId` from TXT is.
+
+### Transport — TLS 1.2 with a self-signed certificate, then WebSocket
+
+Port 1961 answers with a TLS 1.2 handshake, `TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256`, presenting:
+
+```
+subject: O=Yandex, CN=localhost, C=RU
+issuer:  O=Yandex, CN=localhost, C=RU     (self-signed)
+```
+
+Validation fails on two counts, by construction and permanently: `RemoteCertificateChainErrors`
+(self-signed, no path to a public root) and `RemoteCertificateNameMismatch` (`CN=localhost` can never
+match the address being dialled). **And expiry is real, not hypothetical**: of the four speakers,
+one presented a certificate that expired in 2024 and is still serving traffic today. A validation
+policy that rejects expired certificates makes that speaker permanently uncontrollable.
+
+So certificate validation has to be a deliberate, documented decision. It cannot be the default, and
+"accept everything silently" is not acceptable either. This is the one design question in the package
+that deserves the most care.
+
+On top of TLS the device speaks **WebSocket** — `Server: WebSocket++/0.8.2`. The upgrade is accepted
+**with no credentials of any kind**: no token, no header, no prior pairing. Immediately after the
+101, the device starts sending websocket Ping frames with the payload `server_ping`.
+
+That places authentication at the message level, not at the connection level, and it means discovery
+and connection can be implemented and tested with no account involved at all.
+
+### Dependency cost — answered: no dependency needed
+
+The whole discovery path above was driven by a hand-written DNS-SD query and parser of roughly 150
+lines. One PTR query plus parsing of PTR/SRV/TXT/A records — including name compression — is all the
+mDNS this package needs. Taking Makaretu.Dns or Zeroconf for that is not worth the dependency in a
+library whose selling point is a BCL-only core.
+
+## Open questions — still unanswered
+
+- **Credential.** What a command message must carry for the device to act on it, where that comes
+  from, and how long it lives. The connection itself needs nothing, so this is a field inside the
+  payload. If it must be fetched from a Yandex backend, that endpoint is undocumented and outside the
+  Music API — an argument for keeping it in this package rather than the core.
+- **Command schema.** What a play/pause/volume message looks like, and what the device reports back.
 - **Cross-account control.** The official app controls speakers signed in to other accounts. Whether
   that holds for any device on the network or only in some pairing state changes the security posture
   of this feature substantially, and should be understood before shipping it.
-- **Platform reach.** mDNS behaviour differs across Windows/Linux/macOS and breaks on many corporate
-  and guest networks. The library must degrade to "found nothing" cleanly rather than hanging.
+- **Platform reach.** Discovery is confirmed working on Windows. mDNS behaviour differs across
+  Linux/macOS and breaks on many corporate and guest networks; the library must degrade to "found
+  nothing" cleanly rather than hanging. Note that on a machine with several adapters (Hyper-V, WSL,
+  VPN) a socket bound to `0.0.0.0` sends the query out whichever adapter wins on route metric — which
+  found nothing at all here. Discovery must query **every** interface explicitly.
 
 ## Non-goals
 
@@ -149,7 +204,10 @@ have not verified any of it, and the issue should not pretend otherwise.
 
 1. ~~Split the packages and move `CreateYnisonClient` to an extension.~~ **Done in 0.5.0** — the
    core is standalone and BCL-only.
-2. Capture the official app's traffic and answer the open questions above. Write the findings down
-   here before writing code. **This is the next step, and it is research, not coding.**
-3. Discovery only, behind `ILocalDeviceScanner`, with the sample listing what it finds.
+2. Answer the open questions and write the findings down here before writing code. Discovery and
+   transport are **done**; the credential and the command schema are what remain, and they need a
+   capture of the official app talking to a speaker.
+3. Discovery only, behind `ILocalDeviceScanner`. It is now unblocked: it needs no credential, no
+   account and no answers from (2), and it is independently useful — the remote can list the speakers
+   greyed out and say why they cannot be driven yet.
 4. Authorization and control, once (2) is actually known.
