@@ -1,6 +1,6 @@
 using System.Net;
 
-namespace YandexMusic.LocalDevices;
+namespace YandexMusic.Quasar;
 
 /// <summary>
 /// A Yandex speaker answering on the current network. Everything here comes from what the device

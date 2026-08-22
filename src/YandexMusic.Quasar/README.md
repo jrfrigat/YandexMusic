@@ -1,10 +1,10 @@
-# YandexMusic.LocalDevices
+# YandexMusic.Quasar
 
 Finds Yandex speakers on the current network, for the
 [YandexMusic](https://www.nuget.org/packages/YandexMusic) client.
 
 ```csharp
-using YandexMusic.LocalDevices;
+using YandexMusic.Quasar;
 
 var scanner = new LocalDeviceScanner();
 await foreach (var device in scanner.DiscoverAsync(TimeSpan.FromSeconds(3)))

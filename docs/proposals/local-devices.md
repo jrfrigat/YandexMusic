@@ -2,7 +2,7 @@
 
 **Status:** step 1 done — `YandexMusic.Ynison` shipped as its own package in 0.5.0 and the core is
 standalone. Discovery and transport are measured on real hardware (see "What the wire says"), and
-`YandexMusic.LocalDevices` now exists on the `local-devices` branch with discovery implemented and
+`YandexMusic.Quasar` now exists on the `local-devices` branch with discovery implemented and
 verified. What remains unknown is authentication and the command schema, so nothing can be
 **controlled** yet.
 
@@ -44,7 +44,7 @@ The overwhelming majority of consumers want the REST API and nothing else. That 
 ```
 YandexMusic                 REST Music API. Depends on nothing but the BCL.
 YandexMusic.Ynison          Account-level real-time state and remote control. Depends on YandexMusic.
-YandexMusic.LocalDevices    Same-network discovery and control. Depends on YandexMusic.
+YandexMusic.Quasar          Same-network discovery and control. Depends on YandexMusic.
 YandexMusic.DependencyInjection   Unchanged: AddYandexMusic() for the core.
 ```
 
@@ -52,7 +52,7 @@ Rules:
 
 - `YandexMusic` never references the other two. It is complete and useful on its own — this is the
   constraint everything else bends around.
-- `YandexMusic.Ynison` and `YandexMusic.LocalDevices` do not reference each other. A consumer wanting
+- `YandexMusic.Ynison` and `YandexMusic.Quasar` do not reference each other. A consumer wanting
   the merged device list of the official app takes both and merges them itself; a helper that does
   the merging can come later, in its own package, once both halves exist.
 - All three ship from this repository, on one version line, so "the YandexMusic repo covers
@@ -87,9 +87,9 @@ from the Ynison assembly (its namespace is unchanged, so `catch` blocks still co
 protobuf-JSON converters moved along with it — they had no other user. The core no longer references
 `System.Net.WebSockets` at all.
 
-`YandexMusic.LocalDevices` gets the same treatment, so the three entry points read alike.
+`YandexMusic.Quasar` gets the same treatment, so the three entry points read alike.
 
-## Scope of YandexMusic.LocalDevices
+## Scope of YandexMusic.Quasar
 
 Three separable pieces, in dependency order:
 

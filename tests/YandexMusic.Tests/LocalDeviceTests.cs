@@ -1,6 +1,6 @@
 using System.Net;
-using YandexMusic.LocalDevices;
-using YandexMusic.LocalDevices.Mdns;
+using YandexMusic.Quasar;
+using YandexMusic.Quasar.Mdns;
 using Xunit;
 
 namespace YandexMusic.Tests;

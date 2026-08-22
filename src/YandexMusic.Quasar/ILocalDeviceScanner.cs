@@ -1,4 +1,4 @@
-namespace YandexMusic.LocalDevices;
+namespace YandexMusic.Quasar;
 
 /// <summary>
 /// Finds Yandex speakers on the current network. Discovery is purely local: no account, no token and

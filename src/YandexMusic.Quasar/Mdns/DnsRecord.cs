@@ -1,6 +1,6 @@
 using System.Net;
 
-namespace YandexMusic.LocalDevices.Mdns;
+namespace YandexMusic.Quasar.Mdns;
 
 /// <summary>The record types this package needs to read out of an mDNS answer.</summary>
 internal enum DnsRecordType

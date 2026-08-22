@@ -1,6 +1,6 @@
 using System.Net;
 
-namespace YandexMusic.LocalDevices.Mdns;
+namespace YandexMusic.Quasar.Mdns;
 
 /// <summary>
 /// The sliver of the DNS wire format that DNS-SD discovery needs: build one question, and read the

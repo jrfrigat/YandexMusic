@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
+    <PackageId>YandexMusic.Quasar</PackageId>
+    <Title>YandexMusic.Quasar</Title>
+    <Description>Yandex smart speakers for the YandexMusic client: find them on the local network and control them directly, without going through the cloud. — Колонки Яндекса для клиента Яндекс Музыки: поиск в локальной сети и прямое управление.</Description>
+    <IsPackable>true</IsPackable>
+    <IsAotCompatible>true</IsAotCompatible>
+    <PackageTags>$(PackageTags);quasar;alice;station;speaker;mdns;discovery</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="YandexMusic.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\YandexMusic\YandexMusic.csproj" />
+  </ItemGroup>
+
+</Project>

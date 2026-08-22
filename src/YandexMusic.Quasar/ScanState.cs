@@ -1,7 +1,7 @@
 using System.Net;
-using YandexMusic.LocalDevices.Mdns;
+using YandexMusic.Quasar.Mdns;
 
-namespace YandexMusic.LocalDevices;
+namespace YandexMusic.Quasar;
 
 /// <summary>
 /// Assembles the records of a scan into devices. Answers arrive in pieces and out of order — a PTR

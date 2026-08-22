@@ -3,9 +3,9 @@ using System.Net.NetworkInformation;
 using System.Net.Sockets;
 using System.Runtime.CompilerServices;
 using System.Threading.Channels;
-using YandexMusic.LocalDevices.Mdns;
+using YandexMusic.Quasar.Mdns;
 
-namespace YandexMusic.LocalDevices;
+namespace YandexMusic.Quasar;
 
 /// <summary>
 /// Discovers Yandex speakers with mDNS/DNS-SD. Devices register as <c>_yandexio._tcp</c> and answer

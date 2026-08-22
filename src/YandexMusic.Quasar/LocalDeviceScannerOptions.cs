@@ -1,4 +1,4 @@
-namespace YandexMusic.LocalDevices;
+namespace YandexMusic.Quasar;
 
 /// <summary>Tuning for <see cref="LocalDeviceScanner"/>. The defaults are what real speakers answer to.</summary>
 public sealed record LocalDeviceScannerOptions
