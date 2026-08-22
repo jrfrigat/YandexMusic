@@ -92,6 +92,7 @@ case ":$PATH:" in
         printf 'Run it with: %s\n' "$COMMAND"
         ;;
     *)
+        # shellcheck disable=SC2016  # $PATH must stay literal: this line is copied into a profile.
         printf '%s is not on your PATH. Add this to your shell profile:\n\n    export PATH="%s:$PATH"\n\n' "$BIN_DIR" "$BIN_DIR"
         printf 'Until then run it with: %s\n' "$BIN_DIR/$COMMAND"
         ;;

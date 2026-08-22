@@ -24,6 +24,12 @@
 .PARAMETER NoPathUpdate
     Skip adding the install directory to the user PATH.
 #>
+# Write-Host is the right call here and not a lapse: this is an interactive installer whose output is
+# meant for the person running it. Write-Output would put those lines on the pipeline, and the
+# documented way to run this is `irm ... | iex`, where a polluted pipeline is the caller's problem.
+[Diagnostics.CodeAnalysis.SuppressMessageAttribute(
+    'PSAvoidUsingWriteHost', '',
+    Justification = 'Interactive installer: progress belongs on the console, not the pipeline.')]
 [CmdletBinding()]
 param(
     [string] $Version = 'latest',
@@ -43,8 +49,14 @@ if ([Environment]::Is64BitOperatingSystem -eq $false) {
     throw "ymt ships for 64-bit Windows only; this system is 32-bit."
 }
 
-# TLS 1.2 for Windows PowerShell 5.1, whose default still excludes it on older builds.
-try { [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12 } catch { }
+# TLS 1.2 for Windows PowerShell 5.1, whose default still excludes it on older builds. PowerShell 7
+# negotiates on its own and may not expose the knob at all, so failing to set it is not an error.
+try {
+    [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+}
+catch {
+    Write-Verbose "Could not select TLS 1.2 explicitly; using the platform default. $($_.Exception.Message)"
+}
 
 $headers = @{ 'User-Agent' = 'ymt-installer'; 'Accept' = 'application/vnd.github+json' }
 $releaseUrl = if ($Version -eq 'latest') {
