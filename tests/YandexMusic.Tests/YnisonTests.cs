@@ -180,18 +180,30 @@ public sealed class YnisonTests
         var factory = new FakeSocketFactory([redirectSocket, stateSocket]);
         await using var client = new YnisonClient("token-1", "device-x", null, factory);
         using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+
+        // Subscribe before the run starts, or the first frame can arrive before the handler exists.
+        var frames = 0;
+        var frameSeen = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        client.StateReceived += (_, _) =>
+        {
+            _ = Interlocked.Increment(ref frames);
+            _ = frameSeen.TrySetResult();
+        };
+
         var run = Task.Run(() => client.RunAsync(cts.Token));
 
-        var frames = 0;
-        client.StateReceived += (_, _) => frames++;
-
         await client.WaitForStateAsync(TimeSpan.FromSeconds(10));
+
+        // WaitForStateAsync is released before the listeners run — deliberately, so a slow listener
+        // cannot hold up the handshake — so the event has to be awaited on its own.
+        await frameSeen.Task.WaitAsync(TimeSpan.FromSeconds(10));
+
         await client.SetPausedAsync(paused: true);
         await client.NextTrackAsync();
 
         Assert.Equal(123_456_789_012_345_678, client.LatestState!.PlayerState!.Status!.Version!.Version);
         Assert.Equal(42_000, client.LatestState.PlayerState!.Status!.ProgressMs);
-        Assert.True(frames >= 1);
+        Assert.True(Volatile.Read(ref frames) >= 1);
 
         // The redirect socket saw no ticket; the state socket carried it plus the session id.
         Assert.Equal(["Bearer", "v2"], redirectSocket.Subprotocols!.Take(2));
