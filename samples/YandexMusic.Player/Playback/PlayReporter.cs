@@ -16,7 +16,6 @@ public sealed class PlayReporter : IDisposable
     private readonly PlaybackController _controller;
     private readonly Stopwatch _played = new();
     private string? _reportedStation;
-    private string? _currentPlayId;
 
     /// <summary>Creates a reporter bound to a playback controller.</summary>
     /// <param name="client">The signed-in API client.</param>
@@ -29,13 +28,29 @@ public sealed class PlayReporter : IDisposable
         _controller = controller;
         _controller.TrackStarted += OnTrackStarted;
         _controller.TrackLeft += OnTrackLeft;
+        _controller.Changed += OnChanged;
     }
 
     private void OnTrackStarted(PlaybackItem item)
     {
         _played.Restart();
-        _currentPlayId = Guid.NewGuid().ToString("N");
-        _ = ReportAsync(item);
+
+        // The play id travels with the report rather than through a field: the report is fire-and-
+        // forget, and a quick skip would otherwise stamp this track's event with the next track's id.
+        _ = ReportAsync(item, Guid.NewGuid().ToString("N"));
+    }
+
+    /// <summary>Keeps the listened-time clock honest: a paused or buffering track is not being played.</summary>
+    private void OnChanged()
+    {
+        if (_controller.State == PlaybackState.Playing)
+        {
+            _played.Start();
+        }
+        else
+        {
+            _played.Stop();
+        }
     }
 
     private void OnTrackLeft(PlaybackItem item, bool endedNaturally)
@@ -53,7 +68,7 @@ public sealed class PlayReporter : IDisposable
                 station, item.Id, _played.Elapsed.TotalSeconds, item.Origin.BatchId));
     }
 
-    private async Task ReportAsync(PlaybackItem item)
+    private async Task ReportAsync(PlaybackItem item, string playId)
     {
         var origin = item.Origin;
         await TryAsync(() => _client.Tracks.PlayAudioAsync(new PlayAudioOptions
@@ -62,7 +77,7 @@ public sealed class PlayReporter : IDisposable
             From = origin?.From ?? "yandexmusic-player",
             AlbumId = origin?.AlbumId ?? string.Empty,
             PlaylistId = origin?.PlaylistId,
-            PlayId = _currentPlayId,
+            PlayId = playId,
             TrackLengthSeconds = (int)Math.Ceiling(item.Duration.TotalSeconds),
             TotalPlayedSeconds = 0,
             EndPositionSeconds = 0,
@@ -101,5 +116,6 @@ public sealed class PlayReporter : IDisposable
     {
         _controller.TrackStarted -= OnTrackStarted;
         _controller.TrackLeft -= OnTrackLeft;
+        _controller.Changed -= OnChanged;
     }
 }
