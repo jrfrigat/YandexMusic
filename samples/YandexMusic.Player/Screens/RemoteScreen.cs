@@ -19,15 +19,19 @@ public sealed class RemoteScreen
     private static readonly TimeSpan ToastLifetime = TimeSpan.FromSeconds(4);
 
     private readonly IYandexMusicClient _client;
+    private readonly NoticeBoard _notices;
     private string _toast = string.Empty;
     private DateTime _toastShownAt;
 
     /// <summary>Creates the remote screen.</summary>
     /// <param name="client">The signed-in client the Ynison session is created from.</param>
-    public RemoteScreen(IYandexMusicClient client)
+    /// <param name="notices">The board a failed connection reports to.</param>
+    public RemoteScreen(IYandexMusicClient client, NoticeBoard notices)
     {
         ArgumentNullException.ThrowIfNull(client);
+        ArgumentNullException.ThrowIfNull(notices);
         _client = client;
+        _notices = notices;
     }
 
     /// <summary>Runs the remote until the user presses <c>q</c>/<c>Esc</c>.</summary>
@@ -44,7 +48,7 @@ public sealed class RemoteScreen
         }
         catch (YandexMusicYnisonException ex)
         {
-            AnsiConsole.MarkupLine(Strings.RemoteFailed(Markup.Escape(ex.Message)));
+            _notices.Post(Strings.RemoteFailed(ex.Message));
             await StopAsync(sessionCts, run).ConfigureAwait(false);
             return;
         }
@@ -257,7 +261,7 @@ public sealed class RemoteScreen
         var offline = device.IsOffline ? $" [grey]({Strings.RemoteOffline})[/]" : string.Empty;
         var title = Markup.Escape(Format.Truncate(device.Info?.Title ?? Strings.RemoteUnknownDevice, 36));
         var volume = (int)Math.Round(Math.Clamp(device.VolumeInfo?.Volume ?? 0, 0, 1) * 100);
-        return $"[grey][[{index + 1}]] [/grey]{title}{marker}{offline}  [grey]{Strings.VolumeLabel}[/] [green]{volume,3}%[/]";
+        return $"[grey][[{index + 1}]] [/]{title}{marker}{offline}  [grey]{Strings.VolumeLabel}[/] [green]{volume,3}%[/]";
     }
 
 }
