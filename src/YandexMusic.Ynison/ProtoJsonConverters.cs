@@ -2,13 +2,13 @@ using System.Text;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace YandexMusic.Serialization;
+namespace YandexMusic.Ynison;
 
 /// <summary>
 /// An enum converter for protobuf-JSON messages (Ynison). Writes the canonical proto member name in
 /// UPPER_SNAKE_CASE (<c>DO_NOT_INTERCEPT_BY_DEFAULT</c>) and reads tolerantly: the member name in any
 /// casing with <c>-</c>/<c>_</c> separators ignored, or the numeric value. Unknown values read back as
-/// the enum's <c>0</c> member, mirroring <see cref="TolerantEnumConverter{TEnum}"/>. Referenced as a
+/// the enum's <c>0</c> member, mirroring the tolerant enum handling of the REST models. Referenced as a
 /// closed generic so it stays trim/AOT-safe.
 /// </summary>
 /// <typeparam name="TEnum">The enum type to convert.</typeparam>

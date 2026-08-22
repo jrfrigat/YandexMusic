@@ -2,17 +2,25 @@
 
 # Architecture
 
-The library is a single core package plus an optional dependency-injection package, organized into
-clear layers by namespace.
+The library is a self-contained core package plus optional satellites, organized into clear layers
+by namespace.
 
 ```
-YandexMusic.DependencyInjection   // AddYandexMusic(): scoped client over an IHttpClientFactory pool
-        │
-        ▼
+YandexMusic.DependencyInjection   YandexMusic.Ynison
+// AddYandexMusic(): scoped client   // CreateYnisonClient(): live state + remote (websocket)
+// over an IHttpClientFactory pool
+        │                                 │
+        └────────────────┬────────────────┘
+                         ▼
 YandexMusic                       // YandexMusicClient + endpoint groups (Tracks, Search, …)
    Endpoints  →  Http (Connection)  →  Serialization (source-gen JSON)
    Models.*      Authentication        Exceptions
 ```
+
+The arrows only ever point down. `YandexMusic` references nothing but the BCL and never names a type
+from a satellite, so a consumer of the REST API — which is what nearly everyone wants — carries no
+websocket stack. The satellites do not reference each other either: they are independent add-ons on
+one version line, released together from this repository.
 
 ## Client and endpoint groups
 

@@ -9,6 +9,7 @@ Unofficial asynchronous client for the Yandex Music API. Supports **.NET 8, .NET
 | Package | Description |
 |---------|-------------|
 | [`YandexMusic`](https://www.nuget.org/packages/YandexMusic) | The `YandexMusicClient`, models, authentication and endpoint groups. |
+| [`YandexMusic.Ynison`](https://www.nuget.org/packages/YandexMusic.Ynison) | `CreateYnisonClient()` — the account's live playback state and the remote. |
 | [`YandexMusic.DependencyInjection`](https://www.nuget.org/packages/YandexMusic.DependencyInjection) | `AddYandexMusic()` — a scoped client over an `IHttpClientFactory` pool. |
 
 ## Where to start
@@ -51,6 +52,7 @@ Console.WriteLine(track?.Title);
 | Пакет | Описание |
 |-------|----------|
 | [`YandexMusic`](https://www.nuget.org/packages/YandexMusic) | Клиент `YandexMusicClient`, модели, авторизация и группы эндпоинтов. |
+| [`YandexMusic.Ynison`](https://www.nuget.org/packages/YandexMusic.Ynison) | `CreateYnisonClient()` — живое состояние воспроизведения аккаунта и пульт. |
 | [`YandexMusic.DependencyInjection`](https://www.nuget.org/packages/YandexMusic.DependencyInjection) | `AddYandexMusic()` — scoped-клиент поверх пула `IHttpClientFactory`. |
 
 ## С чего начать

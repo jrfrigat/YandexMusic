@@ -88,6 +88,9 @@ See the sample's [README](samples/YandexMusicTerminal/README.md) for the archite
 # Core client
 dotnet add package YandexMusic
 
+# Optional: real-time state and remote control
+dotnet add package YandexMusic.Ynison
+
 # Optional: dependency-injection integration
 dotnet add package YandexMusic.DependencyInjection
 ```
@@ -95,7 +98,12 @@ dotnet add package YandexMusic.DependencyInjection
 | Package | Purpose |
 |---------|---------|
 | [`YandexMusic`](https://www.nuget.org/packages/YandexMusic) | The `YandexMusicClient`, models, authentication and endpoint groups. |
+| [`YandexMusic.Ynison`](https://www.nuget.org/packages/YandexMusic.Ynison) | `CreateYnisonClient()` — the account's live playback state and the remote. |
 | [`YandexMusic.DependencyInjection`](https://www.nuget.org/packages/YandexMusic.DependencyInjection) | `AddYandexMusic()` — a scoped client over an `IHttpClientFactory` pool. |
+
+The core package is standalone and depends on nothing but the BCL — most consumers want the REST API
+and nothing else, so the websocket-based remote lives in its own package rather than in everyone's
+dependency tree.
 
 ## Quick start
 
@@ -147,9 +155,12 @@ var token = await client.Authentication.SignInWithDeviceFlowAsync(code =>
 ### Control playback in real time (Ynison)
 
 Ynison is what synchronizes the web player, the phone apps and smart speakers. The client subscribes
-to the account's playback state and can control any device of the session:
+to the account's playback state and can control any device of the session. It ships separately, in
+`YandexMusic.Ynison`:
 
 ```csharp
+using YandexMusic.Ynison;
+
 await using var ynison = client.CreateYnisonClient();
 var run = Task.Run(() => ynison.RunAsync());
 
@@ -232,6 +243,7 @@ Full guides and API reference: **<https://jrfrigat.github.io/YandexMusic/>**
 .
 ├── src/
 │   ├── YandexMusic/                     # core library (client, models, endpoints, auth, JSON)
+│   ├── YandexMusic.Ynison/              # real-time state and remote control (websocket)
 │   └── YandexMusic.DependencyInjection/ # AddYandexMusic() integration
 ├── tests/
 │   └── YandexMusic.Tests/               # unit + (token-gated) integration tests (xUnit)

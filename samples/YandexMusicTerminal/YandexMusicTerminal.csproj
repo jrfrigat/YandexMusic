@@ -43,6 +43,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\YandexMusic\YandexMusic.csproj" />
+    <ProjectReference Include="..\..\src\YandexMusic.Ynison\YandexMusic.Ynison.csproj" />
   </ItemGroup>
 
 </Project>

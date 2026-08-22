@@ -1,7 +1,9 @@
 # Local device discovery, and splitting the repository into three libraries
 
-**Status:** draft — the package split is decided in principle; the local protocol is not yet
-investigated. Nothing below the "Open questions" heading should be treated as settled.
+**Status:** step 1 done — `YandexMusic.Ynison` shipped as its own package in 0.5.0 and the core is
+standalone. The local protocol is still uninvestigated: nothing below the "Open questions" heading
+should be treated as settled, and `YandexMusic.LocalDevices` does not exist yet — an empty package
+would be worse than no package.
 
 ## The problem
 
@@ -55,17 +57,17 @@ Rules:
 - All three ship from this repository, on one version line, so "the YandexMusic repo covers
   everything you need for this service" holds without splitting the work across repos.
 
-### The one breaking change this requires
+### The one breaking change this requires — done in 0.5.0
 
-`IYandexMusicClient.CreateYnisonClient()` is the coupling that blocks the split: the core interface
-names a Ynison type. It has to move out of the core and become an extension method that the Ynison
-package supplies:
+`IYandexMusicClient.CreateYnisonClient()` was the coupling that blocked the split: the core interface
+named a Ynison type. It moved out of the core and became an extension method supplied by the Ynison
+package:
 
 ```csharp
-// today, on the core interface
+// before 0.5.0, on the core interface
 IYnisonClient CreateYnisonClient(string? deviceId = null, YnisonClientOptions? options = null);
 
-// after the split, in YandexMusic.Ynison
+// since 0.5.0, in YandexMusic.Ynison
 public static class YandexMusicClientYnisonExtensions
 {
     public static IYnisonClient CreateYnisonClient(
@@ -75,11 +77,14 @@ public static class YandexMusicClientYnisonExtensions
 }
 ```
 
-Call sites do not change — `client.CreateYnisonClient()` still compiles — but a `using
-YandexMusic.Ynison;` becomes necessary, and the method disappears from the core interface. The
-extension needs the session's token, which is already reachable publicly through
-`client.Authentication.Session`; confirm that it exposes the access token before committing to this
-shape.
+Call sites did not change — `client.CreateYnisonClient()` still compiles — but a `using
+YandexMusic.Ynison;` is now necessary, and the method is gone from the core interface. The token
+comes from `client.Authentication.Session.AccessToken`, which was already public.
+
+Two smaller moves came with it, both invisible to callers: `YandexMusicYnisonException` now ships
+from the Ynison assembly (its namespace is unchanged, so `catch` blocks still compile), and the
+protobuf-JSON converters moved along with it — they had no other user. The core no longer references
+`System.Net.WebSockets` at all.
 
 `YandexMusic.LocalDevices` gets the same treatment, so the three entry points read alike.
 
@@ -142,9 +147,9 @@ have not verified any of it, and the issue should not pretend otherwise.
 
 ## Suggested order of work
 
-1. Split the packages and move `CreateYnisonClient` to an extension. Mechanical, unblocks everything,
-   and worth doing on its own merits — it is the change that makes the core standalone.
+1. ~~Split the packages and move `CreateYnisonClient` to an extension.~~ **Done in 0.5.0** — the
+   core is standalone and BCL-only.
 2. Capture the official app's traffic and answer the open questions above. Write the findings down
-   here before writing code.
+   here before writing code. **This is the next step, and it is research, not coding.**
 3. Discovery only, behind `ILocalDeviceScanner`, with the sample listing what it finds.
 4. Authorization and control, once (2) is actually known.

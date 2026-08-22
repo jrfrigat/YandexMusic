@@ -6,6 +6,27 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Added
+- **`YandexMusic.Ynison`** — a new package holding the real-time playback state and the remote. The
+  core `YandexMusic` package no longer contains a websocket client of any kind: it references nothing
+  but the BCL, which is what the overwhelming majority of consumers actually want. Both packages ship
+  from this repository on one version line.
+
+### Changed
+- **Breaking**: `CreateYnisonClient` is no longer a member of `IYandexMusicClient`. It is an
+  extension method in `YandexMusic.Ynison`, so `client.CreateYnisonClient()` still compiles — add the
+  package and a `using YandexMusic.Ynison;`. This is the coupling that kept the core from being
+  standalone: an interface in the core named a Ynison type, so every REST consumer carried one.
+- **Breaking**: `YandexMusicYnisonException` ships from the `YandexMusic.Ynison` assembly. Its
+  namespace (`YandexMusic.Exceptions`) and shape are unchanged, so `catch` blocks recompile as they
+  are; only a binary reference has to be updated.
+
+### Removed
+- `RELEASING.md` / `RELEASING.ru.md`. They were a maintainer runbook — repository settings, nuget.org
+  account setup, tagging — with nothing in them for anyone using or contributing to the library.
+
 ## [0.4.0] - 2026-08-22
 
 ### Added

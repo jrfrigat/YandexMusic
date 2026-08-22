@@ -1,7 +1,6 @@
 using YandexMusic.Authentication;
 using YandexMusic.Endpoints;
 using YandexMusic.Http;
-using YandexMusic.Ynison;
 
 namespace YandexMusic;
 
@@ -165,14 +164,6 @@ public sealed class YandexMusicClient : IYandexMusicClient
 
     /// <summary>The shared request engine used by the endpoint groups.</summary>
     internal IYandexMusicConnection Connection { get; }
-
-    /// <inheritdoc />
-    public IYnisonClient CreateYnisonClient(string? deviceId = null, YnisonClientOptions? options = null)
-    {
-        var token = _session.AccessToken ?? throw new InvalidOperationException(
-            "Sign in before creating a Ynison client; the session has no access token yet.");
-        return new YnisonClient(token, deviceId ?? _session.DeviceId, options);
-    }
 
     /// <inheritdoc />
     public void Dispose()

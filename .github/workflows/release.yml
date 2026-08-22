@@ -1,16 +1,12 @@
 name: Release (NuGet)
 
-# Publishes the YandexMusic and YandexMusic.DependencyInjection packages to NuGet.org.
+# Publishes the YandexMusic, YandexMusic.Ynison and YandexMusic.DependencyInjection packages to NuGet.org.
 # Trigger by pushing a version tag, e.g.:  git tag v0.1.0 && git push origin v0.1.0
 # The tag (without the "v" prefix) IS the package version, and the GitHub Release is created here.
 #
-# One-time setup (Trusted Publishing — no long-lived API key is stored):
-#   nuget.org -> Account -> Trusted Publishing -> add a policy for EACH package id
-#   (YandexMusic, YandexMusic.DependencyInjection):
-#     Repository:    jrfrigat/YandexMusic
-#     Workflow file: release.yml
-#   Then set the repository variable NUGET_USER = your nuget.org username
-#   (Settings -> Secrets and variables -> Actions -> Variables).
+# Authentication is Trusted Publishing (OIDC): no long-lived API key is stored anywhere. It requires
+# a policy on nuget.org for each package id, naming this repository, this workflow file and the
+# "nuget" environment, plus the repository variable NUGET_USER.
 on:
   push:
     tags: [ 'v*' ]
@@ -27,7 +23,7 @@ jobs:
   publish:
     name: Pack & push to NuGet
     runs-on: ubuntu-latest
-    environment: nuget   # matches the Trusted Publishing policy (RELEASING.md); optionally protect it
+    environment: nuget   # named by the Trusted Publishing policy; can be protected with reviewers
     timeout-minutes: 30
     steps:
       - name: Checkout
@@ -59,9 +55,10 @@ jobs:
       - name: Test
         run: dotnet test YandexMusic.slnx -c Release --no-build
 
-      # Only IsPackable=true projects produce packages: YandexMusic and YandexMusic.DependencyInjection
-      # (the DI package declares a NuGet dependency on YandexMusic, so both ship together). Symbol
-      # packages (.snupkg) are produced alongside via IncludeSymbols. tests are IsPackable=false.
+      # Only IsPackable=true projects produce packages: YandexMusic, YandexMusic.Ynison and
+      # YandexMusic.DependencyInjection. Both satellites declare a NuGet dependency on the core, so
+      # they ship together on one version line. Symbol packages (.snupkg) are produced alongside via
+      # IncludeSymbols; tests and the sample are IsPackable=false.
       - name: Pack
         run: dotnet pack YandexMusic.slnx -c Release --no-build -p:Version=${{ steps.version.outputs.value }} -o artifacts
 

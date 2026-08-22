@@ -88,6 +88,9 @@ dotnet run --project samples/YandexMusicTerminal
 # Основной клиент
 dotnet add package YandexMusic
 
+# Опционально: состояние в реальном времени и пульт
+dotnet add package YandexMusic.Ynison
+
 # Опционально: интеграция с DI
 dotnet add package YandexMusic.DependencyInjection
 ```
@@ -95,7 +98,11 @@ dotnet add package YandexMusic.DependencyInjection
 | Пакет | Назначение |
 |-------|------------|
 | [`YandexMusic`](https://www.nuget.org/packages/YandexMusic) | Клиент `YandexMusicClient`, модели, авторизация и группы эндпоинтов. |
+| [`YandexMusic.Ynison`](https://www.nuget.org/packages/YandexMusic.Ynison) | `CreateYnisonClient()` — живое состояние воспроизведения аккаунта и пульт. |
 | [`YandexMusic.DependencyInjection`](https://www.nuget.org/packages/YandexMusic.DependencyInjection) | `AddYandexMusic()` — scoped-клиент поверх пула `IHttpClientFactory`. |
+
+Основной пакет самодостаточен и не зависит ни от чего, кроме BCL: большинству нужен именно REST API,
+поэтому пульт на websocket вынесен в отдельный пакет и не попадает в дерево зависимостей всем подряд.
 
 ## Быстрый старт
 
@@ -147,9 +154,12 @@ var token = await client.Authentication.SignInWithDeviceFlowAsync(code =>
 ### Управление воспроизведением в реальном времени (Ynison)
 
 Ynison — это то, что синхронизирует веб-плеер, телефонные приложения и умные колонки. Клиент
-подписывается на состояние воспроизведения аккаунта и может управлять любым устройством сессии:
+подписывается на состояние воспроизведения аккаунта и может управлять любым устройством сессии.
+Поставляется отдельно, в пакете `YandexMusic.Ynison`:
 
 ```csharp
+using YandexMusic.Ynison;
+
 await using var ynison = client.CreateYnisonClient();
 var run = Task.Run(() => ynison.RunAsync());
 
@@ -232,6 +242,7 @@ services.AddYandexMusic(options =>
 .
 ├── src/
 │   ├── YandexMusic/                     # основная библиотека (клиент, модели, эндпоинты, auth, JSON)
+│   ├── YandexMusic.Ynison/              # состояние в реальном времени и пульт (websocket)
 │   └── YandexMusic.DependencyInjection/ # интеграция AddYandexMusic()
 ├── tests/
 │   └── YandexMusic.Tests/               # модульные + (по токену) интеграционные тесты (xUnit)

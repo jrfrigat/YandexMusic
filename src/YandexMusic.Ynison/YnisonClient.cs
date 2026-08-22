@@ -3,8 +3,6 @@ using System.Net.WebSockets;
 using System.Text;
 using System.Text.Json;
 using YandexMusic.Exceptions;
-using YandexMusic.Http;
-using YandexMusic.Serialization;
 
 namespace YandexMusic.Ynison;
 
@@ -499,7 +497,7 @@ public sealed class YnisonClient : IYnisonClient
     private Dictionary<string, string> BuildHeaders() => new()
     {
         ["Origin"] = "https://music.yandex.ru",
-        [YandexMusicHeaders.Authorization] = "OAuth " + _token,
+        ["Authorization"] = "OAuth " + _token,
     };
 
     private IReadOnlyList<string> BuildSubprotocols(string? ticket, long? sessionId)

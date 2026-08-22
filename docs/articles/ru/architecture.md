@@ -2,17 +2,25 @@
 
 # Архитектура
 
-Библиотека — это один основной пакет плюс опциональный пакет для DI, разнесённые по слоям через
-namespace.
+Библиотека — это самодостаточный основной пакет плюс опциональные спутники, разнесённые по слоям
+через namespace.
 
 ```
-YandexMusic.DependencyInjection   // AddYandexMusic(): scoped-клиент поверх пула IHttpClientFactory
-        │
-        ▼
+YandexMusic.DependencyInjection   YandexMusic.Ynison
+// AddYandexMusic(): scoped-клиент    // CreateYnisonClient(): живое состояние
+// поверх пула IHttpClientFactory     // и пульт (websocket)
+        │                                 │
+        └────────────────┬────────────────┘
+                         ▼
 YandexMusic                       // YandexMusicClient + группы эндпоинтов (Tracks, Search, …)
    Endpoints  →  Http (Connection)  →  Serialization (source-gen JSON)
    Models.*      Authentication        Exceptions
 ```
+
+Стрелки идут только вниз. `YandexMusic` не зависит ни от чего, кроме BCL, и нигде не упоминает типы
+спутников, поэтому потребитель REST API — а это почти все — не тащит за собой websocket-стек. Спутники
+не зависят и друг от друга: это независимые дополнения на одной линии версий, выпускаемые вместе из
+этого репозитория.
 
 ## Клиент и группы эндпоинтов
 

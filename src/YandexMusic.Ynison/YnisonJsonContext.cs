@@ -19,7 +19,7 @@ namespace YandexMusic.Ynison;
 [JsonSerializable(typeof(RedirectResponse))]
 internal sealed partial class YnisonJsonContext : JsonSerializerContext;
 
-/// <summary>Typed access to the context's metadata, mirroring <see cref="Serialization.YandexMusicJson"/>.</summary>
+/// <summary>Typed access to the context's metadata, mirroring the REST context's accessor.</summary>
 internal static class YnisonJson
 {
     /// <summary>Returns the source-generated metadata for a Ynison message type.</summary>

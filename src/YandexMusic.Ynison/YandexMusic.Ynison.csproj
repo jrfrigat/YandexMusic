@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net9.0;net10.0</TargetFrameworks>
+    <PackageId>YandexMusic.Ynison</PackageId>
+    <Title>YandexMusic.Ynison</Title>
+    <Description>Ynison real-time playback state and remote control for the YandexMusic client: observe what the account is playing on any device and drive it. — Пульт и синхронизация состояния воспроизведения (Ynison) для клиента Яндекс Музыки.</Description>
+    <IsPackable>true</IsPackable>
+    <IsAotCompatible>true</IsAotCompatible>
+    <PackageTags>$(PackageTags);ynison;websocket;remote</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="YandexMusic.Tests" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\YandexMusic\YandexMusic.csproj" />
+  </ItemGroup>
+
+</Project>
