@@ -32,9 +32,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
 - Sample player: the remote now shows **speakers on this network** beside the account's Ynison
   devices, and can drive them. The number keys pick a target across both lists, `0` hands the keys
   back to the session, `r` rescans; pause, track switching and volume then act on whatever is
-  selected. A speaker the account does not know still appears in the list, greyed of a name — it is
-  reachable, but no token can be issued for it. The raw device frames go to the request journal
-  under `glagol`, the same way Ynison's do.
+  selected, and the track and position at the top of the panel follow the target too — a speaker is
+  not in the account's session, so showing the session's playback while driving one looked like a
+  remote that had frozen. A speaker the account does not know still appears in the list, under its
+  model name — it is reachable, but no token can be issued for it. The raw device frames go to the
+  request journal under `glagol`, the same way Ynison's do.
 - Sample player: an **"About"** screen (`i`) — the running version, the data directory, the state of
   the request journal, and an update check on demand (`r`). The automatic check can only ever report
   bad news; this is the place that answers "am I up to date?" either way.

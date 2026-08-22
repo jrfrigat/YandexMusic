@@ -2,6 +2,7 @@ using Spectre.Console;
 using Spectre.Console.Rendering;
 using YandexMusic;
 using YandexMusic.Exceptions;
+using YandexMusic.Quasar.Control;
 using YandexMusicTerminal.Auth;
 using YandexMusicTerminal.Diagnostics;
 using YandexMusicTerminal.Remote;
@@ -298,10 +299,15 @@ public sealed class RemoteScreen
 
     private Panel Build(PutYnisonStateResponse state, TimeSpan sinceFrame)
     {
+        // The headline follows the target. Showing the session's track while the keys are driving a
+        // speaker is what makes the remote look frozen: the speaker pauses, and the big line above
+        // it — which belongs to a different device entirely — does not move.
+        var driving = _speakers?.Connected is not null ? _speakers.State : null;
+
         var rows = new List<IRenderable>
         {
-            new Markup(TrackLine(state)),
-            new Markup(ProgressLine(state, sinceFrame)),
+            new Markup(driving is null ? TrackLine(state) : LocalTrackLine(driving)),
+            new Markup(driving is null ? ProgressLine(state, sinceFrame) : LocalProgressLine(driving)),
             new Markup(TargetLine()),
             new Markup($"[grey]{Strings.RemoteDevices}[/]"),
         };
@@ -347,15 +353,39 @@ public sealed class RemoteScreen
             return $"[grey]{Strings.RemoteTargetSession}[/]";
         }
 
-        var player = _speakers.State?.State;
-        var mark = player?.Playing == true ? "[green]>[/]" : "[yellow]||[/]";
-        var volume = (int)Math.Round(Math.Clamp(player?.Volume ?? 0, 0, 1) * 100);
-        var title = player?.PlayerState?.Title is { Length: > 0 } name
-            ? $"  [white]{Markup.Escape(Format.Truncate(name, 34))}[/]"
-            : string.Empty;
+        var volume = (int)Math.Round(Math.Clamp(_speakers.State?.State?.Volume ?? 0, 0, 1) * 100);
+        return $"[cyan]{Markup.Escape(Strings.RemoteTargetSpeaker(Format.Truncate(speaker.Name, 34)))}[/]" +
+               $"  [grey]{Strings.VolumeLabel}[/] [green]{volume,3}%[/]";
+    }
 
-        return $"[cyan]{Markup.Escape(Strings.RemoteTargetSpeaker(Format.Truncate(speaker.Name, 28)))}[/] " +
-               $"{mark}{title}  [grey]{Strings.VolumeLabel}[/] [green]{volume,3}%[/]";
+    /// <summary>The track a driven speaker is on, in the same place the session's track otherwise sits.</summary>
+    private static string LocalTrackLine(LocalDeviceFrame frame)
+    {
+        var title = frame.State?.PlayerState?.Title;
+        if (string.IsNullOrWhiteSpace(title))
+        {
+            return $"[grey]{Strings.RemoteNothing}[/]";
+        }
+
+        var performer = frame.State?.PlayerState?.Subtitle;
+        var artist = string.IsNullOrWhiteSpace(performer)
+            ? string.Empty
+            : $" [grey]— {Markup.Escape(Format.Truncate(performer, 30))}[/]";
+
+        return $"[bold white]{Markup.Escape(Format.Truncate(title, 42))}[/]{artist}";
+    }
+
+    /// <summary>
+    /// A driven speaker's position. Unlike Ynison this needs no extrapolating: the device pushes a
+    /// frame about once a second while it plays. The times are seconds here, not milliseconds.
+    /// </summary>
+    private static string LocalProgressLine(LocalDeviceFrame frame)
+    {
+        var player = frame.State?.PlayerState;
+        var stateText = frame.State?.Playing == true ? Strings.StatePlaying : Strings.StatePaused;
+        var progress = TimeSpan.FromSeconds(Math.Max(0, player?.Progress ?? 0));
+        var duration = TimeSpan.FromSeconds(Math.Max(0, player?.Duration ?? 0));
+        return $"[grey]{stateText}   {Format.Duration(progress)} / {Format.Duration(duration)}[/]";
     }
 
     /// <summary>Renders the speakers found on this network, numbered on from the Ynison devices.</summary>
