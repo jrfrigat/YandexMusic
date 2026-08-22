@@ -314,15 +314,51 @@ answer a question and fall silent: once a client has sent one valid message, it 
 on every change. That makes the shape of this client much closer to `IYnisonClient` than to the REST
 endpoint groups — connect, send one message to open the conversation, then subscribe.
 
+### The command vocabulary
+
+Each of these was sent to a real speaker and its effect confirmed three seconds later with a fresh
+`ping`, rather than trusted from the reply:
+
+| `payload.command` | Effect | Status |
+|---|---|---|
+| `ping` | returns state, changes nothing | `SUCCESS` |
+| `play` | resumes | `SUCCESS` |
+| `stop` | **pauses** — this is the pause command | `SUCCESS` |
+| `next` | skips to the next track | `SUCCESS` |
+| `prev` | goes back to the previous track | `SUCCESS` |
+| `setVolume` + `volume` (0..1) | sets the volume | `SUCCESS` |
+| `rewind` + `position`? | accepted, but no seek was observed | `SUCCESS` |
+| `pause` | **not a command** | `UNSUPPORTED` |
+| anything unrecognised | | `UNSUPPORTED` |
+
+`pause` deserves its own line because it is the obvious guess and it is wrong: the device answers
+`UNSUPPORTED`, and pausing is `stop`. An unknown command is refused cleanly with the same status
+rather than being silently dropped, which gives the library a real error signal to surface.
+
+`rewind` is accepted rather than refused, so it exists — but sending `position: 5` produced no
+observable seek, so the argument's name is a guess and stays unverified.
+
+### Two traps in the reply, both worth knowing before writing a client
+
+**A reply carries the state from before the command was applied.** Sending `stop` returns a frame
+saying `playing: true`; three seconds later the device reports `playing: false`. The command worked;
+the reply is simply a snapshot taken when the message arrived. Reading the command's own reply to
+confirm what it did will conclude, every single time, that nothing happened.
+
+**Not every command produces a correlated reply at all.** `play` was answered by no frame carrying
+its `requestId` on either of two runs, while plainly working. So `requestId` is useful for matching
+when a reply comes, but a client must never wait on one as an acknowledgement. The state stream is
+the only reliable source of truth about what the device is doing.
+
 ## Open questions — still unanswered
 
-- **The rest of the command vocabulary.** `ping` is confirmed on the wire. The names for play, pause,
-  next, previous and volume are not: they were not exercised, because doing so means making somebody's
-  speaker actually do something. They should be confirmed one at a time, deliberately, before being
-  written into the library.
+- **The `rewind` argument.** The command exists; how to tell it where to seek does not follow from
+  anything measured.
 - **Cross-account control.** The official app controls speakers signed in to other accounts. Whether
   that holds for any device on the network or only in some pairing state changes the security posture
-  of this feature substantially, and should be understood before shipping it.
+  of this feature substantially, and should be understood before shipping it. Note that everything
+  measured here went through `device_list`, which is account-scoped — so this path does **not** yet
+  explain how the official app reaches a stranger's speaker.
 - **Platform reach.** Discovery is confirmed working on Windows. mDNS behaviour differs across
   Linux/macOS and breaks on many corporate and guest networks; the library must degrade to "found
   nothing" cleanly rather than hanging. Note that on a machine with several adapters (Hyper-V, WSL,
