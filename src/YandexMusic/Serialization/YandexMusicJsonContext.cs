@@ -20,7 +20,6 @@ using YandexMusic.Models.Queue;
 using YandexMusic.Models.Radio;
 using YandexMusic.Models.Search;
 using YandexMusic.Models.Tracks;
-using YandexMusic.Ynison;
 
 namespace YandexMusic.Serialization;
 

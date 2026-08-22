@@ -18,11 +18,12 @@ namespace YandexMusic.Ynison;
 /// <see cref="WaitForStateAsync"/>, then either react to <see cref="StateReceived"/> or send
 /// commands via <see cref="SendAsync"/> and the convenience methods. Dispose the client to stop.
 /// </summary>
-public sealed class YnisonClient : IAsyncDisposable
+public sealed class YnisonClient : IYnisonClient
 {
     private const string RedirectService = "redirector.YnisonRedirectService/GetRedirectToYnison";
     private const string StateService = "ynison_state.YnisonStateService/PutYnisonState";
     private static readonly TimeSpan DefaultKeepAlive = TimeSpan.FromSeconds(20);
+    private static readonly TimeSpan CloseHandshakeTimeout = TimeSpan.FromSeconds(2);
 
     private readonly string _token;
     private readonly YnisonClientOptions _options;
@@ -32,6 +33,7 @@ public sealed class YnisonClient : IAsyncDisposable
     private IYnisonSocket? _redirectSocket;
     private IYnisonSocket? _stateSocket;
     private PutYnisonStateResponse? _latestState;
+    private long _framesReceived;
     private int _stopping;
 
     /// <summary>Creates a client with a generated device id and default options.</summary>
@@ -101,6 +103,15 @@ public sealed class YnisonClient : IAsyncDisposable
         {
             throw new YandexMusicYnisonException($"No Ynison state arrived within {timeout}.", ex);
         }
+        catch (YandexMusicYnisonException)
+        {
+            // Why the session died, reported by RunAsync — far more useful than a timeout.
+            throw;
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            throw new YandexMusicYnisonException("The Ynison connection failed before the first state frame.", ex);
+        }
 
         return LatestState ?? throw new YandexMusicYnisonException("The Ynison connection closed before the first state frame.");
     }
@@ -114,7 +125,25 @@ public sealed class YnisonClient : IAsyncDisposable
     /// <param name="cancellationToken">A token to stop the client.</param>
     public async Task RunAsync(CancellationToken cancellationToken = default)
     {
+        try
+        {
+            await RunLoopAsync(cancellationToken).ConfigureAwait(false);
+
+            // The loop ended without ever producing a frame: release WaitForStateAsync now instead of
+            // making it sit out its whole timeout for a connection that is already gone.
+            FailFirstState(new YandexMusicYnisonException("The Ynison connection closed before the first state frame."));
+        }
+        catch (Exception ex)
+        {
+            FailFirstState(ex);
+            throw;
+        }
+    }
+
+    private async Task RunLoopAsync(CancellationToken cancellationToken)
+    {
         var reconnectNumber = 0;
+        var framesAtLastFailure = 0L;
         while (Volatile.Read(ref _stopping) == 0 && !cancellationToken.IsCancellationRequested)
         {
             try
@@ -134,6 +163,15 @@ public sealed class YnisonClient : IAsyncDisposable
                 if (Volatile.Read(ref _stopping) == 1)
                 {
                     return;
+                }
+
+                // A connection that did deliver frames was healthy; a later drop is a fresh problem
+                // and starts the backoff over instead of inheriting the previous run's ceiling.
+                var frames = Interlocked.Read(ref _framesReceived);
+                if (frames != framesAtLastFailure)
+                {
+                    reconnectNumber = 0;
+                    framesAtLastFailure = frames;
                 }
 
                 reconnectNumber++;
@@ -161,7 +199,16 @@ public sealed class YnisonClient : IAsyncDisposable
         var socket = Volatile.Read(ref _stateSocket)
             ?? throw new YandexMusicYnisonException("The Ynison state socket is not connected; start RunAsync first.");
         var json = JsonSerializer.Serialize(request, YnisonJson.TypeInfo<PutYnisonStateRequest>());
-        await socket.SendAsync(json, cancellationToken).ConfigureAwait(false);
+        try
+        {
+            await socket.SendAsync(json, cancellationToken).ConfigureAwait(false);
+        }
+        catch (Exception ex) when (ex is WebSocketException or IOException or ObjectDisposedException or InvalidOperationException)
+        {
+            // The socket died under the command. Callers get one exception type to handle, and the
+            // run loop reconnects on its own.
+            throw new YandexMusicYnisonException("Sending the Ynison command failed; the connection dropped.", ex);
+        }
     }
 
     /// <summary>Pauses or resumes playback on the active device.</summary>
@@ -284,7 +331,7 @@ public sealed class YnisonClient : IAsyncDisposable
 
                 // The redirector socket has served its purpose; its close handshake runs while the
                 // state socket comes up.
-                await DisposeSocketAsync(redirect).ConfigureAwait(false);
+                await CloseSocketAsync(redirect).ConfigureAwait(false);
                 Volatile.Write(ref _redirectSocket, null);
 
                 await SendAsync(YnisonRequests.CreateUpdateFullStateRequest(DeviceId, _options.AppName), cancellationToken)
@@ -315,19 +362,20 @@ public sealed class YnisonClient : IAsyncDisposable
                     }
 
                     Volatile.Write(ref _latestState, response);
-                    _firstState.TrySetResult();
+                    _ = Interlocked.Increment(ref _framesReceived);
+                    _ = _firstState.TrySetResult();
                     RaiseStateReceived(response);
                 }
             }
             finally
             {
-                await DisposeSocketAsync(state).ConfigureAwait(false);
+                await CloseSocketAsync(state).ConfigureAwait(false);
                 Volatile.Write(ref _stateSocket, null);
             }
         }
         finally
         {
-            await DisposeSocketAsync(redirect).ConfigureAwait(false);
+            await CloseSocketAsync(redirect).ConfigureAwait(false);
             Volatile.Write(ref _redirectSocket, null);
         }
     }
@@ -416,11 +464,32 @@ public sealed class YnisonClient : IAsyncDisposable
         return escaped.ToString();
     }
 
-    private static async Task DisposeSocketAsync(IYnisonSocket? socket)
+    /// <summary>
+    /// Ends a socket the way the protocol expects: a close handshake first (bounded, and it swallows a
+    /// peer that will not answer), then the dispose that aborts whatever is left.
+    /// </summary>
+    private static async Task CloseSocketAsync(IYnisonSocket? socket)
     {
-        if (socket is not null)
+        if (socket is null)
         {
-            await socket.DisposeAsync().ConfigureAwait(false);
+            return;
+        }
+
+        using var closing = new CancellationTokenSource(CloseHandshakeTimeout);
+        await socket.CloseAsync(closing.Token).ConfigureAwait(false);
+        await socket.DisposeAsync().ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Faults the first-state promise, and observes the fault: nobody may ever call
+    /// <see cref="WaitForStateAsync"/>, and an unobserved promise would surface much later as a
+    /// stray <see cref="TaskScheduler.UnobservedTaskException"/>.
+    /// </summary>
+    private void FailFirstState(Exception exception)
+    {
+        if (_firstState.TrySetException(exception))
+        {
+            _ = _firstState.Task.Exception;
         }
     }
 

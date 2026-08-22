@@ -166,17 +166,8 @@ public sealed class YandexMusicClient : IYandexMusicClient
     /// <summary>The shared request engine used by the endpoint groups.</summary>
     internal IYandexMusicConnection Connection { get; }
 
-    /// <summary>
-    /// Creates a <see cref="YnisonClient"/> for the signed-in account: a websocket subscription to
-    /// the account's playback state across devices and a channel for remote-control commands. The
-    /// token and device id are read from this client's session at call time; the returned client is
-    /// independent of this one and must be disposed separately.
-    /// </summary>
-    /// <param name="deviceId">Overrides the session's device id for the Ynison session.</param>
-    /// <param name="options">The Ynison client options, or <see langword="null"/> for defaults.</param>
-    /// <exception cref="InvalidOperationException">The client is not signed in.</exception>
     /// <inheritdoc />
-    public YnisonClient CreateYnisonClient(string? deviceId = null, YnisonClientOptions? options = null)
+    public IYnisonClient CreateYnisonClient(string? deviceId = null, YnisonClientOptions? options = null)
     {
         var token = _session.AccessToken ?? throw new InvalidOperationException(
             "Sign in before creating a Ynison client; the session has no access token yet.");

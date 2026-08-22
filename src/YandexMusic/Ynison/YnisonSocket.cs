@@ -128,7 +128,8 @@ internal sealed class ClientWebSocketYnisonSocketFactory : IYnisonSocketFactory
             var socket = _socket ?? throw new InvalidOperationException("The socket is not connected.");
             var bytes = Encoding.UTF8.GetBytes(message);
             await socket.SendAsync(new ArraySegment<byte>(bytes), WebSocketMessageType.Text, endOfMessage: true, cancellationToken)
-                .ConfigureAwait(false);        }
+                .ConfigureAwait(false);
+        }
 
         public async Task CloseAsync(CancellationToken cancellationToken)
         {

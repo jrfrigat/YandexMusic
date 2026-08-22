@@ -1,3 +1,4 @@
+using System.Net.WebSockets;
 using System.Text.Json;
 using YandexMusic.Exceptions;
 using YandexMusic.Ynison;
@@ -279,6 +280,61 @@ public sealed class YnisonTests
         await run.WaitAsync(TimeSpan.FromSeconds(10));
     }
 
+    [Fact]
+    public async Task WaitForState_ReportsWhyTheHandshakeFailed_InsteadOfWaitingOutTheTimeout()
+    {
+        // The redirector hangs up instead of answering: a fatal, non-transient failure.
+        var factory = new FakeSocketFactory([new FakeSocket([null])]);
+        await using var client = new YnisonClient("token-1", "device-x", null, factory);
+        var run = Task.Run(() => client.RunAsync(CancellationToken.None));
+
+        // The timeout is deliberately long: the wait has to end on the failure, not on the clock.
+        var failure = await Assert
+            .ThrowsAsync<YandexMusicYnisonException>(() => client.WaitForStateAsync(TimeSpan.FromMinutes(5)))
+            .WaitAsync(TimeSpan.FromSeconds(10));
+
+        Assert.Contains("redirector", failure.Message, StringComparison.OrdinalIgnoreCase);
+        await Assert.ThrowsAsync<YandexMusicYnisonException>(() => run).WaitAsync(TimeSpan.FromSeconds(10));
+    }
+
+    [Fact]
+    public async Task Command_OnADroppedSocket_FailsAsAYnisonException()
+    {
+        var stateSocket = new FakeSocket([StateFrame]);
+        var factory = new FakeSocketFactory([new FakeSocket([RedirectFrame]), stateSocket]);
+        await using var client = new YnisonClient("token-1", "device-x", null, factory);
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+        var run = Task.Run(() => client.RunAsync(cts.Token));
+
+        _ = await client.WaitForStateAsync(TimeSpan.FromSeconds(10));
+        stateSocket.SendFailure = new WebSocketException(WebSocketError.ConnectionClosedPrematurely);
+
+        // Callers handle one exception type; the raw transport failure stays as the cause.
+        var failure = await Assert.ThrowsAsync<YandexMusicYnisonException>(() => client.SetPausedAsync(paused: true));
+        _ = Assert.IsType<WebSocketException>(failure.InnerException);
+
+        await client.DisposeAsync();
+        await run.WaitAsync(TimeSpan.FromSeconds(10));
+    }
+
+    [Fact]
+    public async Task Stopping_ClosesBothSocketsGracefully()
+    {
+        var redirectSocket = new FakeSocket([RedirectFrame]);
+        var stateSocket = new FakeSocket([StateFrame]);
+        var factory = new FakeSocketFactory([redirectSocket, stateSocket]);
+        await using var client = new YnisonClient("token-1", "device-x", null, factory);
+        using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(30));
+        var run = Task.Run(() => client.RunAsync(cts.Token));
+
+        _ = await client.WaitForStateAsync(TimeSpan.FromSeconds(10));
+        await client.DisposeAsync();
+        await run.WaitAsync(TimeSpan.FromSeconds(10));
+
+        Assert.True(redirectSocket.Closes > 0, "the redirector socket was aborted without a close handshake");
+        Assert.True(stateSocket.Closes > 0, "the state socket was aborted without a close handshake");
+    }
+
     private sealed class FakeSocketFactory(IReadOnlyList<FakeSocket> sockets) : IYnisonSocketFactory
     {
         private int _created;
@@ -305,6 +361,12 @@ public sealed class YnisonTests
         public TimeSpan KeepAliveInterval { get; private set; }
 
         public List<string> Sent { get; } = [];
+
+        /// <summary>Set to make the next send fail, standing in for a socket that dropped.</summary>
+        public Exception? SendFailure { get; set; }
+
+        /// <summary>How many times a close handshake was requested.</summary>
+        public int Closes { get; private set; }
 
         public Task ConnectAsync(
             Uri uri,
@@ -335,11 +397,20 @@ public sealed class YnisonTests
 
         public Task SendAsync(string message, CancellationToken cancellationToken)
         {
+            if (SendFailure is not null)
+            {
+                throw SendFailure;
+            }
+
             Sent.Add(message);
             return Task.CompletedTask;
         }
 
-        public Task CloseAsync(CancellationToken cancellationToken) => Task.CompletedTask;
+        public Task CloseAsync(CancellationToken cancellationToken)
+        {
+            Closes++;
+            return Task.CompletedTask;
+        }
 
         public ValueTask DisposeAsync()
         {
