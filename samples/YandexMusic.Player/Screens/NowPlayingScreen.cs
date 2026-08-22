@@ -70,9 +70,12 @@ public sealed class NowPlayingScreen
                 return;
             }
 
-            if (_controller.Current is { } item)
+            if (_controller.Current is { } item
+                && !await _lyrics.RunAsync(item.Id, cancellationToken).ConfigureAwait(false))
             {
-                await _lyrics.RunAsync(item.Id, cancellationToken).ConfigureAwait(false);
+                // The live view reopens right below; the refusal belongs in its toast, not in the
+                // scrollback above it.
+                ShowToast(Strings.LyricsUnavailable);
             }
         }
     }

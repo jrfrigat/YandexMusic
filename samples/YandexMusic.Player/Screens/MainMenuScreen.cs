@@ -58,14 +58,18 @@ public sealed class MainMenuScreen
     ];
 
     private readonly PlaybackController _controller;
+    private readonly NoticeBoard _notices;
     private int _index;
 
     /// <summary>Creates the main menu.</summary>
     /// <param name="controller">The playback controller, for the now-playing status line.</param>
-    public MainMenuScreen(PlaybackController controller)
+    /// <param name="notices">The board carrying what the screen the user just left had to say.</param>
+    public MainMenuScreen(PlaybackController controller, NoticeBoard notices)
     {
         ArgumentNullException.ThrowIfNull(controller);
+        ArgumentNullException.ThrowIfNull(notices);
         _controller = controller;
+        _notices = notices;
     }
 
     /// <summary>Runs the menu until the user makes a choice.</summary>
@@ -149,6 +153,12 @@ public sealed class MainMenuScreen
     private Rows Build()
     {
         var rows = new List<IRenderable> { new Markup(NowPlayingLine()), new Text(string.Empty) };
+        if (_notices.Peek() is { } notice)
+        {
+            rows.Add(new Markup($"[grey]{Markup.Escape(notice)}[/]"));
+            rows.Add(new Text(string.Empty));
+        }
+
 
         for (var i = 0; i < Items.Length; i++)
         {

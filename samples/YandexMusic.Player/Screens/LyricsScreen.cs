@@ -26,7 +26,11 @@ public sealed class LyricsScreen
     /// <summary>Shows the lyrics of a track until the user presses <c>q</c>/<c>Esc</c>.</summary>
     /// <param name="trackId">The track identifier.</param>
     /// <param name="cancellationToken">A token to cancel.</param>
-    public async Task RunAsync(string trackId, CancellationToken cancellationToken = default)
+    /// <returns>
+    /// <see langword="false"/> when the track has no lyrics to show, so the caller can say so in its
+    /// own view; a message written here would outlive the screen it belongs to.
+    /// </returns>
+    public async Task<bool> RunAsync(string trackId, CancellationToken cancellationToken = default)
     {
         string? text = null;
         await AnsiConsole.Status()
@@ -38,8 +42,7 @@ public sealed class LyricsScreen
             .Split('\n');
         if (lines.Length == 0 || string.IsNullOrWhiteSpace(string.Concat(lines)))
         {
-            AnsiConsole.MarkupLine(Strings.LyricsUnavailable);
-            return;
+            return false;
         }
 
         var offset = 0;
@@ -77,6 +80,8 @@ public sealed class LyricsScreen
                     await Task.Delay(80, cancellationToken).ConfigureAwait(false);
                 }
             }).ConfigureAwait(false);
+
+        return true;
     }
 
     private static bool TryReadKey(out ConsoleKey key)

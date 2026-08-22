@@ -26,6 +26,7 @@ public sealed class PlayerApp
     private readonly TrackListScreen _trackList;
     private readonly NowPlayingScreen _nowPlaying;
     private readonly RemoteScreen _remote;
+    private readonly NoticeBoard _notices;
 
     /// <summary>Creates the application.</summary>
     public PlayerApp(
@@ -39,7 +40,8 @@ public sealed class PlayerApp
         PlaylistsScreen playlists,
         TrackListScreen trackList,
         NowPlayingScreen nowPlaying,
-        RemoteScreen remote)
+        RemoteScreen remote,
+        NoticeBoard notices)
     {
         _client = client;
         _auth = auth;
@@ -52,6 +54,7 @@ public sealed class PlayerApp
         _trackList = trackList;
         _nowPlaying = nowPlaying;
         _remote = remote;
+        _notices = notices;
     }
 
     /// <summary>Runs the app until the user quits.</summary>
@@ -109,8 +112,8 @@ public sealed class PlayerApp
             catch (Exception ex)
             {
                 // A failing screen (network drop, API error, protocol quirk) must never exit the
-                // app: show the error and fall back to the menu.
-                AnsiConsole.MarkupLine(Strings.ScreenFailed(Markup.Escape(ex.Message)));
+                // app: hand the error to the menu, which shows it briefly and lets it expire.
+                _notices.Post(Strings.ScreenFailed(ex.Message));
             }
         }
     }

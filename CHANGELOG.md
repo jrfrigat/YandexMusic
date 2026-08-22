@@ -6,6 +6,18 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Fixed
+- Sample player: the remote crashed on open with "Encountered malformed markup tag at position 14".
+  The device hotkey badge closed its style with `[/grey]`, which Spectre's markup parser rejects (only
+  `[/]` closes a tag) — the 0.3.0 fix escaped the brackets but introduced this.
+- Sample player: a message a screen left behind (a screen failure, an unreachable Ynison, "this track
+  has no lyrics") stayed on screen for the rest of the session. Those were plain console writes, and
+  every screen that follows is a live view rendered below them, so nothing ever cleared them. They now
+  go through a notice board the main menu renders and expires after four seconds, and the lyrics
+  refusal appears as a toast in the now-playing view it returns to.
+
 ## [0.3.0] - 2026-08-19
 
 ### Added

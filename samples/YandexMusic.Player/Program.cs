@@ -59,6 +59,7 @@ services.AddSingleton<PlaybackController>();
 services.AddSingleton<PlayReporter>();
 
 // Screens.
+services.AddSingleton<NoticeBoard>();
 services.AddSingleton<MainMenuScreen>();
 services.AddSingleton<SearchScreen>();
 services.AddSingleton<AlbumScreen>();
