@@ -33,7 +33,16 @@ internal static class YandexMusicHttpClientFactory
             UseProxy = options.Proxy is not null,
         };
 
-        var httpClient = new HttpClient(handler, disposeHandler: true)
+        // A consumer-supplied handler (logging, tracing, retries) wraps ours, so it observes the
+        // request exactly as it goes on the wire and the response exactly as it comes back.
+        HttpMessageHandler pipeline = handler;
+        if (options.HandlerFactory?.Invoke() is { } outer)
+        {
+            outer.InnerHandler = handler;
+            pipeline = outer;
+        }
+
+        var httpClient = new HttpClient(pipeline, disposeHandler: true)
         {
             BaseAddress = options.ApiBaseUri,
             Timeout = options.Timeout,

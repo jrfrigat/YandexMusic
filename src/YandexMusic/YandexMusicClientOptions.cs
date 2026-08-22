@@ -34,6 +34,14 @@ public sealed class YandexMusicClientOptions
     public IWebProxy? Proxy { get; set; }
 
     /// <summary>
+    /// Creates an optional <see cref="DelegatingHandler"/> placed in front of the client's own
+    /// handler — the hook for logging, tracing or a retry policy when the client is constructed
+    /// directly. Consumers using <c>AddYandexMusic</c> have the <c>configureHttpClient</c> callback
+    /// for the same purpose and do not need this. The returned handler is disposed with the client.
+    /// </summary>
+    public Func<DelegatingHandler>? HandlerFactory { get; set; }
+
+    /// <summary>
     /// The device identifier reported to the Yandex Music API in the <c>X-Yandex-Music-Client</c>
     /// header and related fields. Defaults to <c>"csharp"</c>.
     /// </summary>

@@ -76,6 +76,12 @@ public sealed class YnisonClient : IYnisonClient
     /// </summary>
     public event EventHandler<Exception>? ListenerError;
 
+    /// <inheritdoc />
+    public event EventHandler<string>? FrameReceived;
+
+    /// <inheritdoc />
+    public event EventHandler<string>? FrameSent;
+
     /// <summary>This client's identifier in the Ynison session.</summary>
     public string DeviceId { get; }
 
@@ -199,6 +205,7 @@ public sealed class YnisonClient : IYnisonClient
         var socket = Volatile.Read(ref _stateSocket)
             ?? throw new YandexMusicYnisonException("The Ynison state socket is not connected; start RunAsync first.");
         var json = JsonSerializer.Serialize(request, YnisonJson.TypeInfo<PutYnisonStateRequest>());
+        Raise(FrameSent, json);
         try
         {
             await socket.SendAsync(json, cancellationToken).ConfigureAwait(false);
@@ -346,6 +353,8 @@ public sealed class YnisonClient : IYnisonClient
                         return;
                     }
 
+                    Raise(FrameReceived, frame);
+
                     PutYnisonStateResponse? response;
                     try
                     {
@@ -377,6 +386,24 @@ public sealed class YnisonClient : IYnisonClient
         {
             await CloseSocketAsync(redirect).ConfigureAwait(false);
             Volatile.Write(ref _redirectSocket, null);
+        }
+    }
+
+    /// <summary>Delivers a diagnostic frame, isolating a failing listener exactly like the state event does.</summary>
+    private void Raise(EventHandler<string>? handler, string frame)
+    {
+        if (handler is null)
+        {
+            return;
+        }
+
+        try
+        {
+            handler(this, frame);
+        }
+        catch (Exception ex)
+        {
+            ListenerError?.Invoke(this, ex);
         }
     }
 

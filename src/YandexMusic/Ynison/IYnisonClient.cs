@@ -18,6 +18,16 @@ public interface IYnisonClient : IAsyncDisposable
     /// <summary>Raised when a <see cref="StateReceived"/> handler throws, so a broken listener cannot break the session.</summary>
     event EventHandler<Exception>? ListenerError;
 
+    /// <summary>
+    /// Raised with the raw text of every frame the server sends, before it is parsed. A diagnostic
+    /// hook: it is the only way to see what actually arrived when the parsed state looks wrong.
+    /// The payload carries no credentials — the token travels in the connection headers.
+    /// </summary>
+    event EventHandler<string>? FrameReceived;
+
+    /// <summary>Raised with the raw text of every frame this client sends. The diagnostic counterpart of <see cref="FrameReceived"/>.</summary>
+    event EventHandler<string>? FrameSent;
+
     /// <summary>This client's identifier in the Ynison session.</summary>
     string DeviceId { get; }
 
