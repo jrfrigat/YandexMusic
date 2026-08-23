@@ -1,6 +1,7 @@
 name: Release (NuGet)
 
-# Publishes the YandexMusic, YandexMusic.Ynison and YandexMusic.DependencyInjection packages to NuGet.org.
+# Publishes the YandexMusic, YandexMusic.Ynison, YandexMusic.Quasar and YandexMusic.DependencyInjection
+# packages to NuGet.org.
 # Trigger by pushing a version tag, e.g.:  git tag v0.1.0 && git push origin v0.1.0
 # The tag (without the "v" prefix) IS the package version, and the GitHub Release is created here.
 #
@@ -55,10 +56,10 @@ jobs:
       - name: Test
         run: dotnet test YandexMusic.slnx -c Release --no-build
 
-      # Only IsPackable=true projects produce packages: YandexMusic, YandexMusic.Ynison and
-      # YandexMusic.DependencyInjection. Both satellites declare a NuGet dependency on the core, so
-      # they ship together on one version line. Symbol packages (.snupkg) are produced alongside via
-      # IncludeSymbols; tests and the sample are IsPackable=false.
+      # Only IsPackable=true projects produce packages: YandexMusic, YandexMusic.Ynison,
+      # YandexMusic.Quasar and YandexMusic.DependencyInjection. Every satellite declares a NuGet
+      # dependency on the core, so they ship together on one version line. Symbol packages (.snupkg)
+      # are produced alongside via IncludeSymbols; tests and the sample are IsPackable=false.
       - name: Pack
         run: dotnet pack YandexMusic.slnx -c Release --no-build -p:Version=${{ steps.version.outputs.value }} -o artifacts
 

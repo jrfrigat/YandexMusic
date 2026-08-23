@@ -46,6 +46,7 @@ Music OAuth token and are **skipped automatically when no token is set**.
 
 - `src/YandexMusic` — the core client library.
 - `src/YandexMusic.Ynison` — Ynison: real-time playback state and remote control (optional package).
+- `src/YandexMusic.Quasar` — Quasar: smart speakers on the local network (optional package).
 - `src/YandexMusic.DependencyInjection` — the `AddYandexMusic()` DI integration.
 - `samples/YandexMusicTerminal` — an interactive terminal music player (TUI) example.
 - `tests/YandexMusic.Tests` — unit and integration tests (xUnit; integration tests use the `[IntegrationFact]` attribute and run only when `YANDEX_MUSIC_TOKEN` is set).

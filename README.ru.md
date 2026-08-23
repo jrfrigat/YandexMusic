@@ -21,6 +21,7 @@
 - ✅ **Полное покрытие каталога** — треки (метаданные, **прямая ссылка на скачивание/стрим**, тексты, full-info, похожие, трейлер), поиск (+ подсказки), альбомы, исполнители, плейлисты, жанры, лейблы, клипы, кредиты, дисклеймеры, концерты, мета-теги
 - ✅ **Персональные эндпоинты** — аккаунт и настройки, библиотека (лайки/дизлайки на чтение и запись), редактирование плейлистов, радио (rotor), лендинг и фид, очереди между устройствами, пины, пресейвы, история прослушиваний
 - ✅ **Ynison в реальном времени** — подписка на состояние воспроизведения аккаунта на всех устройствах и дистанционное управление (пауза, треки, громкость) по websocket-протоколу официальных клиентов
+- ✅ **Умные колонки** — поиск в локальной сети по mDNS и прямое управление, с пиннингом TLS-сертификата; колонка никогда не входит в сессию аккаунта, так что это единственный способ до неё добраться
 - ✅ **Три способа входа** — OAuth-токен, официальный OAuth **device-code** flow и best-effort cookie/QR; всё поверх сериализуемой сессии с сохранением/восстановлением
 - ✅ Source-generation `System.Text.Json` — экономно к аллокациям, дружелюбно к trim/AOT (`IsAotCompatible`)
 - ✅ Типизированные исключения, интеграция с DI, полная XML-документация
@@ -69,11 +70,13 @@ dotnet run --project samples/YandexMusicTerminal
   платформах (и как fallback) работает беззвучная симуляция, управляющая тем же интерфейсом. Аудио-бэкенд —
   единственный шов [`IAudioPlayer`](samples/YandexMusicTerminal/Playback/IAudioPlayer.cs), так что замена
   на кроссплатформенный движок меняет одну строку.
-- **Пульт** — экран Ynison показывает, что играет на каждом устройстве аккаунта (веб, телефон, умные
-  колонки), и управляет этим: пауза, треки, громкость и «играть здесь» клавишами `1-9`.
+- **Пульт** — экран показывает и Ynison-устройства аккаунта, и колонки, которые отвечают в этой сети,
+  единой нумерацией. Выбираете клавишами `1-9`, и управление уходит туда; `0` возвращает клавиши
+  сессии, `r` перезапускает поиск.
 - **Действия с треком** (экран «сейчас играет») — `l` лайк · `x` дизлайк (и пропуск) · `t` текст
-  песни · `i` бесконечное радио похожих треков. Старты и скипы отчитываются в API, поэтому
-  «Моя волна» учится на том, что вы слушаете.
+  песни · `i` бесконечное радио похожих треков · `r` отправить трек на колонку, дальше она берёт его
+  из каталога сама. Старты и скипы отчитываются в API, поэтому «Моя волна» учится на том, что вы
+  слушаете.
 - **Поиск** — вкладки треков, артистов, альбомов и плейлистов, пагинация строкой «ещё», drill-in в
   треки выбранного артиста, альбома или плейлиста.
 - **Главное меню** управляется курсором, снизу — строка горячих клавиш; одиночные клавиши сразу
@@ -93,6 +96,9 @@ dotnet add package YandexMusic
 # Опционально: состояние в реальном времени и пульт
 dotnet add package YandexMusic.Ynison
 
+# Опционально: колонки в локальной сети
+dotnet add package YandexMusic.Quasar
+
 # Опционально: интеграция с DI
 dotnet add package YandexMusic.DependencyInjection
 ```
@@ -101,10 +107,12 @@ dotnet add package YandexMusic.DependencyInjection
 |-------|------------|
 | [`YandexMusic`](https://www.nuget.org/packages/YandexMusic) | Клиент `YandexMusicClient`, модели, авторизация и группы эндпоинтов. |
 | [`YandexMusic.Ynison`](https://www.nuget.org/packages/YandexMusic.Ynison) | `CreateYnisonClient()` — живое состояние воспроизведения аккаунта и пульт. |
+| [`YandexMusic.Quasar`](https://www.nuget.org/packages/YandexMusic.Quasar) | Находит колонки Яндекса в локальной сети и управляет ими напрямую. |
 | [`YandexMusic.DependencyInjection`](https://www.nuget.org/packages/YandexMusic.DependencyInjection) | `AddYandexMusic()` — scoped-клиент поверх пула `IHttpClientFactory`. |
 
 Основной пакет самодостаточен и не зависит ни от чего, кроме BCL: большинству нужен именно REST API,
-поэтому пульт на websocket вынесен в отдельный пакет и не попадает в дерево зависимостей всем подряд.
+поэтому пульт на websocket и поддержка колонок вынесены в отдельные пакеты и не попадают в дерево
+зависимостей всем подряд.
 
 ## Быстрый старт
 
@@ -173,6 +181,38 @@ ynison.StateReceived += (_, s) => Console.WriteLine(s.PlayerState?.PlayerQueue?.
 await ynison.SetPausedAsync(paused: false);   // дистанционное управление
 await ynison.NextTrackAsync();
 ```
+
+### Управление колонкой в локальной сети (Quasar)
+
+Умная колонка никогда не входит в Ynison-сессию аккаунта, поэтому единственный способ до неё
+добраться — говорить с ней напрямую. `YandexMusic.Quasar` находит колонки по mDNS и подключается к
+каждой сам:
+
+```csharp
+using YandexMusic.Quasar;
+
+// Одному обнаружению не нужны ни аккаунт, ни токен, ни интернет.
+var scanner = new LocalDeviceScanner();
+await foreach (var found in scanner.DiscoverAsync(TimeSpan.FromSeconds(3)))
+{
+    Console.WriteLine($"{found.Platform} на {found.Endpoint}");
+}
+
+// А управлению нужны: аккаунт даёт имя колонки, её сертификат и токен на устройство.
+using var quasar = client.CreateQuasarClient();
+var speaker = (await quasar.GetDevicesAsync()).First(d => d.Platform == "yandexmini");
+
+await using var control = await quasar.ConnectAsync(speaker);
+_ = control.RunAsync();
+await control.WaitForStateAsync(TimeSpan.FromSeconds(10));
+
+await control.PlayTrackAsync("38633712");   // колонка сама возьмёт трек из каталога
+await control.SetVolumeAsync(0.4);
+```
+
+Соединение пиннит TLS-сертификат колонки к тому, который публикует для неё аккаунт: сертификат
+самоподписанный и говорит `localhost`, так что обычная проверка не прошла бы никогда, а
+единственной альтернативой было бы «доверять чему угодно».
 
 Все методы принимают `CancellationToken`:
 
@@ -245,6 +285,7 @@ services.AddYandexMusic(options =>
 ├── src/
 │   ├── YandexMusic/                     # основная библиотека (клиент, модели, эндпоинты, auth, JSON)
 │   ├── YandexMusic.Ynison/              # состояние в реальном времени и пульт (websocket)
+│   ├── YandexMusic.Quasar/              # колонки в локальной сети (mDNS + websocket)
 │   └── YandexMusic.DependencyInjection/ # интеграция AddYandexMusic()
 ├── tests/
 │   └── YandexMusic.Tests/               # модульные + (по токену) интеграционные тесты (xUnit)

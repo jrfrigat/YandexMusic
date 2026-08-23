@@ -6,9 +6,43 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [0.6.0] - 2026-08-23
 
 ### Added
+- **`YandexMusic.Quasar`** — a new package for Yandex smart speakers: find them on the local network
+  and drive them directly, without going through the cloud.
+  - **Discovery** over mDNS/DNS-SD (`_yandexio._tcp`). `ILocalDeviceScanner.DiscoverAsync` streams
+    each device as it answers, with its identifier, hardware platform and the endpoint to reach it.
+    It needs no account, no token and no internet connection, and it takes no dependency: the slice
+    of the DNS wire format required is about 200 lines. The scan queries every network interface
+    separately, because a socket bound to `0.0.0.0` sends its multicast out whichever adapter wins on
+    route metric — regularly a Hyper-V or VPN adapter with nothing behind it.
+  - **Control** over the device's own websocket. `ILocalDeviceControl` connects, subscribes to the
+    state the speaker pushes on every change, and offers play, pause, next, previous and volume. The
+    TLS certificate is **pinned** against the one the Quasar backend publishes for that device, which
+    is the only way to know which speaker is on the other end: the certificate is self-signed and
+    names `localhost`, so ordinary validation can never succeed. Expiry is deliberately not checked —
+    speakers are shipping certificates that expired years ago and still work.
+  - **`IQuasarClient`** for the account side: the device list, with the names their owner gave them,
+    and the per-device token a command message has to carry. `CreateQuasarClient()` is an extension
+    on `IYandexMusicClient`, in the shape of `CreateYnisonClient()`.
+  - **`PlayTrackAsync`** hands a specific track to a speaker: it fetches and plays the track from the
+    catalogue itself, so nothing is streamed from the caller and the caller is free to stop.
+  - The protocol was measured against real hardware rather than assumed; the findings, including two
+    traps that make a client look broken, are written down in
+    [the proposal](docs/proposals/local-devices.md).
+- Sample player: the remote now shows **speakers on this network** beside the account's Ynison
+  devices, and can drive them. The number keys pick a target across both lists, `0` hands the keys
+  back to the session, `r` rescans; pause, track switching and volume then act on whatever is
+  selected, and the track and position at the top of the panel follow the target too — a speaker is
+  not in the account's session, so showing the session's playback while driving one looked like a
+  remote that had frozen. A speaker the account does not know still appears in the list, under its
+  model name — it is reachable, but no token can be issued for it. The raw device frames go to the
+  request journal under `glagol`, the same way Ynison's do.
+- Sample player: **`r` in the player hands the current track to a speaker.** It scans, asks which one,
+  and the speaker fetches and plays the track itself — so the player is free to stop afterwards. The
+  message only claims success once the speaker reports it is actually on that track: the command is
+  answered `SUCCESS` whether or not anything started, so the reply alone proves nothing.
 - Sample player: an **"About"** screen (`i`) — the running version, the data directory, the state of
   the request journal, and an update check on demand (`r`). The automatic check can only ever report
   bad news; this is the place that answers "am I up to date?" either way.

@@ -17,6 +17,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\YandexMusic\YandexMusic.csproj" />
     <ProjectReference Include="..\..\src\YandexMusic.Ynison\YandexMusic.Ynison.csproj" />
+    <ProjectReference Include="..\..\src\YandexMusic.Quasar\YandexMusic.Quasar.csproj" />
     <ProjectReference Include="..\..\src\YandexMusic.DependencyInjection\YandexMusic.DependencyInjection.csproj" />
   </ItemGroup>
 

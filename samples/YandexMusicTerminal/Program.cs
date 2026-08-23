@@ -78,6 +78,7 @@ services.AddSingleton<PlaylistsScreen>();
 services.AddSingleton<TrackListScreen>();
 services.AddSingleton<NowPlayingScreen>();
 services.AddSingleton<LyricsScreen>();
+services.AddSingleton<SendToDeviceScreen>();
 services.AddSingleton<RemoteScreen>();
 services.AddSingleton<AboutScreen>();
 services.AddSingleton<PlayerApp>();

@@ -6,12 +6,12 @@ The library is a self-contained core package plus optional satellites, organized
 by namespace.
 
 ```
-YandexMusic.DependencyInjection   YandexMusic.Ynison
-// AddYandexMusic(): scoped client   // CreateYnisonClient(): live state + remote (websocket)
-// over an IHttpClientFactory pool
-        │                                 │
-        └────────────────┬────────────────┘
-                         ▼
+YandexMusic.DependencyInjection   YandexMusic.Ynison        YandexMusic.Quasar
+// AddYandexMusic(): scoped        // CreateYnisonClient():   // speakers on this network:
+// client over a pooled handler    // live state + remote     // mDNS + a websocket per device
+        │                                 │                         │
+        └─────────────────────────────────┼─────────────────────────┘
+                                          ▼
 YandexMusic                       // YandexMusicClient + endpoint groups (Tracks, Search, …)
    Endpoints  →  Http (Connection)  →  Serialization (source-gen JSON)
    Models.*      Authentication        Exceptions

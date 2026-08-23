@@ -57,6 +57,23 @@ public static class Strings
     public static string AboutHotkeys => Get(nameof(AboutHotkeys));
     public static string AboutHotkeyUpdate => Get(nameof(AboutHotkeyUpdate));
 
+    // Remote: speakers on this network.
+    public static string RemoteTargetSession => Get(nameof(RemoteTargetSession));
+    public static string RemoteTargetSpeaker(string name) => Fmt(nameof(RemoteTargetSpeaker), name);
+    public static string RemoteLocalSection => Get(nameof(RemoteLocalSection));
+    public static string RemoteLocalScanning => Get(nameof(RemoteLocalScanning));
+    public static string RemoteLocalNone => Get(nameof(RemoteLocalNone));
+    public static string RemoteLocalDriving => Get(nameof(RemoteLocalDriving));
+    public static string SpeakerConnected(string name) => Fmt(nameof(SpeakerConnected), name);
+    public static string SpeakerFailed(string message) => Fmt(nameof(SpeakerFailed), message);
+    public static string SpeakerBackToSession => Get(nameof(SpeakerBackToSession));
+    public static string SpeakerNotOnAccount => Get(nameof(SpeakerNotOnAccount));
+    public static string HandOverNeedsSpeaker => Get(nameof(HandOverNeedsSpeaker));
+    public static string HandOverNothingPlaying => Get(nameof(HandOverNothingPlaying));
+    public static string HandOverSent(string track, string speaker) => Fmt(nameof(HandOverSent), track, speaker);
+    public static string SendToDeviceTitle(string track) => Fmt(nameof(SendToDeviceTitle), track);
+    public static string HandOverUnconfirmed(string speaker) => Fmt(nameof(HandOverUnconfirmed), speaker);
+
     // Shared list controls.
     public static string ListHotkeys => Get(nameof(ListHotkeys));
 

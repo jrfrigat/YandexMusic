@@ -2,6 +2,7 @@
   <Folder Name="/src/">
     <Project Path="src/YandexMusic/YandexMusic.csproj" />
     <Project Path="src/YandexMusic.Ynison/YandexMusic.Ynison.csproj" />
+    <Project Path="src/YandexMusic.Quasar/YandexMusic.Quasar.csproj" />
     <Project Path="src/YandexMusic.DependencyInjection/YandexMusic.DependencyInjection.csproj" />
   </Folder>
   <Folder Name="/tests/">

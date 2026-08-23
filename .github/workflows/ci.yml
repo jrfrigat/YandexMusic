@@ -93,8 +93,8 @@ jobs:
           if-no-files-found: ignore
 
       # Pack here too so a packaging break (missing README/icon, CS1591, etc.) fails CI, not release.
-      # Only IsPackable=true projects are produced: YandexMusic, YandexMusic.Ynison and
-      # YandexMusic.DependencyInjection.
+      # Only IsPackable=true projects are produced: YandexMusic, YandexMusic.Ynison,
+      # YandexMusic.Quasar and YandexMusic.DependencyInjection.
       # Built once (on Linux) — the packages are platform-agnostic (netX.0, no RID-specific assets).
       - name: Pack (validation only)
         if: matrix.os == 'ubuntu-latest'

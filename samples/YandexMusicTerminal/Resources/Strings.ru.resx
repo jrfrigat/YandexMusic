@@ -312,7 +312,13 @@
     <value>Трек {0}/{1}</value>
   </data>
   <data name="NowPlayingKeys" xml:space="preserve">
-    <value>[grey]space[/] пауза   [grey]←/→[/] пред/след   [grey]↑/↓[/] громкость   [grey]l[/] лайк   [grey]x[/] дизлайк   [grey]t[/] текст   [grey]i[/] похожие   [grey]s[/] стоп   [grey]q[/] назад</value>
+    <value>[grey]space[/] пауза   [grey]←/→[/] пред/след   [grey]↑/↓[/] громкость   [grey]l[/] лайк   [grey]x[/] дизлайк   [grey]t[/] текст   [grey]i[/] похожие   [grey]r[/] на устройство   [grey]s[/] стоп   [grey]q[/] назад</value>
+  </data>
+  <data name="SendToDeviceTitle" xml:space="preserve">
+    <value>На какой колонке включить «[white]{0}[/]»?</value>
+  </data>
+  <data name="HandOverUnconfirmed" xml:space="preserve">
+    <value>{0} приняла команду, но трек не включила</value>
   </data>
   <data name="LikeMarker" xml:space="preserve">
     <value>♥ В любимом</value>
@@ -429,6 +435,45 @@
     <value>Команда не выполнена: {0}</value>
   </data>
   <data name="RemoteKeys" xml:space="preserve">
-    <value>[grey]space[/] пауза   [grey]←/→[/] пред/след   [grey]↑/↓[/] громкость   [grey]1-9[/] играть на устройстве   [grey]q[/] назад</value>
+    <value>[grey]space[/] пауза   [grey]←/→[/] пред/след   [grey]↑/↓[/] громкость   [grey]1-9[/] выбрать   [grey]0[/] сессия   [grey]t[/] отправить трек   [grey]r[/] искать   [grey]q[/] назад</value>
+  </data>
+  <data name="RemoteTargetSession" xml:space="preserve">
+    <value>Управляем: сессией аккаунта</value>
+  </data>
+  <data name="RemoteTargetSpeaker" xml:space="preserve">
+    <value>Управляем: {0}</value>
+  </data>
+  <data name="RemoteLocalSection" xml:space="preserve">
+    <value>Колонки в этой сети</value>
+  </data>
+  <data name="RemoteLocalScanning" xml:space="preserve">
+    <value>ищем…</value>
+  </data>
+  <data name="RemoteLocalNone" xml:space="preserve">
+    <value>никто не ответил — возможно, спят, либо сеть не пропускает multicast</value>
+  </data>
+  <data name="RemoteLocalDriving" xml:space="preserve">
+    <value>← клавиши сюда</value>
+  </data>
+  <data name="SpeakerConnected" xml:space="preserve">
+    <value>Подключились к {0}; клавиши теперь управляют ей</value>
+  </data>
+  <data name="SpeakerFailed" xml:space="preserve">
+    <value>Не удалось подключиться: {0}</value>
+  </data>
+  <data name="SpeakerBackToSession" xml:space="preserve">
+    <value>Клавиши снова управляют сессией аккаунта</value>
+  </data>
+  <data name="SpeakerNotOnAccount" xml:space="preserve">
+    <value>Колонка откликнулась в сети, но её нет на вашем аккаунте, поэтому токена для неё не выдадут.</value>
+  </data>
+  <data name="HandOverNeedsSpeaker" xml:space="preserve">
+    <value>Сначала выберите колонку — конкретный трек можно передать только ей</value>
+  </data>
+  <data name="HandOverNothingPlaying" xml:space="preserve">
+    <value>Здесь ничего не играет, передавать нечего</value>
+  </data>
+  <data name="HandOverSent" xml:space="preserve">
+    <value>«{0}» отправлен на {1}</value>
   </data>
 </root>
