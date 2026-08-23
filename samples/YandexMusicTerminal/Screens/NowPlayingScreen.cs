@@ -23,6 +23,7 @@ public sealed class NowPlayingScreen
     private readonly IMusicCatalog _catalog;
     private readonly LyricsScreen _lyrics;
     private readonly NoticeBoard _notices;
+    private readonly SendToDeviceScreen _sendToDevice;
     private HashSet<string> _likedIds = [];
     private bool _likedLoaded;
     private string _toast = string.Empty;
@@ -34,16 +35,24 @@ public sealed class NowPlayingScreen
     /// <param name="catalog">The catalog for like/dislike, lyrics and similar-radio actions.</param>
     /// <param name="lyrics">The lyrics view opened by the <c>t</c> key.</param>
     /// <param name="notices">The board an empty queue reports to.</param>
-    public NowPlayingScreen(PlaybackController controller, IMusicCatalog catalog, LyricsScreen lyrics, NoticeBoard notices)
+    /// <param name="sendToDevice">The picker that hands the current track to a speaker.</param>
+    public NowPlayingScreen(
+        PlaybackController controller,
+        IMusicCatalog catalog,
+        LyricsScreen lyrics,
+        NoticeBoard notices,
+        SendToDeviceScreen sendToDevice)
     {
         ArgumentNullException.ThrowIfNull(controller);
         ArgumentNullException.ThrowIfNull(catalog);
         ArgumentNullException.ThrowIfNull(lyrics);
         ArgumentNullException.ThrowIfNull(notices);
+        ArgumentNullException.ThrowIfNull(sendToDevice);
         _controller = controller;
         _catalog = catalog;
         _lyrics = lyrics;
         _notices = notices;
+        _sendToDevice = sendToDevice;
 
         // A radio queue that cannot fetch its next batch stops playing; say so in the view the user
         // is almost certainly looking at when it happens.
@@ -58,6 +67,9 @@ public sealed class NowPlayingScreen
 
         /// <summary>The lyrics view was requested; reopen the live view afterwards.</summary>
         Lyrics,
+
+        /// <summary>Handing the track to a speaker was requested; reopen the live view afterwards.</summary>
+        SendToDevice,
     }
 
     /// <summary>Runs the live view until the user presses <c>q</c>/<c>Esc</c>.</summary>
@@ -72,18 +84,31 @@ public sealed class NowPlayingScreen
 
         while (!cancellationToken.IsCancellationRequested)
         {
-            var exit = await RunViewAsync(cancellationToken).ConfigureAwait(false);
-            if (exit != ViewExit.Lyrics)
+            // Both of these open their own interactive display, and Spectre allows only one at a
+            // time — so the live view closes first and reopens on the next turn of this loop.
+            switch (await RunViewAsync(cancellationToken).ConfigureAwait(false))
             {
-                return;
-            }
+                case ViewExit.Lyrics:
+                    if (_controller.Current is { } item
+                        && !await _lyrics.RunAsync(item.Id, cancellationToken).ConfigureAwait(false))
+                    {
+                        // The live view reopens right below; the refusal belongs in its toast, not in
+                        // the scrollback above it.
+                        ShowToast(Strings.LyricsUnavailable);
+                    }
 
-            if (_controller.Current is { } item
-                && !await _lyrics.RunAsync(item.Id, cancellationToken).ConfigureAwait(false))
-            {
-                // The live view reopens right below; the refusal belongs in its toast, not in the
-                // scrollback above it.
-                ShowToast(Strings.LyricsUnavailable);
+                    break;
+
+                case ViewExit.SendToDevice:
+                    if (await _sendToDevice.RunAsync(cancellationToken).ConfigureAwait(false) is { } outcome)
+                    {
+                        ShowToast(outcome);
+                    }
+
+                    break;
+
+                default:
+                    return;
             }
         }
     }
@@ -136,6 +161,11 @@ public sealed class NowPlayingScreen
                                 break;
                             case ConsoleKey.I:
                                 await StartSimilarRadioAsync(cancellationToken).ConfigureAwait(false);
+                                break;
+                            case ConsoleKey.R:
+                                // The device picker needs the console too.
+                                exit = ViewExit.SendToDevice;
+                                running = false;
                                 break;
                             case ConsoleKey.Q or ConsoleKey.Escape:
                                 running = false;

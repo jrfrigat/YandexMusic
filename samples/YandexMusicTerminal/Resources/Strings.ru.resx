@@ -312,7 +312,13 @@
     <value>Трек {0}/{1}</value>
   </data>
   <data name="NowPlayingKeys" xml:space="preserve">
-    <value>[grey]space[/] пауза   [grey]←/→[/] пред/след   [grey]↑/↓[/] громкость   [grey]l[/] лайк   [grey]x[/] дизлайк   [grey]t[/] текст   [grey]i[/] похожие   [grey]s[/] стоп   [grey]q[/] назад</value>
+    <value>[grey]space[/] пауза   [grey]←/→[/] пред/след   [grey]↑/↓[/] громкость   [grey]l[/] лайк   [grey]x[/] дизлайк   [grey]t[/] текст   [grey]i[/] похожие   [grey]r[/] на устройство   [grey]s[/] стоп   [grey]q[/] назад</value>
+  </data>
+  <data name="SendToDeviceTitle" xml:space="preserve">
+    <value>На какой колонке включить «[white]{0}[/]»?</value>
+  </data>
+  <data name="HandOverUnconfirmed" xml:space="preserve">
+    <value>{0} приняла команду, но трек не включила</value>
   </data>
   <data name="LikeMarker" xml:space="preserve">
     <value>♥ В любимом</value>

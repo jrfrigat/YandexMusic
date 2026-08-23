@@ -39,6 +39,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   remote that had frozen. A speaker the account does not know still appears in the list, under its
   model name — it is reachable, but no token can be issued for it. The raw device frames go to the
   request journal under `glagol`, the same way Ynison's do.
+- Sample player: **`r` in the player hands the current track to a speaker.** It scans, asks which one,
+  and the speaker fetches and plays the track itself — so the player is free to stop afterwards. The
+  message only claims success once the speaker reports it is actually on that track: the command is
+  answered `SUCCESS` whether or not anything started, so the reply alone proves nothing.
 - Sample player: an **"About"** screen (`i`) — the running version, the data directory, the state of
   the request journal, and an update check on demand (`r`). The automatic check can only ever report
   bad news; this is the place that answers "am I up to date?" either way.

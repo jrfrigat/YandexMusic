@@ -71,6 +71,8 @@ public static class Strings
     public static string HandOverNeedsSpeaker => Get(nameof(HandOverNeedsSpeaker));
     public static string HandOverNothingPlaying => Get(nameof(HandOverNothingPlaying));
     public static string HandOverSent(string track, string speaker) => Fmt(nameof(HandOverSent), track, speaker);
+    public static string SendToDeviceTitle(string track) => Fmt(nameof(SendToDeviceTitle), track);
+    public static string HandOverUnconfirmed(string speaker) => Fmt(nameof(HandOverUnconfirmed), speaker);
 
     // Shared list controls.
     public static string ListHotkeys => Get(nameof(ListHotkeys));

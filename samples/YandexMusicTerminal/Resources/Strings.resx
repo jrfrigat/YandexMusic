@@ -317,7 +317,13 @@
     <value>Track {0}/{1}</value>
   </data>
   <data name="NowPlayingKeys" xml:space="preserve">
-    <value>[grey]space[/] play/pause   [grey]←/→[/] prev/next   [grey]↑/↓[/] volume   [grey]l[/] like   [grey]x[/] dislike   [grey]t[/] lyrics   [grey]i[/] similar   [grey]s[/] stop   [grey]q[/] back</value>
+    <value>[grey]space[/] play/pause   [grey]←/→[/] prev/next   [grey]↑/↓[/] volume   [grey]l[/] like   [grey]x[/] dislike   [grey]t[/] lyrics   [grey]i[/] similar   [grey]r[/] to device   [grey]s[/] stop   [grey]q[/] back</value>
+  </data>
+  <data name="SendToDeviceTitle" xml:space="preserve">
+    <value>Play "[white]{0}[/]" on which speaker?</value>
+  </data>
+  <data name="HandOverUnconfirmed" xml:space="preserve">
+    <value>{0} took the command but did not start the track</value>
   </data>
   <data name="LikeMarker" xml:space="preserve">
     <value>♥ Liked</value>
