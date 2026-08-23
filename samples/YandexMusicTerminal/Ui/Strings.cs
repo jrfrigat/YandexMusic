@@ -68,6 +68,9 @@ public static class Strings
     public static string SpeakerFailed(string message) => Fmt(nameof(SpeakerFailed), message);
     public static string SpeakerBackToSession => Get(nameof(SpeakerBackToSession));
     public static string SpeakerNotOnAccount => Get(nameof(SpeakerNotOnAccount));
+    public static string HandOverNeedsSpeaker => Get(nameof(HandOverNeedsSpeaker));
+    public static string HandOverNothingPlaying => Get(nameof(HandOverNothingPlaying));
+    public static string HandOverSent(string track, string speaker) => Fmt(nameof(HandOverSent), track, speaker);
 
     // Shared list controls.
     public static string ListHotkeys => Get(nameof(ListHotkeys));

@@ -1,10 +1,11 @@
 # Local device discovery, and splitting the repository into three libraries
 
-**Status:** step 1 done — `YandexMusic.Ynison` shipped as its own package in 0.5.0 and the core is
-standalone. Discovery and transport are measured on real hardware (see "What the wire says"), and
-`YandexMusic.Quasar` now exists on the `local-devices` branch with discovery implemented and
-verified. What remains unknown is authentication and the command schema, so nothing can be
-**controlled** yet.
+**Status:** largely done, on the `local-devices` branch. `YandexMusic.Ynison` shipped separately in
+0.5.0 and the core is standalone; `YandexMusic.Quasar` implements discovery, the account-side
+credential and direct control, all measured against real speakers rather than assumed. The terminal
+sample drives them from its remote. What is left is a handful of command arguments nobody has needed
+yet, and the question this issue opened with: how the official app reaches a speaker on somebody
+else's account.
 
 ## The problem
 
@@ -327,16 +328,28 @@ Each of these was sent to a real speaker and its effect confirmed three seconds 
 | `next` | skips to the next track | `SUCCESS` |
 | `prev` | goes back to the previous track | `SUCCESS` |
 | `setVolume` + `volume` (0..1) | sets the volume | `SUCCESS` |
-| `rewind` + `position`? | accepted, but no seek was observed | `SUCCESS` |
-| `pause` | **not a command** | `UNSUPPORTED` |
-| anything unrecognised | | `UNSUPPORTED` |
+| `playMusic` + `id` + `type: "track"` | plays that track, replacing what was on | `SUCCESS` |
+| `shuffle`, `repeat` | exist and are accepted bare; their effect is unverified | `SUCCESS` |
+| `rewind` | exists, but its argument is not known | `FAILURE` when sent bare |
+| `sendText` | exists, presumably a spoken command; not exercised | `FAILURE` when sent bare |
+| `pause`, `setPosition`, `setPlaylist`, `startMusic` | **not commands** | `UNSUPPORTED` |
 
 `pause` deserves its own line because it is the obvious guess and it is wrong: the device answers
-`UNSUPPORTED`, and pausing is `stop`. An unknown command is refused cleanly with the same status
-rather than being silently dropped, which gives the library a real error signal to surface.
+`UNSUPPORTED`, and pausing is `stop`.
 
-`rewind` is accepted rather than refused, so it exists — but sending `position: 5` produced no
-observable seek, so the argument's name is a guess and stays unverified.
+### The status is three-valued, and the distinction is useful
+
+- `UNSUPPORTED` — the device does not know this command at all.
+- `FAILURE` — it knows the command but could not act on what came with it.
+- `SUCCESS` — accepted.
+
+That separation is what makes the vocabulary cheap to explore: send a bare name, and the answer says
+whether the name exists before any effort goes into guessing its arguments. It also gives a library a
+real error to surface rather than a silent no-op.
+
+**`SUCCESS` is not evidence that anything happened.** `playMusic` with an empty `id` answers
+`SUCCESS` and carries on playing what it was on. So does `rewind` with a `position` that does not
+move the track. Only the state that follows is proof.
 
 ### Two traps in the reply, both worth knowing before writing a client
 
@@ -352,8 +365,8 @@ the only reliable source of truth about what the device is doing.
 
 ## Open questions — still unanswered
 
-- **The `rewind` argument.** The command exists; how to tell it where to seek does not follow from
-  anything measured.
+- **The arguments of `rewind` and `sendText`.** Both commands exist - they answer `FAILURE` rather
+  than `UNSUPPORTED` when sent bare - but what they take is not known.
 - **Cross-account control.** The official app controls speakers signed in to other accounts. Whether
   that holds for any device on the network or only in some pairing state changes the security posture
   of this feature substantially, and should be understood before shipping it. Note that everything

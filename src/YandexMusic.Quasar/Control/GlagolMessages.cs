@@ -24,6 +24,12 @@ internal sealed record GlagolPayload(string Command)
 {
     /// <summary>The volume for <c>setVolume</c>, from 0.0 to 1.0.</summary>
     public double? Volume { get; init; }
+
+    /// <summary>What <c>playMusic</c> should play.</summary>
+    public string? Id { get; init; }
+
+    /// <summary>What kind of thing <see cref="Id"/> names, for example <c>track</c>.</summary>
+    public string? Type { get; init; }
 }
 
 /// <summary>

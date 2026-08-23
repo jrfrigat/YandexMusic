@@ -434,7 +434,7 @@
     <value>Command failed: {0}</value>
   </data>
   <data name="RemoteKeys" xml:space="preserve">
-    <value>[grey]space[/] pause   [grey]←/→[/] prev/next   [grey]↑/↓[/] volume   [grey]1-9[/] pick device   [grey]0[/] session   [grey]r[/] rescan   [grey]q[/] back</value>
+    <value>[grey]space[/] pause   [grey]←/→[/] prev/next   [grey]↑/↓[/] volume   [grey]1-9[/] pick device   [grey]0[/] session   [grey]t[/] send track   [grey]r[/] rescan   [grey]q[/] back</value>
   </data>
   <data name="RemoteTargetSession" xml:space="preserve">
     <value>Controlling: the account session</value>
@@ -465,5 +465,14 @@
   </data>
   <data name="SpeakerNotOnAccount" xml:space="preserve">
     <value>This speaker answered on the network but is not on your account, so there is no token for it.</value>
+  </data>
+  <data name="HandOverNeedsSpeaker" xml:space="preserve">
+    <value>Pick a speaker first — only a speaker can be handed a specific track</value>
+  </data>
+  <data name="HandOverNothingPlaying" xml:space="preserve">
+    <value>Nothing is playing here to hand over</value>
+  </data>
+  <data name="HandOverSent" xml:space="preserve">
+    <value>Sent "{0}" to {1}</value>
   </data>
 </root>

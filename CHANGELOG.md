@@ -26,6 +26,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   - **`IQuasarClient`** for the account side: the device list, with the names their owner gave them,
     and the per-device token a command message has to carry. `CreateQuasarClient()` is an extension
     on `IYandexMusicClient`, in the shape of `CreateYnisonClient()`.
+  - **`PlayTrackAsync`** hands a specific track to a speaker: it fetches and plays the track from the
+    catalogue itself, so nothing is streamed from the caller and the caller is free to stop.
   - The protocol was measured against real hardware rather than assumed; the findings, including two
     traps that make a client look broken, are written down in
     [the proposal](docs/proposals/local-devices.md).

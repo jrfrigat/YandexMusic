@@ -76,6 +76,20 @@ public interface ILocalDeviceControl : IAsyncDisposable
     /// <param name="cancellationToken">A token to cancel the command.</param>
     Task PreviousTrackAsync(CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Starts a specific track on the device, replacing whatever it was playing. This is how a track
+    /// is handed from one player to a speaker: the speaker fetches and plays it itself, so nothing is
+    /// streamed from here.
+    /// </summary>
+    /// <param name="trackId">The catalogue identifier of the track.</param>
+    /// <param name="cancellationToken">A token to cancel the command.</param>
+    /// <exception cref="ArgumentException"><paramref name="trackId"/> is null or whitespace.</exception>
+    /// <remarks>
+    /// The device answers <c>SUCCESS</c> to an empty or unknown identifier and then carries on with
+    /// what it was doing, so a success here is not evidence that anything started. Watch the state.
+    /// </remarks>
+    Task PlayTrackAsync(string trackId, CancellationToken cancellationToken = default);
+
     /// <summary>Sets the device volume.</summary>
     /// <param name="volume">The volume, from 0.0 to 1.0.</param>
     /// <param name="cancellationToken">A token to cancel the command.</param>

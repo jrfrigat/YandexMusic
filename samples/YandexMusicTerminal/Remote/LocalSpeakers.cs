@@ -38,6 +38,7 @@ public sealed class LocalSpeakers : IAsyncDisposable
     private ILocalDeviceControl? _control;
     private CancellationTokenSource? _controlCts;
     private Task? _controlRun;
+    private LocalSpeaker? _connected;
 
     /// <summary>Creates the local half of the remote.</summary>
     /// <param name="client">The signed-in client, used to reach the account's device list.</param>
@@ -65,8 +66,14 @@ public sealed class LocalSpeakers : IAsyncDisposable
     /// <summary>Whether a scan is running right now, so the view can say so instead of looking empty.</summary>
     public bool IsScanning { get; private set; }
 
-    /// <summary>The speaker currently being driven, or <see langword="null"/> when none is.</summary>
-    public LocalSpeaker? Connected { get; private set; }
+    /// <summary>
+    /// The speaker currently being driven, or <see langword="null"/> when none is.
+    ///
+    /// A connection that has ended counts as none: a speaker that went to sleep or dropped off the
+    /// network would otherwise stay selected forever, silently swallowing every key press instead of
+    /// letting them fall back to the account session.
+    /// </summary>
+    public LocalSpeaker? Connected => _controlRun?.IsCompleted == true ? null : _connected;
 
     /// <summary>The latest state of the connected speaker.</summary>
     public LocalDeviceFrame? State => _control?.LatestState;
@@ -113,7 +120,7 @@ public sealed class LocalSpeakers : IAsyncDisposable
             _control = control;
             _controlCts = cts;
             _controlRun = run;
-            Connected = speaker;
+            _connected = speaker;
             return Strings.SpeakerConnected(speaker.Name);
         }
         catch (Exception ex) when (ex is YandexMusicException or HttpRequestException or TimeoutException)
@@ -128,7 +135,7 @@ public sealed class LocalSpeakers : IAsyncDisposable
         var control = Interlocked.Exchange(ref _control, null);
         var cts = Interlocked.Exchange(ref _controlCts, null);
         var run = Interlocked.Exchange(ref _controlRun, null);
-        Connected = null;
+        _connected = null;
 
         if (cts is not null)
         {
@@ -168,6 +175,29 @@ public sealed class LocalSpeakers : IAsyncDisposable
         // The device reports what is possible now, so this reads the state rather than tracking it.
         var playing = control.LatestState?.State?.Playing ?? false;
         return Safe(() => playing ? control.PauseAsync(cancellationToken) : control.PlayAsync(cancellationToken));
+    }
+
+    /// <summary>Starts a specific track on the connected speaker, replacing what it was playing.</summary>
+    /// <param name="trackId">The catalogue identifier of the track.</param>
+    /// <param name="cancellationToken">A token to cancel the command.</param>
+    /// <returns>A message describing the failure, or <see langword="null"/> when the command went out.</returns>
+    public async Task<string?> PlayTrackAsync(string trackId, CancellationToken cancellationToken)
+    {
+        var control = _control;
+        if (control is null || string.IsNullOrWhiteSpace(trackId))
+        {
+            return Strings.HandOverNeedsSpeaker;
+        }
+
+        try
+        {
+            await control.PlayTrackAsync(trackId, cancellationToken).ConfigureAwait(false);
+            return null;
+        }
+        catch (YandexMusicException ex)
+        {
+            return Strings.SpeakerFailed(Format.Truncate(ex.Message, 70));
+        }
     }
 
     /// <summary>Moves the connected speaker to the next track.</summary>

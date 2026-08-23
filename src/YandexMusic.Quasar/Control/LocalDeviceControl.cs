@@ -143,6 +143,14 @@ public sealed class LocalDeviceControl : ILocalDeviceControl
         => SendAsync(new GlagolPayload("prev"), cancellationToken);
 
     /// <inheritdoc />
+    public Task PlayTrackAsync(string trackId, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(trackId);
+
+        return SendAsync(new GlagolPayload("playMusic") { Id = trackId, Type = "track" }, cancellationToken);
+    }
+
+    /// <inheritdoc />
     public Task SetVolumeAsync(double volume, CancellationToken cancellationToken = default)
     {
         if (volume is < 0 or > 1 || double.IsNaN(volume))

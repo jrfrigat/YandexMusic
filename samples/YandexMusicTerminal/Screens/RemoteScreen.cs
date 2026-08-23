@@ -5,6 +5,7 @@ using YandexMusic.Exceptions;
 using YandexMusic.Quasar.Control;
 using YandexMusicTerminal.Auth;
 using YandexMusicTerminal.Diagnostics;
+using YandexMusicTerminal.Playback;
 using YandexMusicTerminal.Remote;
 using YandexMusicTerminal.Ui;
 using YandexMusic.Ynison;
@@ -30,6 +31,7 @@ public sealed class RemoteScreen
     private readonly IYandexMusicClient _client;
     private readonly NoticeBoard _notices;
     private readonly RequestLog _log;
+    private readonly PlaybackController _controller;
     private LocalSpeakers? _speakers;
     private string _toast = string.Empty;
     private DateTime _toastShownAt;
@@ -38,14 +40,17 @@ public sealed class RemoteScreen
     /// <param name="client">The signed-in client the Ynison session is created from.</param>
     /// <param name="notices">The board a failed connection reports to.</param>
     /// <param name="log">The request journal the raw Ynison frames go to.</param>
-    public RemoteScreen(IYandexMusicClient client, NoticeBoard notices, RequestLog log)
+    /// <param name="controller">The player's own playback, so its track can be handed to a speaker.</param>
+    public RemoteScreen(IYandexMusicClient client, NoticeBoard notices, RequestLog log, PlaybackController controller)
     {
         ArgumentNullException.ThrowIfNull(client);
         ArgumentNullException.ThrowIfNull(notices);
         ArgumentNullException.ThrowIfNull(log);
+        ArgumentNullException.ThrowIfNull(controller);
         _client = client;
         _notices = notices;
         _log = log;
+        _controller = controller;
     }
 
     /// <summary>Runs the remote until the user presses <c>q</c>/<c>Esc</c>.</summary>
@@ -139,6 +144,9 @@ public sealed class RemoteScreen
                                     await speakers.DisconnectAsync().ConfigureAwait(false);
                                     ShowToast(Strings.SpeakerBackToSession);
                                     break;
+                                case ConsoleKey.T:
+                                    ShowToast(await HandOverAsync(speakers, cancellationToken).ConfigureAwait(false));
+                                    break;
                                 case ConsoleKey.R:
                                     speakers.StartScan(cancellationToken);
                                     break;
@@ -184,6 +192,30 @@ public sealed class RemoteScreen
         => [.. state.Devices.Where(d => d.Capabilities?.CanBePlayer == true).Take(MaxDeviceHotkeys)];
 
     /// <summary>
+    /// Hands the track the player itself is on to the selected speaker. The speaker fetches and plays
+    /// it from the catalogue, so nothing is streamed from here and the player is free to stop.
+    /// </summary>
+    /// <remarks>
+    /// Only a speaker can be handed a specific track. The account session can be told which device
+    /// should play, but not what — that needs a queue, which this protocol does not expose here.
+    /// </remarks>
+    private async Task<string> HandOverAsync(LocalSpeakers speakers, CancellationToken cancellationToken)
+    {
+        if (speakers.Connected is not { } speaker)
+        {
+            return Strings.HandOverNeedsSpeaker;
+        }
+
+        if (_controller.Current is not { } track)
+        {
+            return Strings.HandOverNothingPlaying;
+        }
+
+        var failure = await speakers.PlayTrackAsync(track.Id, cancellationToken).ConfigureAwait(false);
+        return failure ?? Strings.HandOverSent(Format.Truncate(track.Title, 34), Format.Truncate(speaker.Name, 24));
+    }
+
+    /// <summary>
     /// The speakers a hotkey may target, numbered after the Ynison devices so one row of numbers
     /// covers both lists.
     /// </summary>
@@ -203,6 +235,10 @@ public sealed class RemoteScreen
         var playable = ynison.LatestState is { } state ? PlayableDevices(state) : [];
         if (index < playable.Count)
         {
+            // Picking a session device hands the keys back to the session. Without this the remote
+            // starts playing on the phone while pause and the arrows still go to a speaker nobody
+            // was looking at — which reads as the remote having broken.
+            await speakers.DisconnectAsync().ConfigureAwait(false);
             return await PlayOnDeviceAsync(ynison, index, cancellationToken).ConfigureAwait(false);
         }
 
