@@ -46,6 +46,7 @@ OAuth-токен Яндекс Музыки и **автоматически пр�
 
 - `src/YandexMusic` — основная клиентская библиотека.
 - `src/YandexMusic.Ynison` — Ynison: состояние воспроизведения в реальном времени и пульт (отдельный пакет).
+- `src/YandexMusic.Quasar` — Quasar: умные колонки в локальной сети (отдельный пакет).
 - `src/YandexMusic.DependencyInjection` — интеграция с DI (`AddYandexMusic()`).
 - `samples/YandexMusicTerminal` — интерактивный терминальный музыкальный плеер (TUI), пример использования.
 - `tests/YandexMusic.Tests` — модульные и интеграционные тесты (xUnit; интеграционные используют атрибут `[IntegrationFact]` и запускаются только при заданной `YANDEX_MUSIC_TOKEN`).

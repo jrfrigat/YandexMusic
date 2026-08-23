@@ -6,12 +6,12 @@
 через namespace.
 
 ```
-YandexMusic.DependencyInjection   YandexMusic.Ynison
-// AddYandexMusic(): scoped-клиент    // CreateYnisonClient(): живое состояние
-// поверх пула IHttpClientFactory     // и пульт (websocket)
-        │                                 │
-        └────────────────┬────────────────┘
-                         ▼
+YandexMusic.DependencyInjection   YandexMusic.Ynison        YandexMusic.Quasar
+// AddYandexMusic(): scoped-       // CreateYnisonClient():   // колонки в этой сети:
+// клиент поверх пула handler'ов   // живое состояние и пульт // mDNS + websocket к каждой
+        │                                 │                         │
+        └─────────────────────────────────┼─────────────────────────┘
+                                          ▼
 YandexMusic                       // YandexMusicClient + группы эндпоинтов (Tracks, Search, …)
    Endpoints  →  Http (Connection)  →  Serialization (source-gen JSON)
    Models.*      Authentication        Exceptions

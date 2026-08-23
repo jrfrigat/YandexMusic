@@ -1,7 +1,7 @@
 # API Reference / Справочник API
 
 **English** · Auto-generated documentation for all public types of the `YandexMusic`,
-`YandexMusic.Ynison` and `YandexMusic.DependencyInjection` packages.
+`YandexMusic.Ynison`, `YandexMusic.Quasar` and `YandexMusic.DependencyInjection` packages.
 
 Start with the key types:
 
@@ -9,6 +9,7 @@ Start with the key types:
 - `YandexMusic.Endpoints` — the typed endpoint groups (`ITracksClient`, `ISearchClient`, …).
 - `YandexMusic.Authentication` — `IAuthSession`, `AuthSnapshot`, `IAuthenticationClient`.
 - `YandexMusic.Ynison` — `IYnisonClient`, `CreateYnisonClient()` and the state models.
+- `YandexMusic.Quasar` — `ILocalDeviceScanner`, `IQuasarClient`, `ILocalDeviceControl`.
 - `Microsoft.Extensions.DependencyInjection.YandexMusicServiceCollectionExtensions` — `AddYandexMusic()`.
 - `YandexMusic.YandexMusicException` and descendants — the exception hierarchy.
 
@@ -21,7 +22,7 @@ Use the tree on the left or the search box to navigate.
 ---
 
 **Русский** · Автоматически сгенерированная документация по всем публичным типам пакетов
-`YandexMusic`, `YandexMusic.Ynison` и `YandexMusic.DependencyInjection`.
+`YandexMusic`, `YandexMusic.Ynison`, `YandexMusic.Quasar` и `YandexMusic.DependencyInjection`.
 
 Начните с ключевых типов:
 
@@ -29,6 +30,7 @@ Use the tree on the left or the search box to navigate.
 - `YandexMusic.Endpoints` — типизированные группы эндпоинтов (`ITracksClient`, `ISearchClient`, …).
 - `YandexMusic.Authentication` — `IAuthSession`, `AuthSnapshot`, `IAuthenticationClient`.
 - `YandexMusic.Ynison` — `IYnisonClient`, `CreateYnisonClient()` и модели состояния.
+- `YandexMusic.Quasar` — `ILocalDeviceScanner`, `IQuasarClient`, `ILocalDeviceControl`.
 - `Microsoft.Extensions.DependencyInjection.YandexMusicServiceCollectionExtensions` — `AddYandexMusic()`.
 - `YandexMusic.YandexMusicException` и наследники — иерархия исключений.
 

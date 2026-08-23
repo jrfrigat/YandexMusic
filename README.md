@@ -21,6 +21,7 @@ Unofficial asynchronous library for the Yandex Music API. Runs on **.NET 8, .NET
 - ✅ **Full catalogue coverage** — tracks (metadata, **direct download/stream link**, lyrics, full-info, similar, trailer), search (+ autocomplete), albums, artists, playlists, genres, labels, clips, credits, disclaimers, concerts, meta-tag pages
 - ✅ **Personalised endpoints** — account & settings, library likes/dislikes (read & write), playlist editing, radio (rotor) stations, landing & feed, cross-device queues, pins, pre-saves, listening history
 - ✅ **Ynison real-time** — subscribe to the account's playback state across all devices and remote-control it (pause, tracks, volume) over the same websocket protocol the official clients use
+- ✅ **Smart speakers** — find them on the local network over mDNS and drive them directly, with their TLS certificate pinned; a speaker never joins the account's session, so this is the only way to reach one
 - ✅ **Multiple sign-in flows** — OAuth token, the official OAuth **device-code** flow, and best-effort cookie, QR or login + password; all over a serializable session you can persist and restore
 - ✅ `System.Text.Json` source generation — allocation-conscious and trim/AOT-friendly (`IsAotCompatible`)
 - ✅ Typed exceptions, first-class dependency-injection integration, full XML documentation
@@ -69,11 +70,13 @@ dotnet run --project samples/YandexMusicTerminal
   fallback) it runs a silent simulation that drives the same UI. The audio backend is a single
   [`IAudioPlayer`](samples/YandexMusicTerminal/Playback/IAudioPlayer.cs) seam, so swapping in a
   cross-platform backend changes one line.
-- **Remote control** — the Ynison screen shows what is playing on every device of the account (web,
-  phone, smart speakers) and controls it: pause, tracks, volume, and "play here" by pressing `1-9`.
+- **Remote control** — the screen lists both the account's Ynison devices and the speakers answering
+  on this network, numbered in one row. Pick one with `1-9` and the transport keys drive it; `0`
+  hands them back to the session, `r` rescans.
 - **Per-track actions** (now-playing view) — `l` like · `x` dislike (and skip) · `t` lyrics ·
-  `i` an endless radio of similar tracks. Playback starts and skips are reported back to the API,
-  so "My Wave" keeps learning from what you play.
+  `i` an endless radio of similar tracks · `r` send the track to a speaker, which then fetches and
+  plays it itself. Playback starts and skips are reported back to the API, so "My Wave" keeps
+  learning from what you play.
 - **Search** — tabs for tracks, artists, albums and playlists, paging via a "more" row, and drill-in
   to a picked artist's, album's or playlist's tracks.
 - **Main menu** is cursor-driven with a hotkey bar along the bottom — single-key shortcuts jump
@@ -93,6 +96,9 @@ dotnet add package YandexMusic
 # Optional: real-time state and remote control
 dotnet add package YandexMusic.Ynison
 
+# Optional: smart speakers on the local network
+dotnet add package YandexMusic.Quasar
+
 # Optional: dependency-injection integration
 dotnet add package YandexMusic.DependencyInjection
 ```
@@ -101,11 +107,12 @@ dotnet add package YandexMusic.DependencyInjection
 |---------|---------|
 | [`YandexMusic`](https://www.nuget.org/packages/YandexMusic) | The `YandexMusicClient`, models, authentication and endpoint groups. |
 | [`YandexMusic.Ynison`](https://www.nuget.org/packages/YandexMusic.Ynison) | `CreateYnisonClient()` — the account's live playback state and the remote. |
+| [`YandexMusic.Quasar`](https://www.nuget.org/packages/YandexMusic.Quasar) | Finds Yandex speakers on the local network and drives them directly. |
 | [`YandexMusic.DependencyInjection`](https://www.nuget.org/packages/YandexMusic.DependencyInjection) | `AddYandexMusic()` — a scoped client over an `IHttpClientFactory` pool. |
 
 The core package is standalone and depends on nothing but the BCL — most consumers want the REST API
-and nothing else, so the websocket-based remote lives in its own package rather than in everyone's
-dependency tree.
+and nothing else, so the websocket-based remote and the speaker support live in their own packages
+rather than in everyone's dependency tree.
 
 ## Quick start
 
@@ -174,6 +181,37 @@ ynison.StateReceived += (_, s) => Console.WriteLine(s.PlayerState?.PlayerQueue?.
 await ynison.SetPausedAsync(paused: false);   // remote control
 await ynison.NextTrackAsync();
 ```
+
+### Drive a speaker on the local network (Quasar)
+
+A smart speaker never joins the account's Ynison session, so the only way to reach one is to talk to
+it directly. `YandexMusic.Quasar` finds them over mDNS and connects to each speaker itself:
+
+```csharp
+using YandexMusic.Quasar;
+
+// Discovery alone needs no account, no token and no internet connection.
+var scanner = new LocalDeviceScanner();
+await foreach (var found in scanner.DiscoverAsync(TimeSpan.FromSeconds(3)))
+{
+    Console.WriteLine($"{found.Platform} at {found.Endpoint}");
+}
+
+// Driving one does: the account supplies its name, its certificate and a per-device token.
+using var quasar = client.CreateQuasarClient();
+var speaker = (await quasar.GetDevicesAsync()).First(d => d.Platform == "yandexmini");
+
+await using var control = await quasar.ConnectAsync(speaker);
+_ = control.RunAsync();
+await control.WaitForStateAsync(TimeSpan.FromSeconds(10));
+
+await control.PlayTrackAsync("38633712");   // the speaker fetches and plays it itself
+await control.SetVolumeAsync(0.4);
+```
+
+The connection pins the speaker's TLS certificate against the one the account publishes for it —
+the certificate is self-signed and names `localhost`, so ordinary validation could never succeed and
+"trust anything" would be the only alternative.
 
 Every method accepts a `CancellationToken`:
 
@@ -246,6 +284,7 @@ Full guides and API reference: **<https://jrfrigat.github.io/YandexMusic/>**
 ├── src/
 │   ├── YandexMusic/                     # core library (client, models, endpoints, auth, JSON)
 │   ├── YandexMusic.Ynison/              # real-time state and remote control (websocket)
+│   ├── YandexMusic.Quasar/              # speakers on the local network (mDNS + websocket)
 │   └── YandexMusic.DependencyInjection/ # AddYandexMusic() integration
 ├── tests/
 │   └── YandexMusic.Tests/               # unit + (token-gated) integration tests (xUnit)
