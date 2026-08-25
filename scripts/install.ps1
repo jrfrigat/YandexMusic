@@ -45,6 +45,38 @@ $command = 'ymt'
 
 function Write-Step([string] $message) { Write-Host "==> $message" -ForegroundColor Cyan }
 
+function Get-LatestReleaseTag([string] $repository) {
+    # The unauthenticated GitHub API is limited to 60 requests per public IP. That limit is often
+    # shared by an office, VPN or ISP and can make the installer fail even though releases are
+    # available. The regular releases/latest endpoint is not subject to that API limit and redirects
+    # to /releases/tag/<tag>, so only inspect its Location header.
+    $latestUrl = "https://github.com/$repository/releases/latest"
+    $request = [Net.HttpWebRequest]::Create($latestUrl)
+    $request.Method = 'HEAD'
+    $request.AllowAutoRedirect = $false
+    $request.UserAgent = 'ymt-installer'
+
+    try {
+        $response = [Net.HttpWebResponse] $request.GetResponse()
+    }
+    catch {
+        throw "Cannot resolve the latest GitHub release ($latestUrl): $($_.Exception.Message)"
+    }
+
+    try {
+        $location = $response.Headers['Location']
+    }
+    finally {
+        $response.Dispose()
+    }
+
+    if (-not $location -or $location -notmatch '/releases/tag/([^/?#]+)') {
+        throw "GitHub did not redirect $latestUrl to a release tag. Location: $location"
+    }
+
+    return [Uri]::UnescapeDataString($Matches[1])
+}
+
 if ([Environment]::Is64BitOperatingSystem -eq $false) {
     throw "ymt ships for 64-bit Windows only; this system is 32-bit."
 }
@@ -58,32 +90,31 @@ catch {
     Write-Verbose "Could not select TLS 1.2 explicitly; using the platform default. $($_.Exception.Message)"
 }
 
-$headers = @{ 'User-Agent' = 'ymt-installer'; 'Accept' = 'application/vnd.github+json' }
-$releaseUrl = if ($Version -eq 'latest') {
-    "https://api.github.com/repos/$repo/releases/latest"
-} else {
-    "https://api.github.com/repos/$repo/releases/tags/$Version"
+$headers = @{ 'User-Agent' = 'ymt-installer' }
+$tag = $Version
+if ($Version -eq 'latest') {
+    Write-Step "Looking up the latest release of $repo"
+    $tag = Get-LatestReleaseTag $repo
 }
 
-Write-Step "Looking up the $Version release of $repo"
-try {
-    $release = Invoke-RestMethod -Uri $releaseUrl -Headers $headers
-}
-catch {
-    throw "Cannot reach the GitHub release API ($releaseUrl): $($_.Exception.Message)"
-}
-
-$asset = $release.assets | Where-Object { $_.name -like 'ymt-*-win-x64.zip' } | Select-Object -First 1
-if (-not $asset) {
-    throw "Release $($release.tag_name) has no win-x64 archive. Assets: $(($release.assets | ForEach-Object name) -join ', ')"
-}
+$releaseVersion = $tag -replace '^v', ''
+$assetName = "ymt-$releaseVersion-win-x64.zip"
+$escapedTag = [Uri]::EscapeDataString($tag)
+$escapedAssetName = [Uri]::EscapeDataString($assetName)
+$downloadUrl = "https://github.com/$repo/releases/download/$escapedTag/$escapedAssetName"
 
 $temp = Join-Path ([IO.Path]::GetTempPath()) ("ymt-" + [Guid]::NewGuid().ToString('N'))
 New-Item -ItemType Directory -Path $temp | Out-Null
 try {
-    $archive = Join-Path $temp $asset.name
-    Write-Step "Downloading $($asset.name) ($([math]::Round($asset.size / 1MB, 1)) MB)"
-    Invoke-WebRequest -Uri $asset.browser_download_url -OutFile $archive -Headers $headers
+    $archive = Join-Path $temp $assetName
+    Write-Step "Downloading $assetName"
+    try {
+        # Basic parsing avoids the Internet Explorer dependency in Windows PowerShell 5.1.
+        Invoke-WebRequest -Uri $downloadUrl -OutFile $archive -Headers $headers -UseBasicParsing
+    }
+    catch {
+        throw "Cannot download the win-x64 archive for release $tag ($downloadUrl): $($_.Exception.Message)"
+    }
 
     Write-Step "Unpacking into $InstallDir"
     $staging = Join-Path $temp 'unpacked'
@@ -123,6 +154,6 @@ if (-not $NoPathUpdate) {
 }
 
 Write-Host ""
-Write-Host "ymt $($release.tag_name) installed." -ForegroundColor Green
+Write-Host "ymt $tag installed." -ForegroundColor Green
 Write-Host "Run it with: " -NoNewline
 Write-Host $command -ForegroundColor Yellow
