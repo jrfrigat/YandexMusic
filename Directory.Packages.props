@@ -10,7 +10,7 @@
     <!-- Build / packaging -->
     <PackageVersion Include="Microsoft.SourceLink.GitHub" Version="10.0.400" />
     <!-- Version is derived from the latest 'v*' git tag (see Directory.Build.props). -->
-    <PackageVersion Include="MinVer" Version="7.0.0" />
+    <PackageVersion Include="MinVer" Version="8.0.0" />
   </ItemGroup>
 
   <!--
