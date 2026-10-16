@@ -38,7 +38,7 @@ public sealed class PlaylistDeserializationTests
         Assert.Equal("My Rock", playlist.Title);
         Assert.Equal(1000, playlist.Kind);
         Assert.Equal(PlaylistVisibility.Public, playlist.Visibility);
-        Assert.Equal("user", playlist.Owner.Login);
+        Assert.Equal("user", playlist.Owner!.Login);
         Assert.Equal(2020, playlist.Created!.Value.Year);
         Assert.Equal(2, playlist.Pager!.Total);
     }

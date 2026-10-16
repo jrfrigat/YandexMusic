@@ -31,8 +31,8 @@ public sealed class PlaylistTag
 /// <summary>A playlist of tracks.</summary>
 public sealed class Playlist
 {
-    /// <summary>The playlist owner.</summary>
-    public User Owner { get; init; } = new();
+    /// <summary>The playlist owner. Artist playlists (in the artist brief info) come without one.</summary>
+    public User? Owner { get; init; }
 
     /// <summary>The globally-unique playlist identifier.</summary>
     public string? PlaylistUuid { get; init; }
@@ -102,4 +102,22 @@ public sealed class Playlist
 
     /// <summary>The analytics context identifier the playlist was opened from, when provided.</summary>
     public string? IdForFrom { get; init; }
+
+    /// <summary>The call-to-action button of the playlist page, when present.</summary>
+    public ActionButton? ActionButton { get; init; }
+
+    /// <summary>The kind of artist playlist. Known values: <c>TOP</c>, <c>SIMILAR</c>.</summary>
+    public string? ArtistPlaylistType { get; init; }
+
+    /// <summary>Whether the playlist is content for children.</summary>
+    public bool? ChildContent { get; init; }
+
+    /// <summary>The accent colors derived from the cover.</summary>
+    public DerivedColors? DerivedColors { get; init; }
+
+    /// <summary>Marks a personal playlist and how to address its listener.</summary>
+    public MadeForUser? MadeForUser { get; init; }
+
+    /// <summary>"My wave" seeded from the playlist, when the page promotes one.</summary>
+    public CustomWave? CustomWave { get; init; }
 }

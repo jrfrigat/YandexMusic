@@ -100,4 +100,16 @@ public sealed class Artist
 
     /// <summary>The countries associated with the artist, when available.</summary>
     public IReadOnlyList<string>? Countries { get; init; }
+
+    /// <summary>The call-to-action button of the artist page, when present.</summary>
+    public ActionButton? ActionButton { get; init; }
+
+    /// <summary>The link to donate to the artist, when present.</summary>
+    public ArtistDonationInfo? DonationInfo { get; init; }
+
+    /// <summary>Whether the artist has a trailer.</summary>
+    public bool? HasTrailer { get; init; }
+
+    /// <summary>Whether a trailer is available for the artist.</summary>
+    public ArtistTrailerStatus? Trailer { get; init; }
 }

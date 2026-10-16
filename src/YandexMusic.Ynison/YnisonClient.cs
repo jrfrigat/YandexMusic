@@ -77,6 +77,9 @@ public sealed class YnisonClient : IYnisonClient
     public event EventHandler<Exception>? ListenerError;
 
     /// <inheritdoc />
+    public event EventHandler<Exception>? ConnectionError;
+
+    /// <inheritdoc />
     public event EventHandler<string>? FrameReceived;
 
     /// <inheritdoc />
@@ -165,6 +168,7 @@ public sealed class YnisonClient : IYnisonClient
     {
         var reconnectNumber = 0;
         var framesAtLastFailure = 0L;
+        IReadOnlyList<TimeSpan> serverBackoff = [];
         while (Volatile.Read(ref _stopping) == 0 && !cancellationToken.IsCancellationRequested)
         {
             try
@@ -179,7 +183,12 @@ public sealed class YnisonClient : IYnisonClient
             {
                 return;
             }
-            catch (Exception ex) when (IsTransient(ex))
+            catch (YandexMusicYnisonServerException ex) when (ex.IsTerminal)
+            {
+                // A rejected token, a displaced device or a go-away: retrying cannot succeed.
+                throw;
+            }
+            catch (Exception ex) when (IsTransient(ex) || ex is YandexMusicYnisonServerException)
             {
                 if (Volatile.Read(ref _stopping) == 1)
                 {
@@ -195,8 +204,20 @@ public sealed class YnisonClient : IYnisonClient
                     framesAtLastFailure = frames;
                 }
 
+                if (ex is YandexMusicYnisonServerException { Backoff.Count: > 0 } serverError)
+                {
+                    serverBackoff = serverError.Backoff;
+                }
+
                 reconnectNumber++;
-                var backoff = TimeSpan.FromSeconds(Math.Min(Math.Pow(2, reconnectNumber), 64) + (Random.Shared.NextDouble() - 0.5));
+                if (_options.MaxReconnectAttempts is { } limit && reconnectNumber > limit)
+                {
+                    throw new YandexMusicYnisonException($"Ynison did not reconnect after {limit} attempts.", ex);
+                }
+
+                RaiseConnectionError(ex);
+
+                var backoff = ReconnectDelay(reconnectNumber, serverBackoff);
                 try
                 {
                     await Task.Delay(backoff, cancellationToken).ConfigureAwait(false);
@@ -322,6 +343,11 @@ public sealed class YnisonClient : IYnisonClient
             var redirectJson = await redirect.ReceiveTextAsync(cancellationToken).ConfigureAwait(false)
                 ?? throw new YandexMusicYnisonException("The Ynison redirector closed the connection before answering.");
 
+            if (YnisonServerErrors.TryParse(redirectJson, out var redirectError))
+            {
+                throw redirectError!;
+            }
+
             RedirectResponse? redirection;
             try
             {
@@ -376,6 +402,13 @@ public sealed class YnisonClient : IYnisonClient
 
                     Raise(FrameReceived, frame);
 
+                    // An error frame would otherwise parse as an empty state and look like
+                    // "nothing is playing"; the server closes the stream after it anyway.
+                    if (YnisonServerErrors.TryParse(frame, out var serverError))
+                    {
+                        throw serverError!;
+                    }
+
                     PutYnisonStateResponse? response;
                     try
                     {
@@ -427,6 +460,37 @@ public sealed class YnisonClient : IYnisonClient
         {
             ListenerError?.Invoke(this, ex);
         }
+    }
+
+    private void RaiseConnectionError(Exception error)
+    {
+        var handler = ConnectionError;
+        if (handler is null)
+        {
+            return;
+        }
+
+        try
+        {
+            handler(this, error);
+        }
+        catch (Exception ex)
+        {
+            ListenerError?.Invoke(this, ex);
+        }
+    }
+
+    // The server's own ladder wins when it sent one (with a little jitter so clients do not
+    // reconnect in lockstep); otherwise a capped exponential backoff.
+    private static TimeSpan ReconnectDelay(int reconnectNumber, IReadOnlyList<TimeSpan> serverBackoff)
+    {
+        if (serverBackoff.Count > 0)
+        {
+            var step = serverBackoff[Math.Min(reconnectNumber - 1, serverBackoff.Count - 1)];
+            return step + TimeSpan.FromMilliseconds(Random.Shared.Next(0, 250));
+        }
+
+        return TimeSpan.FromSeconds(Math.Min(Math.Pow(2, reconnectNumber), 64) + (Random.Shared.NextDouble() - 0.5));
     }
 
     private void RaiseStateReceived(PutYnisonStateResponse response)

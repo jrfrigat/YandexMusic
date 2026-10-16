@@ -23,4 +23,34 @@ public sealed class ArtistBriefInfo
 
     /// <summary>Artists similar to this one.</summary>
     public IReadOnlyList<Artist> SimilarArtists { get; init; } = [];
+
+    /// <summary>The call-to-action button of the artist page, when present.</summary>
+    public ActionButton? ActionButton { get; init; }
+
+    /// <summary>The background image URL of the artist page.</summary>
+    public string? BackgroundImageUrl { get; init; }
+
+    /// <summary>The identifier of the background video of the artist page.</summary>
+    public string? BackgroundVideoId { get; init; }
+
+    /// <summary>The URL of the background video of the artist page.</summary>
+    public string? BackgroundVideoUrl { get; init; }
+
+    /// <summary>The Bandlink page listing playlists that feature the artist.</summary>
+    public ArtistLink? BandlinkScannerLink { get; init; }
+
+    /// <summary>The artist's clips. Only sent when the request asks for the clip data format.</summary>
+    public IReadOnlyList<Clip> Clips { get; init; } = [];
+
+    /// <summary>"My wave" seeded from the artist, when the page promotes one.</summary>
+    public CustomWave? CustomWave { get; init; }
+
+    /// <summary>Whether the artist has a trailer.</summary>
+    public bool? HasTrailer { get; init; }
+
+    /// <summary>Links to the artist's pages elsewhere.</summary>
+    public IReadOnlyList<ArtistLink> Links { get; init; } = [];
+
+    /// <summary>The artist's announced, not yet released album.</summary>
+    public UpcomingAlbum? UpcomingAlbum { get; init; }
 }

@@ -1,6 +1,7 @@
 using System.Text.Json.Serialization;
 using YandexMusic.Models.Albums;
 using YandexMusic.Models.Artists;
+using YandexMusic.Models.Landing;
 using YandexMusic.Serialization;
 
 namespace YandexMusic.Models.Tracks;
@@ -68,6 +69,9 @@ public sealed class R128
 
     /// <summary>The true peak, in dBTP.</summary>
     public double Tp { get; init; }
+
+    /// <summary>How many seconds of the track carry its significant part.</summary>
+    public int? ImportantSecs { get; init; }
 }
 
 /// <summary>The fade-in/fade-out envelope of a track, in seconds.</summary>
@@ -196,4 +200,25 @@ public sealed class Track
 
     /// <summary>The replacement track served when the original is unavailable in the region, when present.</summary>
     public Track? Substituted { get; init; }
+
+    /// <summary>The fade envelope radio uses when mixing this track into the next one.</summary>
+    public Fade? MixFade { get; init; }
+
+    /// <summary>The chart position of the track, when it is charted.</summary>
+    public Chart? Chart { get; init; }
+
+    /// <summary>The identifiers of the track's clips.</summary>
+    public IReadOnlyList<long> ClipIds { get; init; } = [];
+
+    /// <summary>The International Standard Recording Code of the track.</summary>
+    public string? Isrc { get; init; }
+
+    /// <summary>The performer's name of a user-uploaded track.</summary>
+    public string? UgcArtistName { get; init; }
+
+    /// <summary>The kind of podcast episode, for example <c>full</c>.</summary>
+    public string? PodcastEpisodeType { get; init; }
+
+    /// <summary>When the podcast episode was published.</summary>
+    public DateTimeOffset? PubDate { get; init; }
 }

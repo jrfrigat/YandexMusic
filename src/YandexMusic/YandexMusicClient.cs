@@ -50,6 +50,7 @@ public sealed class YandexMusicClient : IYandexMusicClient
         Labels = new LabelsClient(Connection);
         Landing = new LandingClient(Connection);
         Radio = new RadioClient(Connection);
+        RadioSessions = new RadioSessionsClient(Connection);
         Concerts = new ConcertsClient(Connection);
         Metatags = new MetatagsClient(Connection);
         Queue = new QueueClient(Connection);
@@ -91,6 +92,7 @@ public sealed class YandexMusicClient : IYandexMusicClient
         Labels = new LabelsClient(Connection);
         Landing = new LandingClient(Connection);
         Radio = new RadioClient(Connection);
+        RadioSessions = new RadioSessionsClient(Connection);
         Concerts = new ConcertsClient(Connection);
         Metatags = new MetatagsClient(Connection);
         Queue = new QueueClient(Connection);
@@ -143,6 +145,9 @@ public sealed class YandexMusicClient : IYandexMusicClient
 
     /// <inheritdoc />
     public IRadioClient Radio { get; }
+
+    /// <inheritdoc />
+    public IRadioSessionsClient RadioSessions { get; }
 
     /// <inheritdoc />
     public IConcertsClient Concerts { get; }

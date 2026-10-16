@@ -18,9 +18,11 @@ public sealed class Station
     [JsonPropertyName("mtsIcon")]
     public Icon MtsIcon { get; init; } = new();
 
-    /// <summary>The geocell station icon.</summary>
+    /// <summary>
+    /// The geocell station icon. The wave settings do not always include it, so it may be absent.
+    /// </summary>
     [JsonPropertyName("geocellIcon")]
-    public Icon GeocellIcon { get; init; } = new();
+    public Icon? GeocellIcon { get; init; }
 
     /// <summary>The seed value used in the <c>from</c> field when reporting playback.</summary>
     [JsonPropertyName("idForFrom")]

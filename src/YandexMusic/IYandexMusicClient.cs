@@ -55,6 +55,9 @@ public interface IYandexMusicClient : IDisposable, IAsyncDisposable
     /// <summary>Endpoints for radio (rotor) stations.</summary>
     IRadioClient Radio { get; }
 
+    /// <summary>Endpoints for radio sessions, the session-based way to play radio and report feedback.</summary>
+    IRadioSessionsClient RadioSessions { get; }
+
     /// <summary>Endpoints for concerts and events.</summary>
     IConcertsClient Concerts { get; }
 

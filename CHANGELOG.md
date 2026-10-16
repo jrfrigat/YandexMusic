@@ -6,6 +6,55 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
+## [Unreleased]
+
+### Fixed
+- **Radio feedback and station settings** are sent as JSON. The rotor endpoints stopped accepting
+  form fields, so `SendStationFeedback*Async` and `SetStationSettingsAsync` were failing. Event times
+  are now `DateTimeOffset?` and go out as ISO 8601 in UTC (`2024-01-01T12:00:00.000Z`): the API
+  rejects a Unix timestamp written as a string, which is what the old `double?` seconds became. An
+  empty `language` is left out instead of being sent blank.
+- **Ynison next/previous follow the shuffled order.** With shuffle on they used to step through the
+  list order and land on the wrong track. At either end of the queue the command now throws instead
+  of quietly restarting the current track; with repeat-all on it wraps around.
+- **Ynison error frames are recognized.** The server reports failures as `{"error": …}` frames,
+  which used to parse as an empty state and look like "nothing is playing". They now surface as
+  `YandexMusicYnisonServerException` with the gRPC/HTTP codes and the server's advice: recoverable
+  errors reconnect on the server's own backoff ladder, while a rejected token, a device displaced by
+  another connection with the same id, or a go-away end `RunAsync` instead of retrying forever. A
+  token rejected at the websocket handshake is treated the same way.
+
+### Added
+- **Radio sessions** (`IYandexMusicClient.RadioSessions`), the current way to play radio: open a
+  session from seeds, fetch batches, report feedback one by one or in bulk (also for several sessions
+  at once), clone a session, and the combined track-and-clip sessions. A session can be started
+  already tuned by passing the `SerializedSeed` of a wave setting as a seed.
+- **Wave**: the last started wave and resetting it, and the wave settings with the seed of every
+  setting value.
+- **Generative stations** (`generative:focus` and similar): `GetStationStreamAsync` and
+  `SendStationStreamFeedbackAsync`, plus `streamId` on station feedback.
+- **Lossless**: `ITracksClient.GetFileInfoAsync` asks for a rendition by quality, codecs and
+  transport, signed with the desktop key the endpoint requires. `DownloadAsync` streams the file to
+  any `Stream` and decrypts `encraw` (AES-128-CTR) on the fly, chunk by chunk, so a large FLAC is
+  never held in memory whole.
+- Ynison: the `ConnectionError` event for failures the client recovers from,
+  `YnisonClientOptions.MaxReconnectAttempts`, and `YnisonQueueNavigation` for reading a queue in
+  playback order.
+- New model fields the API now sends: on tracks (`Isrc`, `ClipIds`, `Chart`, `MixFade`,
+  `UgcArtistName`, `PodcastEpisodeType`, `PubDate`, `R128.ImportantSecs`), albums (`CustomWave`,
+  `Trailer`, `DurationSec`, `ActionButton`, `BackgroundImageUrl`, `ChildContent`), artists and their
+  brief info (`ActionButton`, `DonationInfo`, `Trailer`, `UpcomingAlbum`, `Links`, `Clips`,
+  `CustomWave`, background media), playlists (`ActionButton`, `ArtistPlaylistType`, `MadeForUser`,
+  `DerivedColors`, `ChildContent`, `CustomWave`), search (`Clips`, `Banner`), radio (`TrackParameters`,
+  `RadioSessionId`, the wave fields of `Wave`, `SerializedSeed` on setting values) and the account
+  (`RegionCode`, `NonOwnerFamilyMember`, `HasOptions`, `Plus.Migrated`).
+
+### Changed
+- `Playlist.Owner` is nullable: artist playlists come without an owner, and an empty `User` stood in
+  for it. `Subscription.HadAnySubscription` is `bool?`, since the radio account status leaves it out
+  and `false` would claim "never subscribed". `Station.GeocellIcon` is nullable for the same reason.
+- `YandexMusicYnisonException` is no longer sealed, so the server error can derive from it.
+
 ## [0.6.0] - 2026-08-23
 
 ### Added

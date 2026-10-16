@@ -22,6 +22,9 @@ public sealed class TrackShort
     /// <summary>The original position of the track within its container.</summary>
     public int OriginalIndex { get; init; }
 
+    /// <summary>The position of the track in the container's shuffled order, when the container was shuffled.</summary>
+    public int? OriginalShuffleIndex { get; init; }
+
     /// <summary>When the track was added to the container, when known.</summary>
     public DateTimeOffset? Timestamp { get; init; }
 

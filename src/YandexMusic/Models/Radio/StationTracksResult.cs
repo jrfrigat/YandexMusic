@@ -18,6 +18,13 @@ public sealed class StationTracksResult
 
     /// <summary>Whether the seasonal "pumpkin" presentation is active.</summary>
     public bool Pumpkin { get; init; }
+
+    /// <summary>
+    /// The radio session the batch was served in, when the station is backed by a session. It is the
+    /// identifier to use with the session endpoints rather than starting a new session.
+    /// </summary>
+    [JsonPropertyName("radioSessionId")]
+    public string? RadioSessionId { get; init; }
 }
 
 /// <summary>A single item in a station batch: a track and whether it is already liked.</summary>
@@ -31,4 +38,8 @@ public sealed class Sequence
 
     /// <summary>Whether the current user already liked the track.</summary>
     public bool Liked { get; init; }
+
+    /// <summary>The musical characteristics radio reports for the track, when it provides them.</summary>
+    [JsonPropertyName("trackParameters")]
+    public TrackParameters? TrackParameters { get; init; }
 }

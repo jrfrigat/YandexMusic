@@ -1,5 +1,6 @@
-using System.Globalization;
+using System.Text.Json;
 using YandexMusic.Http;
+using YandexMusic.Models;
 using YandexMusic.Models.Account;
 using YandexMusic.Models.Radio;
 
@@ -45,44 +46,41 @@ internal sealed class RadioClient : IRadioClient
     public async Task<bool> SendStationFeedbackAsync(
         string station,
         string type,
-        double? timestamp = null,
+        DateTimeOffset? timestamp = null,
         string? from = null,
         string? batchId = null,
         double? totalPlayedSeconds = null,
         string? trackId = null,
+        string? streamId = null,
         CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(station);
         ArgumentException.ThrowIfNullOrWhiteSpace(type);
 
-        var fields = new Dictionary<string, string>
+        // The endpoint takes a JSON body; form fields are rejected. A zero play time is the same as
+        // none, so it is left out rather than reported as an instant skip.
+        using var content = JsonBody.FromObject(writer =>
         {
-            ["type"] = type,
-            ["timestamp"] = (timestamp ?? CurrentUnixSeconds()).ToString(CultureInfo.InvariantCulture),
-        };
+            writer.WriteString("type", type);
+            writer.WriteString("timestamp", JsonBody.FormatTimestamp(timestamp));
 
-        if (!string.IsNullOrEmpty(from))
-        {
-            fields["from"] = from;
-        }
+            if (!string.IsNullOrEmpty(trackId))
+            {
+                writer.WriteString("trackId", trackId);
+            }
 
-        if (!string.IsNullOrEmpty(trackId))
-        {
-            fields["trackId"] = trackId;
-        }
+            if (!string.IsNullOrEmpty(from))
+            {
+                writer.WriteString("from", from);
+            }
 
-        if (totalPlayedSeconds is { } played)
-        {
-            fields["totalPlayedSeconds"] = played.ToString(CultureInfo.InvariantCulture);
-        }
+            if (totalPlayedSeconds is { } played && played != 0)
+            {
+                writer.WriteNumber("totalPlayedSeconds", played);
+            }
+        });
 
-        var url = $"/rotor/station/{Uri.EscapeDataString(station)}/feedback";
-        if (!string.IsNullOrEmpty(batchId))
-        {
-            url += $"?batch-id={Uri.EscapeDataString(batchId)}";
-        }
-
-        using var content = new FormUrlEncodedContent(fields);
+        var url = FeedbackUrl(station, batchId, streamId);
         var result = await _connection
             .PostAsync<string>(url, content, cancellationToken)
             .ConfigureAwait(false);
@@ -95,7 +93,7 @@ internal sealed class RadioClient : IRadioClient
         string station,
         string from,
         string? batchId = null,
-        double? timestamp = null,
+        DateTimeOffset? timestamp = null,
         CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(from);
@@ -107,7 +105,7 @@ internal sealed class RadioClient : IRadioClient
         string station,
         string trackId,
         string? batchId = null,
-        double? timestamp = null,
+        DateTimeOffset? timestamp = null,
         CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(trackId);
@@ -120,7 +118,7 @@ internal sealed class RadioClient : IRadioClient
         string trackId,
         double totalPlayedSeconds,
         string? batchId = null,
-        double? timestamp = null,
+        DateTimeOffset? timestamp = null,
         CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(trackId);
@@ -133,7 +131,7 @@ internal sealed class RadioClient : IRadioClient
         string trackId,
         double totalPlayedSeconds,
         string? batchId = null,
-        double? timestamp = null,
+        DateTimeOffset? timestamp = null,
         CancellationToken cancellationToken = default)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(trackId);
@@ -153,6 +151,35 @@ internal sealed class RadioClient : IRadioClient
     }
 
     /// <inheritdoc />
+    public Task<GenerativeStream?> GetStationStreamAsync(string station, CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(station);
+        return _connection.GetAsync<GenerativeStream>($"/rotor/station/{Uri.EscapeDataString(station)}/stream", cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public async Task<GenerativeStreamFeedback?> SendStationStreamFeedbackAsync(
+        string station,
+        string type,
+        string? streamId = null,
+        DateTimeOffset? timestamp = null,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(station);
+        ArgumentException.ThrowIfNullOrWhiteSpace(type);
+
+        using var content = JsonBody.FromObject(writer =>
+        {
+            writer.WriteString("type", type);
+            writer.WriteString("timestamp", JsonBody.FormatTimestamp(timestamp));
+        });
+
+        return await _connection
+            .PostAsync<GenerativeStreamFeedback>(FeedbackUrl(station, batchId: null, streamId), content, cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    /// <inheritdoc />
     public async Task<bool> SetStationSettingsAsync(
         string station,
         string moodEnergy,
@@ -165,15 +192,18 @@ internal sealed class RadioClient : IRadioClient
         ArgumentException.ThrowIfNullOrWhiteSpace(moodEnergy);
         ArgumentException.ThrowIfNullOrWhiteSpace(diversity);
 
-        var fields = new Dictionary<string, string>
+        using var content = JsonBody.FromObject(writer =>
         {
-            ["moodEnergy"] = moodEnergy,
-            ["diversity"] = diversity,
-            ["type"] = type,
-            ["language"] = language,
-        };
+            writer.WriteString("moodEnergy", moodEnergy);
+            writer.WriteString("diversity", diversity);
+            writer.WriteString("type", type);
 
-        using var content = new FormUrlEncodedContent(fields);
+            if (!string.IsNullOrEmpty(language))
+            {
+                writer.WriteString("language", language);
+            }
+        });
+
         var result = await _connection
             .PostAsync<string>($"/rotor/station/{Uri.EscapeDataString(station)}/settings3", content, cancellationToken)
             .ConfigureAwait(false);
@@ -203,7 +233,51 @@ internal sealed class RadioClient : IRadioClient
         return _connection.GetAsync<StationTracksResult>(url, cancellationToken);
     }
 
-    // The rotor feedback endpoint expects timestamps as unix epoch seconds.
-    private static double CurrentUnixSeconds()
-        => DateTimeOffset.UtcNow.ToUnixTimeMilliseconds() / 1000.0;
+    /// <inheritdoc />
+    public Task<Wave?> GetLastWaveAsync(CancellationToken cancellationToken = default)
+        => _connection.GetAsync<Wave>("/rotor/wave/last", cancellationToken);
+
+    /// <inheritdoc />
+    public async Task<bool> ResetLastWaveAsync(CancellationToken cancellationToken = default)
+    {
+        var result = await _connection
+            .PostAsync<JsonElement>("/rotor/wave/last/reset", null, cancellationToken)
+            .ConfigureAwait(false);
+
+        // The acknowledgement is an object of the form { "result": "ok" } inside the envelope.
+        return result.ValueKind == JsonValueKind.Object
+            && result.TryGetProperty("result", out var status)
+            && status.ValueKind == JsonValueKind.String
+            && string.Equals(status.GetString(), "ok", StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <inheritdoc />
+    public Task<WaveSettings?> GetWaveSettingsAsync(IEnumerable<string>? seeds = null, CancellationToken cancellationToken = default)
+    {
+        var url = "/rotor/wave/settings";
+        var joined = seeds is null ? string.Empty : string.Join(',', seeds.Where(s => !string.IsNullOrWhiteSpace(s)));
+        if (joined.Length > 0)
+        {
+            url += $"?seeds={Uri.EscapeDataString(joined)}";
+        }
+
+        return _connection.GetAsync<WaveSettings>(url, cancellationToken);
+    }
+
+    private static string FeedbackUrl(string station, string? batchId, string? streamId)
+    {
+        var query = new List<string>(2);
+        if (!string.IsNullOrEmpty(batchId))
+        {
+            query.Add($"batch-id={Uri.EscapeDataString(batchId)}");
+        }
+
+        if (!string.IsNullOrEmpty(streamId))
+        {
+            query.Add($"streamId={Uri.EscapeDataString(streamId)}");
+        }
+
+        var url = $"/rotor/station/{Uri.EscapeDataString(station)}/feedback";
+        return query.Count == 0 ? url : $"{url}?{string.Join('&', query)}";
+    }
 }

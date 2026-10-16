@@ -36,6 +36,36 @@ public interface ITracksClient
     /// <returns>The direct media URL, or <see langword="null"/> if no downloadable variant exists.</returns>
     Task<string?> GetDirectLinkAsync(string trackId, CancellationToken cancellationToken = default);
 
+    /// <summary>
+    /// Gets the download location of one rendition of a track, including lossless ones. Requires
+    /// authentication; <c>lossless</c> also requires a subscription. The server picks the codec from
+    /// <paramref name="codecs"/>, preferring <paramref name="quality"/>, and falls back to the best
+    /// rendition available when the requested quality is not.
+    /// </summary>
+    /// <param name="trackId">The track identifier.</param>
+    /// <param name="quality">The preferred quality. Known values: <c>lossless</c>, <c>hq</c>, <c>nq</c>.</param>
+    /// <param name="codecs">The acceptable codecs. Defaults to every known codec.</param>
+    /// <param name="transport">The delivery: <c>raw</c> (plain) or <c>encraw</c> (encrypted, decrypted by <see cref="DownloadAsync"/>).</param>
+    /// <param name="cancellationToken">A token to cancel the request.</param>
+    /// <returns>The file information, or <see langword="null"/> when the API returns none.</returns>
+    Task<TrackFileInfo?> GetFileInfoAsync(
+        string trackId,
+        string quality = "lossless",
+        IEnumerable<string>? codecs = null,
+        string transport = "raw",
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Downloads a rendition returned by <see cref="GetFileInfoAsync"/> into a stream, decrypting an
+    /// <c>encraw</c> file on the fly. The data is streamed, never buffered whole, and the container
+    /// is left as delivered.
+    /// </summary>
+    /// <param name="file">The rendition to download.</param>
+    /// <param name="destination">The stream that receives the (decrypted) file.</param>
+    /// <param name="cancellationToken">A token to cancel the download.</param>
+    /// <exception cref="YandexMusicApiException">The server answered with an error status.</exception>
+    Task DownloadAsync(TrackFileDownloadInfo file, Stream destination, CancellationToken cancellationToken = default);
+
     /// <summary>Gets supplementary information for a track, such as its lyrics.</summary>
     /// <param name="trackId">The track identifier.</param>
     /// <param name="cancellationToken">A token to cancel the request.</param>

@@ -1,3 +1,5 @@
+using YandexMusic.Exceptions;
+
 namespace YandexMusic.Ynison;
 
 /// <summary>
@@ -62,25 +64,21 @@ public static class YnisonRequests
     /// <summary>Builds a request switching to an adjacent track of the queue.</summary>
     /// <param name="deviceId">This device's identifier.</param>
     /// <param name="currentState">The player state from the latest server frame.</param>
-    /// <param name="delta">The index shift: 1 for the next track, -1 for the previous one.</param>
+    /// <param name="delta">The shift in playback order (shuffle-aware): 1 for the next track, -1 for the previous one.</param>
     /// <returns>The <c>UpdatePlayerState</c> request with the moved index and a reset progress.</returns>
+    /// <exception cref="YandexMusicYnisonException">The shift leaves the queue and repeat-all is off.</exception>
     public static PutYnisonStateRequest CreateChangeTrackRequest(string deviceId, PlayerState currentState, int delta)
     {
         ArgumentNullException.ThrowIfNull(currentState);
         var queue = currentState.PlayerQueue ?? throw new ArgumentException(
             "The player state has no queue to switch tracks in.", nameof(currentState));
 
-        var total = queue.PlayableList.Count;
-        int newIndex;
-        if (total == 0)
-        {
-            newIndex = -1;
-        }
-        else
-        {
-            var current = queue.CurrentPlayableIndex < 0 ? 0 : queue.CurrentPlayableIndex;
-            newIndex = Math.Clamp(current + delta, 0, total - 1);
-        }
+        // The shift follows playback order, so with shuffle on "next" is the next shuffled track, not
+        // the next list entry. Leaving the queue is reported instead of clamped: a clamped index
+        // would silently restart the current track from zero.
+        var newIndex = YnisonQueueNavigation.GetNeighbourIndex(queue, delta)
+            ?? throw new YandexMusicYnisonException(
+                $"Cannot move {delta:+0;-0} from track {queue.CurrentPlayableIndex} in a queue of {queue.PlayableList.Count} tracks.");
 
         var paused = currentState.Status?.Paused ?? true;
         var speed = currentState.Status?.PlaybackSpeed ?? 0;
@@ -98,14 +96,14 @@ public static class YnisonRequests
     /// <summary>Builds a request switching to the next track of the queue.</summary>
     /// <param name="deviceId">This device's identifier.</param>
     /// <param name="currentState">The player state from the latest server frame.</param>
-    /// <returns>The <c>UpdatePlayerState</c> request with the index increased by one.</returns>
+    /// <returns>The <c>UpdatePlayerState</c> request moving to the next track in playback order.</returns>
     public static PutYnisonStateRequest CreateNextTrackRequest(string deviceId, PlayerState currentState)
         => CreateChangeTrackRequest(deviceId, currentState, 1);
 
     /// <summary>Builds a request switching to the previous track of the queue.</summary>
     /// <param name="deviceId">This device's identifier.</param>
     /// <param name="currentState">The player state from the latest server frame.</param>
-    /// <returns>The <c>UpdatePlayerState</c> request with the index decreased by one.</returns>
+    /// <returns>The <c>UpdatePlayerState</c> request moving to the previous track in playback order.</returns>
     public static PutYnisonStateRequest CreatePreviousTrackRequest(string deviceId, PlayerState currentState)
         => CreateChangeTrackRequest(deviceId, currentState, -1);
 

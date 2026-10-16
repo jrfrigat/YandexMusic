@@ -60,4 +60,19 @@ public sealed class EnumValue
 
     /// <summary>The human-readable name of the value.</summary>
     public string Name { get; init; } = string.Empty;
+
+    /// <summary>The illustration of the value, when the server provides one.</summary>
+    [JsonPropertyName("imageUrl")]
+    public string? ImageUrl { get; init; }
+
+    /// <summary>
+    /// The value expressed as a radio seed, for example <c>settingDiversity:favorite</c>. Passing it
+    /// as a seed is how a session is started with this setting already applied, which replaces
+    /// changing the station settings first.
+    /// </summary>
+    [JsonPropertyName("serializedSeed")]
+    public string? SerializedSeed { get; init; }
+
+    /// <summary>Whether this is the catch-all default ("any") rather than a specific choice.</summary>
+    public bool? Unspecified { get; init; }
 }

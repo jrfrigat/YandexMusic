@@ -13,6 +13,17 @@ public sealed class Wave
 
     /// <summary>The seeds the wave is built from, for example <c>album:12345</c>.</summary>
     public IReadOnlyList<string>? Seeds { get; init; }
+
+    /// <summary>The station the wave plays as, for example <c>user:onyourwave</c>.</summary>
+    [JsonPropertyName("stationId")]
+    public string? StationId { get; init; }
+
+    /// <summary>The value to send as the <c>from</c> field of feedback events for this wave.</summary>
+    [JsonPropertyName("idForFrom")]
+    public string? IdForFrom { get; init; }
+
+    /// <summary>The wave type. The known value is <c>DEFAULT</c>.</summary>
+    public string? Type { get; init; }
 }
 
 /// <summary>The visual agent (mascot) presenting a <see cref="Wave"/>.</summary>

@@ -1,7 +1,7 @@
 namespace YandexMusic.Exceptions;
 
 /// <summary>A failure of the Ynison real-time session: the handshake, a frame, or the connection lifecycle.</summary>
-public sealed class YandexMusicYnisonException : YandexMusicException
+public class YandexMusicYnisonException : YandexMusicException
 {
     /// <summary>Creates the exception with a message.</summary>
     /// <param name="message">The failure description.</param>

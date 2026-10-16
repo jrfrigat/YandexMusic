@@ -8,13 +8,19 @@ public sealed class Plus
 
     /// <summary>Whether the Plus onboarding tutorial has been completed.</summary>
     public bool IsTutorialCompleted { get; init; }
+
+    /// <summary>A migration flag the radio account status reports; its meaning is not documented.</summary>
+    public bool? Migrated { get; init; }
 }
 
 /// <summary>The subscription state of an account.</summary>
 public sealed class Subscription
 {
-    /// <summary>Whether the account has ever had any subscription.</summary>
-    public bool HadAnySubscription { get; init; }
+    /// <summary>
+    /// Whether the account has ever had any subscription. The radio account status does not report
+    /// it, so <see langword="null"/> means unknown rather than "never".
+    /// </summary>
+    public bool? HadAnySubscription { get; init; }
 
     /// <summary>The active auto-renewing subscriptions.</summary>
     public IReadOnlyList<AutoRenewable>? AutoRenewable { get; init; }

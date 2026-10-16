@@ -19,6 +19,14 @@ public interface IYnisonClient : IAsyncDisposable
     event EventHandler<Exception>? ListenerError;
 
     /// <summary>
+    /// Raised for a failure the client recovers from, right before it reconnects: a dropped
+    /// connection or an error the server reported (<see cref="Exceptions.YandexMusicYnisonServerException"/>).
+    /// Failures that make reconnecting pointless (a rejected token, a displaced device, a server
+    /// go-away) are not raised here; they end <see cref="RunAsync"/> with the exception instead.
+    /// </summary>
+    event EventHandler<Exception>? ConnectionError;
+
+    /// <summary>
     /// Raised with the raw text of every frame the server sends, before it is parsed. A diagnostic
     /// hook: it is the only way to see what actually arrived when the parsed state looks wrong.
     /// The payload carries no credentials — the token travels in the connection headers.

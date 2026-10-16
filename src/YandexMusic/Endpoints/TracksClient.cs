@@ -1,3 +1,4 @@
+using System.Buffers;
 using System.Globalization;
 using YandexMusic.Http;
 using YandexMusic.Models.Tracks;
@@ -7,6 +8,14 @@ namespace YandexMusic.Endpoints;
 /// <summary>The default <see cref="ITracksClient"/> implementation.</summary>
 internal sealed class TracksClient : ITracksClient
 {
+    // Every codec the file-info endpoint is known to serve, best first.
+    private static readonly List<string> FileInfoCodecs = ["flac", "flac-mp4", "aac-mp4", "he-aac-mp4", "aac", "he-aac", "mp3"];
+
+    private static readonly Dictionary<string, string> DesktopClientHeaders = new()
+    {
+        ["X-Yandex-Music-Client"] = TrackRequestSigner.DesktopClientHeader,
+    };
+
     private readonly IYandexMusicConnection _connection;
 
     /// <summary>Initializes a new tracks endpoint over the shared connection.</summary>
@@ -94,6 +103,80 @@ internal sealed class TracksClient : ITracksClient
 
         var xml = await response.Content.ReadAsStringAsync(cancellationToken).ConfigureAwait(false);
         return DownloadLinkResolver.BuildDirectLink(xml);
+    }
+
+    /// <inheritdoc />
+    public Task<TrackFileInfo?> GetFileInfoAsync(
+        string trackId,
+        string quality = "lossless",
+        IEnumerable<string>? codecs = null,
+        string transport = "raw",
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(trackId);
+        ArgumentException.ThrowIfNullOrWhiteSpace(quality);
+        ArgumentException.ThrowIfNullOrWhiteSpace(transport);
+
+        var codecList = codecs?.Where(c => !string.IsNullOrWhiteSpace(c)).ToList();
+        if (codecList is not { Count: > 0 })
+        {
+            codecList = FileInfoCodecs;
+        }
+
+        // The signature covers the parameters exactly as sent, so they are built from the same values.
+        var signature = TrackRequestSigner.SignFileInfo(trackId, quality, codecList, transport);
+        var url =
+            $"/get-file-info?ts={signature.Timestamp.ToString(CultureInfo.InvariantCulture)}" +
+            $"&trackId={Uri.EscapeDataString(trackId)}" +
+            $"&quality={Uri.EscapeDataString(quality)}" +
+            $"&codecs={Uri.EscapeDataString(string.Join(',', codecList))}" +
+            $"&transports={Uri.EscapeDataString(transport)}" +
+            $"&sign={Uri.EscapeDataString(signature.Value)}";
+
+        return _connection.GetAsync<TrackFileInfo>(url, DesktopClientHeaders, cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public async Task DownloadAsync(TrackFileDownloadInfo file, Stream destination, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(file);
+        ArgumentNullException.ThrowIfNull(destination);
+        if (string.IsNullOrEmpty(file.Url))
+        {
+            throw new ArgumentException("The file has no download URL.", nameof(file));
+        }
+
+        // Created before the request so a bad key fails fast, without a wasted download.
+        using var decryptor = file.IsEncrypted ? new AesCtrDecryptor(file.Key!) : null;
+
+        using var request = new HttpRequestMessage(HttpMethod.Get, file.Url);
+        using var response = await _connection
+            .SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken)
+            .ConfigureAwait(false);
+
+        if (!response.IsSuccessStatusCode)
+        {
+            throw new YandexMusicApiException(response.StatusCode, null, null);
+        }
+
+        var source = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
+        await using (source.ConfigureAwait(false))
+        {
+            var buffer = ArrayPool<byte>.Shared.Rent(81920);
+            try
+            {
+                int read;
+                while ((read = await source.ReadAsync(buffer.AsMemory(), cancellationToken).ConfigureAwait(false)) > 0)
+                {
+                    decryptor?.Transform(buffer.AsSpan(0, read));
+                    await destination.WriteAsync(buffer.AsMemory(0, read), cancellationToken).ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(buffer);
+            }
+        }
     }
 
     /// <inheritdoc />

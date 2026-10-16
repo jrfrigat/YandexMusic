@@ -55,4 +55,40 @@ public sealed class SearchResult
 
     /// <summary>The matching users.</summary>
     public SearchSection<User>? Users { get; init; }
+
+    /// <summary>The matching clips.</summary>
+    public SearchSection<Clip>? Clips { get; init; }
+
+    /// <summary>The promotional banner shown for the query, when there is one.</summary>
+    public SearchBanner? Banner { get; init; }
+}
+
+/// <summary>A promotional banner shown above search results for certain queries.</summary>
+public sealed class SearchBanner
+{
+    /// <summary>The banner text.</summary>
+    public string? Text { get; init; }
+
+    /// <summary>The query text the banner is shown for.</summary>
+    [JsonPropertyName("textForSearch")]
+    public string? TextForSearch { get; init; }
+
+    /// <summary>The link the banner opens.</summary>
+    public string? Url { get; init; }
+
+    /// <summary>The link in app-scheme form.</summary>
+    [JsonPropertyName("urlScheme")]
+    public string? UrlScheme { get; init; }
+
+    /// <summary>The text color, in HEX.</summary>
+    [JsonPropertyName("textColor")]
+    public string? TextColor { get; init; }
+
+    /// <summary>The text background color, in HEX.</summary>
+    [JsonPropertyName("textBackgroundColor")]
+    public string? TextBackgroundColor { get; init; }
+
+    /// <summary>The banner image URL.</summary>
+    [JsonPropertyName("imageUrl")]
+    public string? ImageUrl { get; init; }
 }

@@ -38,6 +38,9 @@ public sealed class AccountStatus
 
     /// <summary>The banner shown below the player (for example a subscription or gift notice), when present.</summary>
     public Alert? BarBelow { get; init; }
+
+    /// <summary>The add-on options attached to the subscription, for example <c>bookmate</c>.</summary>
+    public IReadOnlyList<string>? HasOptions { get; init; }
 }
 
 /// <summary>Information about a Yandex account.</summary>
@@ -84,6 +87,12 @@ public sealed class AccountInfo
 
     /// <summary>The phone numbers attached to the passport account.</summary>
     public IReadOnlyList<PassportPhone>? PassportPhones { get; init; }
+
+    /// <summary>The user's region code, for example <c>ru</c>.</summary>
+    public string? RegionCode { get; init; }
+
+    /// <summary>Whether the user is a member of a family subscription without owning it.</summary>
+    public bool? NonOwnerFamilyMember { get; init; }
 }
 
 /// <summary>The feature permissions granted by an account's subscription.</summary>

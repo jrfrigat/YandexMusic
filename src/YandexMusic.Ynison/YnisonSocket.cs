@@ -1,6 +1,8 @@
 using System.Buffers;
+using System.Net;
 using System.Net.WebSockets;
 using System.Text;
+using YandexMusic.Exceptions;
 
 namespace YandexMusic.Ynison;
 
@@ -72,8 +74,29 @@ internal sealed class ClientWebSocketYnisonSocketFactory : IYnisonSocketFactory
             }
 
             socket.Options.KeepAliveInterval = keepAliveInterval;
+            socket.Options.CollectHttpResponseDetails = true;
 
-            await socket.ConnectAsync(uri, cancellationToken).ConfigureAwait(false);
+            try
+            {
+                await socket.ConnectAsync(uri, cancellationToken).ConfigureAwait(false);
+            }
+            catch (WebSocketException) when (socket.HttpStatusCode is HttpStatusCode.Unauthorized or HttpStatusCode.Forbidden)
+            {
+                // A rejected token surfaces as a failed upgrade. Left as a plain transport error it
+                // would be retried forever with a token that can never work.
+                var status = (int)socket.HttpStatusCode;
+                socket.Dispose();
+                throw new YandexMusicYnisonServerException(
+                    $"Ynison rejected the token (HTTP {status}).",
+                    YnisonServerErrorKind.Unauthorized,
+                    httpCode: status);
+            }
+            catch
+            {
+                socket.Dispose();
+                throw;
+            }
+
             _socket = socket;
         }
 

@@ -123,4 +123,22 @@ public sealed class Album
 
     /// <summary>Pagination information, when provided by the "with tracks" endpoint.</summary>
     public Pager? Pager { get; init; }
+
+    /// <summary>The background image URL of the album page.</summary>
+    public string? BackgroundImageUrl { get; init; }
+
+    /// <summary>"My wave" seeded from the album, when the page promotes one.</summary>
+    public CustomWave? CustomWave { get; init; }
+
+    /// <summary>The total duration of the album, in seconds.</summary>
+    public long? DurationSec { get; init; }
+
+    /// <summary>Whether a trailer is available for the album.</summary>
+    public AlbumTrailerStatus? Trailer { get; init; }
+
+    /// <summary>Whether the album is content for children.</summary>
+    public bool? ChildContent { get; init; }
+
+    /// <summary>The call-to-action button of the album page, when present.</summary>
+    public ActionButton? ActionButton { get; init; }
 }

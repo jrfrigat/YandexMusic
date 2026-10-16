@@ -20,4 +20,11 @@ public sealed record YnisonClientOptions
     /// recommended by the redirector is used, falling back to 20 seconds.
     /// </summary>
     public TimeSpan? KeepAliveInterval { get; init; }
+
+    /// <summary>
+    /// How many reconnects in a row may fail before <see cref="YnisonClient.RunAsync"/> gives up with
+    /// the last failure. <see langword="null"/> (the default) retries without limit. A connection
+    /// that delivers state resets the count.
+    /// </summary>
+    public int? MaxReconnectAttempts { get; init; }
 }
