@@ -122,6 +122,16 @@ public static class Strings
     public static string LoadingWave => Get(nameof(LoadingWave));
     public static string NoWave => Get(nameof(NoWave));
     public static string WaveTitle(int count) => Fmt(nameof(WaveTitle), count);
+    public static string MenuTuneWave => Get(nameof(MenuTuneWave));
+    public static string LoadingWaveSettings => Get(nameof(LoadingWaveSettings));
+    public static string PickWave => Get(nameof(PickWave));
+    public static string PickWaveCharacter => Get(nameof(PickWaveCharacter));
+
+    // Stream quality.
+    public static string MenuQualityStandard => Get(nameof(MenuQualityStandard));
+    public static string MenuQualityLossless => Get(nameof(MenuQualityLossless));
+    public static string QualityStandardOn => Get(nameof(QualityStandardOn));
+    public static string QualityLosslessOn => Get(nameof(QualityLosslessOn));
 
     // Playlists.
     public static string LoadingPlaylists => Get(nameof(LoadingPlaylists));
@@ -164,6 +174,10 @@ public static class Strings
     public static string RemoteStartedOn(string device) => Fmt(nameof(RemoteStartedOn), device);
     public static string RemoteCommandFailed(string reason) => Fmt(nameof(RemoteCommandFailed), reason);
     public static string RemoteKeys => Get(nameof(RemoteKeys));
+    public static string RemoteReconnecting(string reason) => Fmt(nameof(RemoteReconnecting), reason);
+    public static string RemoteSessionClosed => Get(nameof(RemoteSessionClosed));
+    public static string RemoteQueueEnd => Get(nameof(RemoteQueueEnd));
+    public static string RemoteQueueStart => Get(nameof(RemoteQueueStart));
 
     // Per-track actions (now playing).
     public static string LikeMarker => Get(nameof(LikeMarker));

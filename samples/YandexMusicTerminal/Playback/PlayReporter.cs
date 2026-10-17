@@ -7,7 +7,7 @@ namespace YandexMusicTerminal.Playback;
 /// <summary>
 /// Reports listening activity to the API so recommendations and "My Wave" react to what is played:
 /// a play-audio event when a track starts, and radio feedback (radio started / track started /
-/// finished / skipped) while a radio queue is playing. Failures are swallowed — reporting must
+/// finished / skipped) to the radio session a radio queue came from. Failures are swallowed — reporting must
 /// never break playback.
 /// </summary>
 public sealed class PlayReporter : IDisposable
@@ -15,7 +15,7 @@ public sealed class PlayReporter : IDisposable
     private readonly IYandexMusicClient _client;
     private readonly PlaybackController _controller;
     private readonly Stopwatch _played = new();
-    private string? _reportedStation;
+    private string? _reportedSession;
 
     /// <summary>Creates a reporter bound to a playback controller.</summary>
     /// <param name="client">The signed-in API client.</param>
@@ -56,16 +56,16 @@ public sealed class PlayReporter : IDisposable
     private void OnTrackLeft(PlaybackItem item, bool endedNaturally)
     {
         _played.Stop();
-        if (item.Origin?.Station is not { Length: > 0 } station)
+        if (item.Origin?.RadioSessionId is not { Length: > 0 } session)
         {
             return;
         }
 
         _ = endedNaturally
-            ? TryAsync(() => _client.Radio.SendStationFeedbackTrackFinishedAsync(
-                station, item.Id, _played.Elapsed.TotalSeconds, item.Origin.BatchId))
-            : TryAsync(() => _client.Radio.SendStationFeedbackSkipAsync(
-                station, item.Id, _played.Elapsed.TotalSeconds, item.Origin.BatchId));
+            ? TryAsync(() => _client.RadioSessions.SendTrackFinishedAsync(
+                session, item.Id, _played.Elapsed.TotalSeconds, item.Origin.BatchId))
+            : TryAsync(() => _client.RadioSessions.SendSkipAsync(
+                session, item.Id, _played.Elapsed.TotalSeconds, item.Origin.BatchId));
     }
 
     private async Task ReportAsync(PlaybackItem item, string playId)
@@ -83,20 +83,21 @@ public sealed class PlayReporter : IDisposable
             EndPositionSeconds = 0,
         })).ConfigureAwait(false);
 
-        if (origin?.Station is not { Length: > 0 } station)
+        if (origin?.RadioSessionId is not { Length: > 0 } session)
         {
             return;
         }
 
-        if (_reportedStation != station)
+        // "Radio started" once per session: a renewed session counts as a new start.
+        if (_reportedSession != session)
         {
-            _reportedStation = station;
-            await TryAsync(() => _client.Radio.SendStationFeedbackRadioStartedAsync(
-                station, origin.From, origin.BatchId)).ConfigureAwait(false);
+            _reportedSession = session;
+            await TryAsync(() => _client.RadioSessions.SendRadioStartedAsync(
+                session, origin.BatchId, origin.From)).ConfigureAwait(false);
         }
 
-        await TryAsync(() => _client.Radio.SendStationFeedbackTrackStartedAsync(
-            station, item.Id, origin.BatchId)).ConfigureAwait(false);
+        await TryAsync(() => _client.RadioSessions.SendTrackStartedAsync(
+            session, item.Id, origin.BatchId)).ConfigureAwait(false);
     }
 
     private static async Task TryAsync(Func<Task<bool>> call)

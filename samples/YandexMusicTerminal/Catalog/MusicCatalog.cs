@@ -9,9 +9,8 @@ using YandexMusic.Models.Tracks;
 namespace YandexMusicTerminal.Catalog;
 
 /// <summary>The default <see cref="IMusicCatalog"/> over an <see cref="IYandexMusicClient"/>.</summary>
-public sealed class MusicCatalog : IMusicCatalog
+public sealed partial class MusicCatalog : IMusicCatalog
 {
-    private const string MyWaveStation = "user:onyourwave";
     private const int MaxTrackBatch = 100;
 
     private readonly IYandexMusicClient _client;
@@ -224,18 +223,6 @@ public sealed class MusicCatalog : IMusicCatalog
     }
 
     /// <inheritdoc />
-    public Task<RadioBatch> GetMyWaveAsync(CancellationToken cancellationToken = default)
-        => GetStationBatchAsync(MyWaveStation, cancellationToken);
-
-    /// <inheritdoc />
-    public Task<RadioBatch> GetRadioAsync(string station, CancellationToken cancellationToken = default)
-        => GetStationBatchAsync(station, cancellationToken);
-
-    /// <inheritdoc />
-    public async Task<RadioBatch> GetSimilarRadioAsync(string trackId, CancellationToken cancellationToken = default)
-        => await GetStationBatchAsync("track:" + trackId, cancellationToken).ConfigureAwait(false);
-
-    /// <inheritdoc />
     public async Task<string?> GetLyricsAsync(string trackId, CancellationToken cancellationToken = default)
     {
         // The signed /lyrics endpoint is currently rejected by the server ("Invalid Sign"), but the
@@ -248,23 +235,6 @@ public sealed class MusicCatalog : IMusicCatalog
         }
 
         return lyrics.FullText ?? lyrics.Text;
-    }
-
-    /// <inheritdoc />
-    public Task<string?> ResolveStreamUrlAsync(string trackId, CancellationToken cancellationToken = default)
-        => _client.Tracks.GetDirectLinkAsync(trackId, cancellationToken);
-
-    private async Task<RadioBatch> GetStationBatchAsync(string station, CancellationToken cancellationToken)
-    {
-        var result = await _client.Radio.GetStationTracksAsync(station, cancellationToken: cancellationToken).ConfigureAwait(false);
-        var tracks = (result?.Sequence ?? [])
-            .Select(s => s.Track)
-            .Where(t => t is not null)
-            .Select(t => ToTrackView(t!))
-            .ToList();
-        var id = result?.Id;
-        var stationId = id is { Type.Length: > 0, Tag.Length: > 0 } ? $"{id.Type}:{id.Tag}" : station;
-        return new RadioBatch(tracks, stationId, result?.BatchId ?? string.Empty);
     }
 
     private async Task<string?> GetUidAsync(CancellationToken cancellationToken)

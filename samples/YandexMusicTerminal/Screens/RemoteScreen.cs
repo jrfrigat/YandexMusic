@@ -22,7 +22,7 @@ namespace YandexMusicTerminal.Screens;
 /// The transport keys drive whichever is selected, and the screen says which that is. It owns both
 /// connections: they open when it opens and close when it exits.
 /// </summary>
-public sealed class RemoteScreen
+public sealed partial class RemoteScreen
 {
     private const double VolumeStep = 0.1;
     private const int MaxDeviceHotkeys = 9;
@@ -67,6 +67,10 @@ public sealed class RemoteScreen
         ynison.FrameReceived += (_, frame) => _log.Write("ynison <--", frame);
         ynison.FrameSent += (_, frame) => _log.Write("ynison -->", frame);
 
+        // A dropped connection or a rejected request is recovered from on its own; saying so keeps
+        // a remote that briefly stops reacting from looking frozen.
+        ynison.ConnectionError += (_, error) => ShowToast(Strings.RemoteReconnecting(Format.Truncate(error.Message, 60)));
+
         using var sessionCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         var run = Task.Run(() => ynison.RunAsync(sessionCts.Token), CancellationToken.None);
 
@@ -96,6 +100,16 @@ public sealed class RemoteScreen
                 {
                     while (!exit && !cancellationToken.IsCancellationRequested)
                     {
+                        // The session ended for good (the token was rejected, another client took
+                        // over this device id, or the server asked to stay away): there is nothing
+                        // left to drive, so leave and say why instead of showing a frozen panel.
+                        if (run.IsCompleted)
+                        {
+                            _notices.Post(Strings.RemoteFailed(run.Exception?.GetBaseException().Message ?? Strings.RemoteSessionClosed));
+                            exit = true;
+                            break;
+                        }
+
                         live.UpdateTarget(Build(ynison.LatestState!, ynison.TimeSinceLatestState));
 
                         while (TryReadKey(out var key))
@@ -118,12 +132,12 @@ public sealed class RemoteScreen
                                 case ConsoleKey.RightArrow or ConsoleKey.N:
                                     await (local
                                         ? speakers.NextAsync(cancellationToken)
-                                        : SafeAsync(() => ynison.NextTrackAsync(cancellationToken))).ConfigureAwait(false);
+                                        : StepAsync(ynison, +1, cancellationToken)).ConfigureAwait(false);
                                     break;
                                 case ConsoleKey.LeftArrow or ConsoleKey.B:
                                     await (local
                                         ? speakers.PreviousAsync(cancellationToken)
-                                        : SafeAsync(() => ynison.PreviousTrackAsync(cancellationToken))).ConfigureAwait(false);
+                                        : StepAsync(ynison, -1, cancellationToken)).ConfigureAwait(false);
                                     break;
                                 case ConsoleKey.UpArrow or ConsoleKey.Add or ConsoleKey.OemPlus:
                                     await (local
@@ -279,6 +293,21 @@ public sealed class RemoteScreen
         }
     }
 
+    /// <summary>
+    /// Switches the session's track in playback order (shuffle included). At the edge of the queue
+    /// nothing is sent; the user is told instead, rather than the current track silently restarting.
+    /// </summary>
+    private Task StepAsync(IYnisonClient ynison, int delta, CancellationToken cancellationToken)
+    {
+        if (ynison.LatestState?.PlayerState?.PlayerQueue is { } queue && YnisonQueueNavigation.GetNeighbourIndex(queue, delta) is null)
+        {
+            ShowToast(delta > 0 ? Strings.RemoteQueueEnd : Strings.RemoteQueueStart);
+            return Task.CompletedTask;
+        }
+
+        return SafeAsync(() => delta > 0 ? ynison.NextTrackAsync(cancellationToken) : ynison.PreviousTrackAsync(cancellationToken));
+    }
+
     private static async Task SafeAsync(Func<Task> command)
     {
         try
@@ -332,176 +361,4 @@ public sealed class RemoteScreen
         _toast = message;
         _toastShownAt = DateTime.UtcNow;
     }
-
-    private Panel Build(PutYnisonStateResponse state, TimeSpan sinceFrame)
-    {
-        // The headline follows the target. Showing the session's track while the keys are driving a
-        // speaker is what makes the remote look frozen: the speaker pauses, and the big line above
-        // it — which belongs to a different device entirely — does not move.
-        var driving = _speakers?.Connected is not null ? _speakers.State : null;
-
-        var rows = new List<IRenderable>
-        {
-            new Markup(driving is null ? TrackLine(state) : LocalTrackLine(driving)),
-            new Markup(driving is null ? ProgressLine(state, sinceFrame) : LocalProgressLine(driving)),
-            new Markup(TargetLine()),
-            new Markup($"[grey]{Strings.RemoteDevices}[/]"),
-        };
-
-        if (state.Devices.Count == 0)
-        {
-            rows.Add(new Markup($"[grey]{Strings.RemoteNoDevices}[/]"));
-        }
-
-        // Hotkeys are numbered over the playable devices only, so the number next to a device is the
-        // key that actually starts playback on it. Everything else is listed without one.
-        var playable = PlayableDevices(state);
-        foreach (var device in state.Devices)
-        {
-            var hotkey = playable.IndexOf(device);
-            rows.Add(new Markup(DeviceLine(state, device, hotkey)));
-        }
-
-        AppendSpeakers(rows, playable.Count);
-
-        rows.Add(new Markup(string.Empty));
-        if (!string.IsNullOrEmpty(_toast) && DateTime.UtcNow - _toastShownAt < ToastLifetime)
-        {
-            rows.Add(new Markup($"[grey]{Markup.Escape(_toast)}[/]"));
-        }
-        else
-        {
-            rows.Add(new Markup(Strings.RemoteKeys));
-        }
-
-        return new Panel(new Rows(rows))
-            .Header(Strings.RemoteHeader)
-            .Border(BoxBorder.Rounded)
-            .BorderColor(Color.Cyan1)
-            .Padding(2, 1);
-    }
-
-    /// <summary>Says what the transport keys are driving right now, because the same keys do both.</summary>
-    private string TargetLine()
-    {
-        if (_speakers?.Connected is not { } speaker)
-        {
-            return $"[grey]{Strings.RemoteTargetSession}[/]";
-        }
-
-        var volume = (int)Math.Round(Math.Clamp(_speakers.State?.State?.Volume ?? 0, 0, 1) * 100);
-        return $"[cyan]{Markup.Escape(Strings.RemoteTargetSpeaker(Format.Truncate(speaker.Name, 34)))}[/]" +
-               $"  [grey]{Strings.VolumeLabel}[/] [green]{volume,3}%[/]";
-    }
-
-    /// <summary>The track a driven speaker is on, in the same place the session's track otherwise sits.</summary>
-    private static string LocalTrackLine(LocalDeviceFrame frame)
-    {
-        var title = frame.State?.PlayerState?.Title;
-        if (string.IsNullOrWhiteSpace(title))
-        {
-            return $"[grey]{Strings.RemoteNothing}[/]";
-        }
-
-        var performer = frame.State?.PlayerState?.Subtitle;
-        var artist = string.IsNullOrWhiteSpace(performer)
-            ? string.Empty
-            : $" [grey]— {Markup.Escape(Format.Truncate(performer, 30))}[/]";
-
-        return $"[bold white]{Markup.Escape(Format.Truncate(title, 42))}[/]{artist}";
-    }
-
-    /// <summary>
-    /// A driven speaker's position. Unlike Ynison this needs no extrapolating: the device pushes a
-    /// frame about once a second while it plays. The times are seconds here, not milliseconds.
-    /// </summary>
-    private static string LocalProgressLine(LocalDeviceFrame frame)
-    {
-        var player = frame.State?.PlayerState;
-        var stateText = frame.State?.Playing == true ? Strings.StatePlaying : Strings.StatePaused;
-        var progress = TimeSpan.FromSeconds(Math.Max(0, player?.Progress ?? 0));
-        var duration = TimeSpan.FromSeconds(Math.Max(0, player?.Duration ?? 0));
-        return $"[grey]{stateText}   {Format.Duration(progress)} / {Format.Duration(duration)}[/]";
-    }
-
-    /// <summary>Renders the speakers found on this network, numbered on from the Ynison devices.</summary>
-    private void AppendSpeakers(List<IRenderable> rows, int hotkeysUsed)
-    {
-        if (_speakers is not { } speakers)
-        {
-            return;
-        }
-
-        rows.Add(new Markup(string.Empty));
-        rows.Add(new Markup($"[grey]{Strings.RemoteLocalSection}[/]"));
-
-        var found = HotkeySpeakers(speakers, hotkeysUsed);
-        if (found.Count == 0)
-        {
-            rows.Add(new Markup(speakers.IsScanning
-                ? $"[grey]{Strings.RemoteLocalScanning}[/]"
-                : $"[grey]{Strings.RemoteLocalNone}[/]"));
-            return;
-        }
-
-        for (var i = 0; i < found.Count; i++)
-        {
-            var speaker = found[i];
-            var connected = speakers.Connected?.DeviceId == speaker.DeviceId;
-            var badge = $"[grey][[{hotkeysUsed + i + 1}]] [/]";
-            var name = Markup.Escape(Format.Truncate(speaker.Name, 36));
-            var mark = connected ? $" [cyan]{Strings.RemoteLocalDriving}[/]" : string.Empty;
-            var model = $"  [grey]{Markup.Escape(speaker.Platform)}[/]";
-            rows.Add(new Markup($"{badge}{name}{mark}{model}"));
-        }
-    }
-
-    private static string TrackLine(PutYnisonStateResponse state)
-    {
-        var queue = state.PlayerState?.PlayerQueue;
-        var index = queue?.CurrentPlayableIndex ?? -1;
-        var playable = queue is not null && index >= 0 && index < queue.PlayableList.Count
-            ? queue.PlayableList[index]
-            : null;
-        return playable is null
-            ? $"[grey]{Strings.RemoteNothing}[/]"
-            : $"[bold white]{Markup.Escape(Format.Truncate(playable.Title, 60))}[/]";
-    }
-
-    /// <summary>
-    /// The playback position, advanced by however long ago the frame arrived. Ynison sends a frame
-    /// only when something changes, so rendering its position verbatim shows a counter frozen on the
-    /// second the last change happened.
-    /// </summary>
-    private static string ProgressLine(PutYnisonStateResponse state, TimeSpan sinceFrame)
-    {
-        var status = state.PlayerState?.Status;
-        var playing = status?.Paused == false;
-        var stateText = playing ? Strings.StatePlaying : Strings.StatePaused;
-        var elapsed = playing ? (long)sinceFrame.TotalMilliseconds : 0;
-        var durationMs = Math.Max(0, status?.DurationMs ?? 0);
-        var progressMs = Math.Max(0, status?.ProgressMs ?? 0) + elapsed;
-        if (durationMs > 0)
-        {
-            progressMs = Math.Min(progressMs, durationMs);
-        }
-
-        var progress = TimeSpan.FromMilliseconds(progressMs);
-        var duration = TimeSpan.FromMilliseconds(durationMs);
-        return $"[grey]{stateText}   {Format.Duration(progress)} / {Format.Duration(duration)}[/]";
-    }
-
-    /// <summary>Renders one device row; <paramref name="hotkey"/> is -1 for a device no key targets.</summary>
-    private static string DeviceLine(PutYnisonStateResponse state, Device device, int hotkey)
-    {
-        var id = device.Info?.DeviceId;
-        var isActive = !string.IsNullOrEmpty(state.ActiveDeviceIdOptional) && state.ActiveDeviceIdOptional == id;
-        var marker = isActive ? $" [green]{Strings.RemoteActive}[/]" : string.Empty;
-        var offline = device.IsOffline ? $" [grey]({Strings.RemoteOffline})[/]" : string.Empty;
-        var title = Markup.Escape(Format.Truncate(device.Info?.Title ?? Strings.RemoteUnknownDevice, 36));
-        var volume = (int)Math.Round(Math.Clamp(device.VolumeInfo?.Volume ?? 0, 0, 1) * 100);
-        var badge = hotkey >= 0 ? $"[grey][[{hotkey + 1}]] [/]" : "[grey]    [/]";
-        return $"{badge}{title}{marker}{offline}  [grey]{Strings.VolumeLabel}[/] [green]{volume,3}%[/]";
-    }
-
 }

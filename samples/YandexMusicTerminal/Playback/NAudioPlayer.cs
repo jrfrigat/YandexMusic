@@ -74,6 +74,28 @@ public sealed class NAudioPlayer : IAudioPlayer
             throw new InvalidOperationException("No stream URL is available for this track.");
         }
 
+        try
+        {
+            Open(url);
+        }
+        catch (Exception) when (item.ResolveFallbackStreamUrlAsync is not null)
+        {
+            // A lossless stream in a codec this Windows build cannot decode: retry with the plain
+            // MP3 before giving the track up.
+            var fallback = await item.ResolveFallbackStreamUrlAsync(cancellationToken).ConfigureAwait(false);
+            if (string.IsNullOrEmpty(fallback) || fallback == url)
+            {
+                throw;
+            }
+
+            Open(fallback);
+        }
+
+        SetState(PlaybackState.Stopped);
+    }
+
+    private void Open(string url)
+    {
         lock (_gate)
         {
             DisposeBackend();
@@ -83,8 +105,6 @@ public sealed class NAudioPlayer : IAudioPlayer
             _output.Init(_reader);
             _output.PlaybackStopped += OnPlaybackStopped;
         }
-
-        SetState(PlaybackState.Stopped);
     }
 
     /// <inheritdoc />

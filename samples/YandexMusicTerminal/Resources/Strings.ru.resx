@@ -108,7 +108,7 @@
     <value>[grey]♪ ничего не играет[/]</value>
   </data>
   <data name="MenuHotkeys" xml:space="preserve">
-    <value>[grey]↑↓[/] выбор   [grey]enter[/] открыть   [grey]s[/] поиск   [grey]a[/] альбомы   [grey]l[/] плейлисты   [grey]f[/] любимое   [grey]w[/] волна   [grey]p[/] плеер   [grey]r[/] пульт   [grey]g[/] журнал   [grey]i[/] о программе   [grey]o[/] аккаунт   [grey]q[/] выход</value>
+    <value>[grey]↑↓[/] выбор   [grey]enter[/] открыть   [grey]s[/] поиск   [grey]a[/] альбомы   [grey]l[/] плейлисты   [grey]f[/] любимое   [grey]w[/] волна   [grey]t[/] настройка   [grey]p[/] плеер   [grey]r[/] пульт   [grey]h[/] качество   [grey]g[/] журнал   [grey]i[/] о программе   [grey]o[/] аккаунт   [grey]q[/] выход</value>
   </data>
   <data name="MenuHotkeyUpdate" xml:space="preserve">
     <value>   [yellow]u[/] обновиться</value>
@@ -475,5 +475,41 @@
   </data>
   <data name="HandOverSent" xml:space="preserve">
     <value>«{0}» отправлен на {1}</value>
+  </data>
+  <data name="MenuTuneWave" xml:space="preserve">
+    <value>Настроить волну</value>
+  </data>
+  <data name="MenuQualityStandard" xml:space="preserve">
+    <value>Качество: обычное (MP3)</value>
+  </data>
+  <data name="MenuQualityLossless" xml:space="preserve">
+    <value>Качество: без потерь (FLAC)</value>
+  </data>
+  <data name="QualityStandardOn" xml:space="preserve">
+    <value>Треки будут играть в обычном качестве.</value>
+  </data>
+  <data name="QualityLosslessOn" xml:space="preserve">
+    <value>Треки будут играть без потерь, если это позволяет подписка.</value>
+  </data>
+  <data name="LoadingWaveSettings" xml:space="preserve">
+    <value>Загрузка настроек волны…</value>
+  </data>
+  <data name="PickWave" xml:space="preserve">
+    <value>Какую волну включить?</value>
+  </data>
+  <data name="PickWaveCharacter" xml:space="preserve">
+    <value>Какой характер?</value>
+  </data>
+  <data name="RemoteReconnecting" xml:space="preserve">
+    <value>Связь потеряна, переподключение: {0}</value>
+  </data>
+  <data name="RemoteSessionClosed" xml:space="preserve">
+    <value>сеанс закрыт</value>
+  </data>
+  <data name="RemoteQueueEnd" xml:space="preserve">
+    <value>Это последний трек в очереди</value>
+  </data>
+  <data name="RemoteQueueStart" xml:space="preserve">
+    <value>Это первый трек в очереди</value>
   </data>
 </root>

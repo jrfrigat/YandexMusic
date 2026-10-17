@@ -101,6 +101,13 @@ public sealed class PlayerApp
                     case MainMenuAction.MyWave:
                         await PlayAndShowAsync(await _trackList.RunWaveAsync(cancellationToken).ConfigureAwait(false), cancellationToken).ConfigureAwait(false);
                         break;
+                    case MainMenuAction.TuneWave:
+                        await PlayAndShowAsync(await _trackList.RunTunedWaveAsync(cancellationToken).ConfigureAwait(false), cancellationToken).ConfigureAwait(false);
+                        break;
+                    case MainMenuAction.Quality:
+                        _catalog.PreferLossless = !_catalog.PreferLossless;
+                        _notices.Post(_catalog.PreferLossless ? Strings.QualityLosslessOn : Strings.QualityStandardOn);
+                        break;
                     case MainMenuAction.NowPlaying:
                         await _nowPlaying.RunAsync(cancellationToken).ConfigureAwait(false);
                         break;
@@ -180,18 +187,12 @@ public sealed class PlayerApp
         var origin = request.Origin ?? new PlaybackOrigin("app");
         var items = request.Tracks.Select(t => TrackList.ToPlaybackItem(t, origin, _catalog)).ToList();
         Func<CancellationToken, Task<IReadOnlyList<PlaybackItem>>>? continuation = null;
-        if (request.Origin?.Station is { Length: > 0 } station)
+        if (request.Origin?.RadioKey is { Length: > 0 } radioKey)
         {
-            continuation = ct => FetchRadioItemsAsync(station, ct);
+            continuation = TrackList.RadioContinuation(request.Origin.From, radioKey, _catalog);
         }
+
         await _controller.PlayAsync(items, request.StartIndex, continuation, cancellationToken).ConfigureAwait(false);
         await _nowPlaying.RunAsync(cancellationToken).ConfigureAwait(false);
-    }
-
-    private async Task<IReadOnlyList<PlaybackItem>> FetchRadioItemsAsync(string station, CancellationToken cancellationToken)
-    {
-        var batch = await _catalog.GetRadioAsync(station, cancellationToken).ConfigureAwait(false);
-        var origin = new PlaybackOrigin("radio", Station: batch.Station, BatchId: batch.BatchId);
-        return batch.Tracks.Select(t => TrackList.ToPlaybackItem(t, origin, _catalog)).ToList();
     }
 }

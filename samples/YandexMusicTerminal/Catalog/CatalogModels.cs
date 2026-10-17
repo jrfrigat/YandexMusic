@@ -44,11 +44,26 @@ public sealed record PlaylistView(string Id, string Title, int TrackCount);
 /// <param name="Tracks">The playlist's tracks, in order.</param>
 public sealed record PlaylistDetail(PlaylistView Playlist, IReadOnlyList<TrackView> Tracks);
 
-/// <summary>A batch of tracks from a radio station, with the identity needed to report feedback.</summary>
+/// <summary>A batch of tracks from a radio session, with the identity needed to report feedback.</summary>
 /// <param name="Tracks">The tracks of the batch.</param>
-/// <param name="Station">The station identity, for example "user:onyourwave" or "track:{id}".</param>
+/// <param name="Station">The seed the radio was started from, for example "user:onyourwave" or "track:{id}".</param>
 /// <param name="BatchId">The batch identifier, echoed back in radio feedback.</param>
-public sealed record RadioBatch(IReadOnlyList<TrackView> Tracks, string Station, string BatchId);
+/// <param name="SessionId">The radio session the batch belongs to; feedback goes to it.</param>
+/// <param name="SessionKey">
+/// A stable handle for fetching further batches. The session itself may be replaced when the server
+/// forgets it, so the key stays the same while <paramref name="SessionId"/> can change.
+/// </param>
+public sealed record RadioBatch(IReadOnlyList<TrackView> Tracks, string Station, string BatchId, string SessionId, string SessionKey);
+
+/// <summary>One choice of the wave picker: a display name and the radio seed it stands for.</summary>
+/// <param name="Name">The display name.</param>
+/// <param name="Seed">The seed, for example "user:onyourwave" or "settingDiversity:discover".</param>
+public sealed record WaveChoice(string Name, string Seed);
+
+/// <summary>What the wave can be tuned to: which wave (My Wave or an activity) and its character.</summary>
+/// <param name="Waves">The activity waves the service offers; "My Wave" itself is not among them.</param>
+/// <param name="Characters">The characters to tune the wave to, the default ("any") first.</param>
+public sealed record WaveOptions(IReadOnlyList<WaveChoice> Waves, IReadOnlyList<WaveChoice> Characters);
 
 /// <summary>One page of search results together with the total number of matches.</summary>
 /// <param name="Items">The items on this page.</param>

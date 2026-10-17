@@ -86,21 +86,36 @@ public interface IMusicCatalog
     /// <returns>Whether the API accepted the change.</returns>
     Task<bool> DislikeTrackAsync(string trackId, CancellationToken cancellationToken = default);
 
-    /// <summary>Gets a batch of tracks from the user's personal "My Wave" radio station.</summary>
+    /// <summary>Starts the user's personal "My Wave" and returns its first batch.</summary>
     /// <param name="cancellationToken">A token to cancel the request.</param>
     /// <returns>The wave batch.</returns>
     Task<RadioBatch> GetMyWaveAsync(CancellationToken cancellationToken = default);
 
-    /// <summary>Gets a batch from an arbitrary radio station, identified as <c>type:tag</c>.</summary>
-    /// <param name="station">The station identity, for example <c>user:onyourwave</c> or <c>track:{id}</c>.</param>
+    /// <summary>Gets what the wave can be tuned to: the activity waves and the characters.</summary>
     /// <param name="cancellationToken">A token to cancel the request.</param>
-    /// <returns>The station batch.</returns>
-    Task<RadioBatch> GetRadioAsync(string station, CancellationToken cancellationToken = default);
+    /// <returns>The choices, or empty lists when the service offers none.</returns>
+    Task<WaveOptions> GetWaveOptionsAsync(CancellationToken cancellationToken = default);
 
-    /// <summary>Gets a batch of a radio station seeded from a track (its "similar tracks" stream).</summary>
-    /// <param name="trackId">The track to seed the station with.</param>
+    /// <summary>Starts a radio session from seeds and returns its first batch.</summary>
+    /// <param name="seeds">The seeds, for example <c>user:onyourwave</c> plus <c>settingDiversity:discover</c>.</param>
     /// <param name="cancellationToken">A token to cancel the request.</param>
-    /// <returns>The similar-tracks batch.</returns>
+    /// <returns>The first batch.</returns>
+    Task<RadioBatch> StartRadioAsync(IReadOnlyList<string> seeds, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Gets the next batch of a radio session started earlier. The tracks already handed out are
+    /// sent along so the radio does not repeat them; a session the server forgot is replaced by a new
+    /// one with the same seeds.
+    /// </summary>
+    /// <param name="sessionKey">The <see cref="RadioBatch.SessionKey"/> of an earlier batch.</param>
+    /// <param name="cancellationToken">A token to cancel the request.</param>
+    /// <returns>The next batch; empty when the radio has nothing more.</returns>
+    Task<RadioBatch> GetNextRadioBatchAsync(string sessionKey, CancellationToken cancellationToken = default);
+
+    /// <summary>Starts a radio seeded from a track (its "similar tracks" stream).</summary>
+    /// <param name="trackId">The track to seed the radio with.</param>
+    /// <param name="cancellationToken">A token to cancel the request.</param>
+    /// <returns>The first batch.</returns>
     Task<RadioBatch> GetSimilarRadioAsync(string trackId, CancellationToken cancellationToken = default);
 
     /// <summary>Downloads the lyrics of a track, when they are available.</summary>
@@ -109,9 +124,24 @@ public interface IMusicCatalog
     /// <returns>The lyrics text, or <see langword="null"/> when the track has none.</returns>
     Task<string?> GetLyricsAsync(string trackId, CancellationToken cancellationToken = default);
 
-    /// <summary>Resolves a direct media URL for a track, when one is available.</summary>
+    /// <summary>
+    /// Whether streams are requested in lossless quality (FLAC) rather than the standard MP3. Lossless
+    /// needs a subscription that includes it; the server falls back to the best quality available.
+    /// </summary>
+    bool PreferLossless { get; set; }
+
+    /// <summary>Resolves a direct media URL for a track in the preferred quality, when one is available.</summary>
     /// <param name="trackId">The track identifier.</param>
     /// <param name="cancellationToken">A token to cancel the request.</param>
     /// <returns>The media URL, or <see langword="null"/> when unavailable (no subscription/token).</returns>
     Task<string?> ResolveStreamUrlAsync(string trackId, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Resolves the standard MP3 URL of a track, for when a player cannot open the lossless stream
+    /// <see cref="ResolveStreamUrlAsync"/> handed out.
+    /// </summary>
+    /// <param name="trackId">The track identifier.</param>
+    /// <param name="cancellationToken">A token to cancel the request.</param>
+    /// <returns>The media URL, or <see langword="null"/> when unavailable.</returns>
+    Task<string?> ResolveFallbackStreamUrlAsync(string trackId, CancellationToken cancellationToken = default);
 }

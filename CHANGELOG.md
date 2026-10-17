@@ -37,6 +37,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   transport, signed with the desktop key the endpoint requires. `DownloadAsync` streams the file to
   any `Stream` and decrypts `encraw` (AES-128-CTR) on the fly, chunk by chunk, so a large FLAC is
   never held in memory whole.
+- Sample player: radio (My Wave and the similar-tracks radio) now runs on radio sessions and reports
+  starts, finishes and skips to the session; a session the server forgets is replaced without a
+  break. `t` tunes the wave before it starts — an activity and a character, the character passed as
+  a session seed. `h` switches streams to lossless FLAC, falling back to MP3 when Windows cannot open
+  the file. The remote says when it is reconnecting, leaves with the reason when the session ends for
+  good, and reports the edge of the queue instead of sending a command that cannot work.
 - Ynison: the `ConnectionError` event for failures the client recovers from,
   `YnisonClientOptions.MaxReconnectAttempts`, and `YnisonQueueNavigation` for reading a queue in
   playback order.

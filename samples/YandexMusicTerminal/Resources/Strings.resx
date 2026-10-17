@@ -113,7 +113,7 @@
     <value>[grey]♪ nothing playing[/]</value>
   </data>
   <data name="MenuHotkeys" xml:space="preserve">
-    <value>[grey]↑↓[/] move   [grey]enter[/] select   [grey]s[/] search   [grey]a[/] albums   [grey]l[/] playlists   [grey]f[/] liked   [grey]w[/] wave   [grey]p[/] player   [grey]r[/] remote   [grey]g[/] log   [grey]i[/] about   [grey]o[/] sign out   [grey]q[/] quit</value>
+    <value>[grey]↑↓[/] move   [grey]enter[/] select   [grey]s[/] search   [grey]a[/] albums   [grey]l[/] playlists   [grey]f[/] liked   [grey]w[/] wave   [grey]t[/] tune   [grey]p[/] player   [grey]r[/] remote   [grey]h[/] quality   [grey]g[/] log   [grey]i[/] about   [grey]o[/] sign out   [grey]q[/] quit</value>
   </data>
   <data name="MenuHotkeyUpdate" xml:space="preserve">
     <value>   [yellow]u[/] update</value>
@@ -480,5 +480,41 @@
   </data>
   <data name="HandOverSent" xml:space="preserve">
     <value>Sent "{0}" to {1}</value>
+  </data>
+  <data name="MenuTuneWave" xml:space="preserve">
+    <value>Tune My Wave</value>
+  </data>
+  <data name="MenuQualityStandard" xml:space="preserve">
+    <value>Quality: standard (MP3)</value>
+  </data>
+  <data name="MenuQualityLossless" xml:space="preserve">
+    <value>Quality: lossless (FLAC)</value>
+  </data>
+  <data name="QualityStandardOn" xml:space="preserve">
+    <value>Tracks will play in standard quality.</value>
+  </data>
+  <data name="QualityLosslessOn" xml:space="preserve">
+    <value>Tracks will play lossless where the subscription allows it.</value>
+  </data>
+  <data name="LoadingWaveSettings" xml:space="preserve">
+    <value>Loading the wave settings…</value>
+  </data>
+  <data name="PickWave" xml:space="preserve">
+    <value>Which wave?</value>
+  </data>
+  <data name="PickWaveCharacter" xml:space="preserve">
+    <value>What character?</value>
+  </data>
+  <data name="RemoteReconnecting" xml:space="preserve">
+    <value>Connection lost, reconnecting: {0}</value>
+  </data>
+  <data name="RemoteSessionClosed" xml:space="preserve">
+    <value>the session was closed</value>
+  </data>
+  <data name="RemoteQueueEnd" xml:space="preserve">
+    <value>This is the last track in the queue</value>
+  </data>
+  <data name="RemoteQueueStart" xml:space="preserve">
+    <value>This is the first track in the queue</value>
   </data>
 </root>

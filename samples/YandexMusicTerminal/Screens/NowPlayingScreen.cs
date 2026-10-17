@@ -291,24 +291,17 @@ public sealed class NowPlayingScreen
                 return;
             }
 
-            var origin = new PlaybackOrigin("similar", Station: batch.Station, BatchId: batch.BatchId);
+            var origin = TrackList.RadioOrigin("similar", batch);
             var items = batch.Tracks.Select(t => TrackList.ToPlaybackItem(t, origin, _catalog)).ToList();
             await _controller.PlayAsync(
                 items,
-                continuation: ct => FetchRadioItemsAsync(batch.Station, ct),
+                continuation: TrackList.RadioContinuation("similar", batch.SessionKey, _catalog),
                 cancellationToken: cancellationToken).ConfigureAwait(false);
         }
         catch (YandexMusicException)
         {
             ShowToast(Strings.ActionFailed);
         }
-    }
-
-    private async Task<IReadOnlyList<PlaybackItem>> FetchRadioItemsAsync(string station, CancellationToken cancellationToken)
-    {
-        var batch = await _catalog.GetRadioAsync(station, cancellationToken).ConfigureAwait(false);
-        var origin = new PlaybackOrigin("similar", Station: batch.Station, BatchId: batch.BatchId);
-        return batch.Tracks.Select(t => TrackList.ToPlaybackItem(t, origin, _catalog)).ToList();
     }
 
     private static bool TryReadKey(out ConsoleKey key)

@@ -22,7 +22,12 @@ dotnet run --project samples/YandexMusicTerminal
   on Linux/macOS, readable only by your user account.
 - **Search tracks** and start playback from any result (the whole result set becomes the queue).
 - **Browse your albums** and **your playlists**, and drill into either's tracklist.
-- **Liked** — your "liked" tracks; **My Wave** — a batch from your personal radio station.
+- **Liked** — your "liked" tracks; **My Wave** — your personal radio, played as a radio session that
+  keeps fetching new batches and learns from what you play or skip. **Tune My Wave** (`t`) picks an
+  activity wave and a character first; the character is passed as a session seed, so the radio
+  starts already tuned.
+- **Quality** (`h`) switches streams between standard MP3 and lossless FLAC. If Windows cannot open
+  the lossless stream, the track falls back to MP3 instead of going silent.
 - **Remote control** (`r`) — the Ynison screen: live playback state of every device on the account,
   pause/tracks/volume commands, and "play on this device" via keys `1-9`.
 - **Now playing** — a live view with an animated equalizer, a real-time progress bar, a volume meter,
@@ -41,9 +46,10 @@ The **main menu**:
 | --- | --- |
 | `↑` / `↓` · `enter` | move · select |
 | `s` · `a` · `l` | search · my albums · my playlists |
-| `f` · `w` | liked · my wave |
+| `f` · `w` · `t` | liked · my wave · tune my wave |
 | `p` | open player (now playing) |
 | `r` | Ynison remote control |
+| `h` | stream quality: standard / lossless |
 | `o` · `q` | sign out · quit |
 
 Any **selection screen**: `↑`/`↓` move · `enter` select · `Esc` back.

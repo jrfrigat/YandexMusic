@@ -77,11 +77,13 @@ dotnet run --project samples/YandexMusicTerminal
   `i` an endless radio of similar tracks · `r` send the track to a speaker, which then fetches and
   plays it itself. Playback starts and skips are reported back to the API, so "My Wave" keeps
   learning from what you play.
+- **Radio and quality** — "My Wave" runs as a radio session; `t` tunes it to an activity and a
+  character before it starts, and `h` switches streams to lossless FLAC, with MP3 as the fallback.
 - **Search** — tabs for tracks, artists, albums and playlists, paging via a "more" row, and drill-in
   to a picked artist's, album's or playlist's tracks.
 - **Main menu** is cursor-driven with a hotkey bar along the bottom — single-key shortcuts jump
-  straight to a section (`s` search · `a` albums · `l` playlists · `p` open player · `r` remote ·
-  `g` request log · `q` quit).
+  straight to a section (`s` search · `a` albums · `l` playlists · `f` liked · `w` my wave ·
+  `t` tune my wave · `p` open player · `r` remote · `h` stream quality · `g` request log · `q` quit).
 - **Controls** (now-playing view): `space` play/pause · `←/→` prev/next · `↑/↓` volume · `s` stop ·
   `q` back — plus `l`/`x`/`t`/`i` for like, dislike, lyrics and similar (see above).
 

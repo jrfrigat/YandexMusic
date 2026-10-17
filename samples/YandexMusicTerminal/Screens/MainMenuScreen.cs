@@ -1,5 +1,6 @@
 using Spectre.Console;
 using Spectre.Console.Rendering;
+using YandexMusicTerminal.Catalog;
 using YandexMusicTerminal.Diagnostics;
 using YandexMusicTerminal.Playback;
 using YandexMusicTerminal.Ui;
@@ -24,11 +25,17 @@ public enum MainMenuAction
     /// <summary>Open "My Wave".</summary>
     MyWave,
 
+    /// <summary>Pick a wave (My Wave or an activity) and its character, then play it.</summary>
+    TuneWave,
+
     /// <summary>Open the now-playing view.</summary>
     NowPlaying,
 
     /// <summary>Open the Ynison remote control.</summary>
     Remote,
+
+    /// <summary>Switch streams between standard and lossless quality.</summary>
+    Quality,
 
     /// <summary>Turn the request journal on or off.</summary>
     Logging,
@@ -61,8 +68,10 @@ public sealed class MainMenuScreen
         (MainMenuAction.Playlists, ConsoleKey.L, 'l'),
         (MainMenuAction.Liked, ConsoleKey.F, 'f'),
         (MainMenuAction.MyWave, ConsoleKey.W, 'w'),
+        (MainMenuAction.TuneWave, ConsoleKey.T, 't'),
         (MainMenuAction.NowPlaying, ConsoleKey.P, 'p'),
         (MainMenuAction.Remote, ConsoleKey.R, 'r'),
+        (MainMenuAction.Quality, ConsoleKey.H, 'h'),
         (MainMenuAction.Logging, ConsoleKey.G, 'g'),
         (MainMenuAction.About, ConsoleKey.I, 'i'),
         (MainMenuAction.SignOut, ConsoleKey.O, 'o'),
@@ -72,6 +81,7 @@ public sealed class MainMenuScreen
     private readonly PlaybackController _controller;
     private readonly NoticeBoard _notices;
     private readonly RequestLog _log;
+    private readonly IMusicCatalog _catalog;
     private readonly UpdateChecker _updates;
 
     // The selection is an action, not an index, because the entry list grows the moment the update
@@ -83,8 +93,11 @@ public sealed class MainMenuScreen
     /// <param name="notices">The board carrying what the screen the user just left had to say.</param>
     /// <param name="log">The request journal, whose menu entry shows and flips its state.</param>
     /// <param name="updates">The update checker, whose finding is shown above the menu.</param>
-    public MainMenuScreen(PlaybackController controller, NoticeBoard notices, RequestLog log, UpdateChecker updates)
+    /// <param name="catalog">The catalog, whose stream quality the menu shows and flips.</param>
+    public MainMenuScreen(PlaybackController controller, NoticeBoard notices, RequestLog log, UpdateChecker updates, IMusicCatalog catalog)
     {
+        ArgumentNullException.ThrowIfNull(catalog);
+        _catalog = catalog;
         ArgumentNullException.ThrowIfNull(controller);
         ArgumentNullException.ThrowIfNull(notices);
         ArgumentNullException.ThrowIfNull(log);
@@ -239,8 +252,10 @@ public sealed class MainMenuScreen
         MainMenuAction.Playlists => Strings.MenuPlaylists,
         MainMenuAction.Liked => Strings.MenuLiked,
         MainMenuAction.MyWave => Strings.MenuMyWave,
+        MainMenuAction.TuneWave => Strings.MenuTuneWave,
         MainMenuAction.NowPlaying => Strings.MenuOpenPlayer,
         MainMenuAction.Remote => Strings.MenuRemote,
+        MainMenuAction.Quality => _catalog.PreferLossless ? Strings.MenuQualityLossless : Strings.MenuQualityStandard,
         MainMenuAction.Logging => _log.IsEnabled ? Strings.MenuLoggingOn : Strings.MenuLoggingOff,
         MainMenuAction.About => Strings.MenuAbout,
         MainMenuAction.Update => Strings.MenuUpdate(_updates.Available?.Version ?? string.Empty),
