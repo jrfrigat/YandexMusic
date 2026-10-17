@@ -1,5 +1,7 @@
 using System.Text.Json;
+using YandexMusic.Authentication;
 using YandexMusic.Http;
+using YandexMusic.Models.Radio;
 using YandexMusic.Models.Search;
 using YandexMusic.Serialization;
 using Xunit;
@@ -115,5 +117,51 @@ public sealed class LiveShapeRegressionTests
         var label = Assert.Single(album.Labels!);
         Assert.Equal("Object Label", label.Name);
         Assert.Equal(5, label.Id);
+    }
+
+    [Fact]
+    public void WaveSettings_DiscreteScaleBoundsArriveAsNumbers()
+    {
+        // /rotor/wave/settings sends the mood and energy scale bounds as JSON numbers.
+        const string json =
+            """
+            { "result": { "blocks": [ { "type": "contexts", "items": [ { "name": "Work",
+              "restrictions": { "mood": { "type": "discrete-scale", "name": "Mood",
+                "min": { "value": 1, "name": "Sad" }, "max": { "value": 4, "name": "Fun" } } } } ] } ] } }
+            """;
+
+        var settings = JsonSerializer.Deserialize(json, YandexMusicJson.TypeInfo<ApiResponse<WaveSettings>>())!.Result!;
+
+        var mood = settings.Blocks![0].Items![0].Restrictions.Mood!;
+        Assert.Equal("1", mood.Min!.Value);
+        Assert.Equal("4", mood.Max!.Value);
+    }
+
+    [Fact]
+    public async Task PerRequestHeader_ReplacesTheDefaultInsteadOfAddingASecondValue()
+    {
+        // The file-info signature is bound to one X-Yandex-Music-Client value; sent next to the
+        // default device id, the server answers 403.
+        using var handler = new CapturingHandler();
+        using var http = new HttpClient(handler) { BaseAddress = new Uri("https://api.music.yandex.net") };
+        var connection = new YandexMusicConnection(http, new AuthSession("device-1"));
+
+        await connection.GetAsync<JsonElement>("/get-file-info", new Dictionary<string, string> { ["X-Yandex-Music-Client"] = "Desktop/1" }, CancellationToken.None);
+
+        Assert.Equal(["Desktop/1"], handler.Request!.Headers.GetValues("X-Yandex-Music-Client"));
+    }
+
+    private sealed class CapturingHandler : HttpMessageHandler
+    {
+        public HttpRequestMessage? Request { get; private set; }
+
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            Request = request;
+            return Task.FromResult(new HttpResponseMessage(System.Net.HttpStatusCode.OK)
+            {
+                Content = new StringContent("{\"result\":{}}", System.Text.Encoding.UTF8, "application/json"),
+            });
+        }
     }
 }

@@ -106,8 +106,12 @@ internal sealed class YandexMusicConnection : IYandexMusicConnection
 
         if (headers is not null)
         {
+            // A per-request header replaces the default of the same name rather than adding a second
+            // value: the file-info signature is bound to one exact X-Yandex-Music-Client, and the
+            // server rejects "desktop-client, device-id" with 403.
             foreach (var header in headers)
             {
+                request.Headers.Remove(header.Key);
                 request.Headers.TryAddWithoutValidation(header.Key, header.Value);
             }
         }

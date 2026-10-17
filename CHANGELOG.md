@@ -14,6 +14,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   are now `DateTimeOffset?` and go out as ISO 8601 in UTC (`2024-01-01T12:00:00.000Z`): the API
   rejects a Unix timestamp written as a string, which is what the old `double?` seconds became. An
   empty `language` is left out instead of being sent blank.
+- **A per-request header replaces the default instead of being sent beside it.** File info is
+  signed for one exact `X-Yandex-Music-Client`; going out next to the default device id, it was
+  answered with 403.
+- **Wave settings deserialize.** The bounds of a discrete scale (mood, energy) arrive as JSON
+  numbers, which `EnumValue.Value` could not read, so `GetWaveSettingsAsync` failed on a real
+  account.
 - **Ynison next/previous follow the shuffled order.** With shuffle on they used to step through the
   list order and land on the wrong track. At either end of the queue the command now throws instead
   of quietly restarting the current track; with repeat-all on it wraps around.

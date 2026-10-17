@@ -1,4 +1,5 @@
 using System.Text.Json.Serialization;
+using YandexMusic.Serialization;
 
 namespace YandexMusic.Models.Radio;
 
@@ -55,7 +56,12 @@ public sealed class DiscreteScale
 /// <summary>A single selectable value of a restriction: its wire value and its display name.</summary>
 public sealed class EnumValue
 {
-    /// <summary>The value sent back to the API when this option is chosen.</summary>
+    /// <summary>
+    /// The value sent back to the API when this option is chosen. The bounds of a discrete scale
+    /// arrive as JSON numbers (the wave settings send them that way), so the value is normalized to
+    /// a string.
+    /// </summary>
+    [JsonConverter(typeof(FlexibleStringConverter))]
     public string Value { get; init; } = string.Empty;
 
     /// <summary>The human-readable name of the value.</summary>
