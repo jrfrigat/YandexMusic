@@ -6,7 +6,7 @@ All notable changes to this project are documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/).
 
-## [Unreleased]
+## [0.7.0] - 2026-10-17
 
 ### Fixed
 - **Radio feedback and station settings** are sent as JSON. The rotor endpoints stopped accepting
@@ -66,6 +66,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/).
   for it. `Subscription.HadAnySubscription` is `bool?`, since the radio account status leaves it out
   and `false` would claim "never subscribed". `Station.GeocellIcon` is nullable for the same reason.
 - `YandexMusicYnisonException` is no longer sealed, so the server error can derive from it.
+- Dependencies updated: `Microsoft.Extensions.*` to 9.0.21 on net9.0 and 10.0.13 on net10.0,
+  SourceLink to 10.0.402; the sample player moves to the stable NAudio 3.2.0 and QRCoder 1.8.1.
 
 ## [0.6.0] - 2026-08-23
 
